@@ -1,13 +1,14 @@
 #read_net.py
 
 import sys
+import pickle as p
 
-if len(sys.argv) != 3:
-    print "\nUsage:\n python read_net.py [input filename] [output filename]"
+if len(sys.argv) != 4:
+    print "\nUsage:\n python read_net.py [input .net filename] [output .fg filename] [output .dat filename]"
     exit()
 infile = sys.argv[1]
 outfile = sys.argv[2]
-
+data_outfile = sys.argv[3]
 class chunk:
     def __init__(self, startline, name):
         self.startline = startline
@@ -28,8 +29,7 @@ class node:
         for i in tmp:
             self.properties[i[0]] = i[1]
         tmp = self.properties['states'].replace('" "', '", "')
-        self.states = eval(tmp)
-        #print self.states
+        self.states = list(eval(tmp))
         self.name = chunk.name[0].rstrip()
 
 class potential:
@@ -135,7 +135,9 @@ f = open(outfile, 'w')
 for i in range(len(potentials)):
     print_potential(i, f)
 
-
+f = open(data_outfile, 'w')
+tmp = [nodes, potentials, pseudonym, name]
+p.dump(tmp, f)
 
 
 
