@@ -113,9 +113,9 @@ def print_potential(i, f):
     n = potentials[i].node
     p = potentials[i].parents
     ans += str(1 + len(p)) + '\n'
-    ans += str(pseudonym[n]) + ' '
     for j in p:
         ans += str(pseudonym[j]) + ' '
+    ans += str(pseudonym[n])
     ans += '\n'
     l = 1
     for j in [n] + p:
@@ -132,6 +132,7 @@ def print_potential(i, f):
 
 
 f = open(outfile, 'w')
+f.write(str(len(nodes))+'\n\n')
 for i in range(len(potentials)):
     print_potential(i, f)
 
