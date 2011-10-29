@@ -9,7 +9,7 @@ CC=g++
 # Compiler flags
 CCFLAGS=-Wno-deprecated -Wall -W -Wextra -fpic -O3 -static $(INC)
 
-all : uai2010-aie-solver asia simple sprinkler
+all : uai2010-aie-solver asia simple
 
 
 #uai2010-aie-solver : uai2010-aie-solver.cpp $(LIB)/libdai.a
