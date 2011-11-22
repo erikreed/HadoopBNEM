@@ -22,13 +22,13 @@ class node:
         lines = chunk.text
         tmp = [x.split(' = ') for x in lines]
         for i in tmp:
-            i[0] = i[0].strip('\t')
+            i[0] = i[0].strip('\t').lstrip()
             i[1] = i[1].strip(';\n').strip('\t').lstrip()
         #self.properties = tmp
         self.properties = dict()
         for i in tmp:
             self.properties[i[0]] = i[1]
-        tmp = self.properties['states'].replace('" "', '", "')
+        tmp = self.properties['states'].replace('" "', '", "').replace('(,', '(').replace(',)', ')')
         self.states = list(eval(tmp))
         self.name = chunk.name[0].rstrip()
 
@@ -37,14 +37,16 @@ class potential:
         tmp = chunk.text
         tmp2 = ''
         for i in tmp:
-            tmp2 += i.strip().lstrip('data =').rstrip(';').replace('\t', ',').replace('(,','(').replace(',)', ')')
-        tmp2 = tmp2.replace(')(','),(')
+            tmp2 += ' '.join(i.split()).strip().lstrip('data =').rstrip(';').replace('\t', ',').replace('(,','(').replace(',)', ')')
+        tmp2 = tmp2.replace(')(','),(').replace(' ',',').replace(',,', ',').replace('(,','(').replace(',)', ')')
         self.data = eval(tmp2)
-        tmp = chunk.name
-        self.node = tmp[1]
-        self.parents = [tmp[x] for x in range(3,len(tmp)-1)]
-        #print 'POTENTIAL - Node:', self.node, "Parents:", self.parents
-        #print 'Data: ',  self.data
+        tmp = ' '.join(chunk.name)
+        #print tmp
+        tmp = tmp.replace('(','').replace(')','').replace('|',' ').split()
+        #print tmp
+        self.node = tmp[0]
+        self.parents = [tmp[x] for x in range(1,len(tmp))]
+        print self.parents
 
 nodes = []
 potentials = []
@@ -69,7 +71,7 @@ for line in open(infile, 'r'):
             else:
                 potentials.append(potential(thisChunk))
         else:
-            thisChunk.insert_line(line)
+            thisChunk.insert_line(line.split('%')[0])
     elif line == "{\n":
         chunk_active=True
         chunkName = prevline.split(' ')[1:]
@@ -113,9 +115,10 @@ def print_potential(i, f):
     n = potentials[i].node
     p = potentials[i].parents
     ans += str(1 + len(p)) + '\n'
+    ans += str(pseudonym[n]) + ' '
+    p.reverse()
     for j in p:
         ans += str(pseudonym[j]) + ' '
-    ans += str(pseudonym[n])
     ans += '\n'
     l = 1
     for j in [n] + p:
