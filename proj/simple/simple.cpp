@@ -1,11 +1,5 @@
-/*  This file is part of libDAI - http://www.libdai.org/
- *
- *  Copyright (c) 2006-2011, The libDAI authors. All rights reserved.
- *
- *  Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
- */
-
-//TODO: input .fg .tab output likelihood
+// erik reed
+// erikreed@cmu.edu
 
 #include <dai/alldai.h>
 #include <iostream>
@@ -18,36 +12,11 @@ using namespace dai;
 
 
 void displayStats(char** argv) {
+	//Builtin inference algorithms: {BP, CBP, DECMAP, EXACT, FBP, GIBBS, HAK, JTREE, LC, MF, MR, TREEEP, TRWBP}
 
-
-	// This example program illustrates how to learn the
-	// parameters of a Bayesian network from a sample of
-	// the sprinkler network discussed at
-	// http://www.cs.ubc.ca/~murphyk/Bayes/bnintro.html
-	//
-	// The factor graph file (sprinkler.fg) has to be generated first
-	// by running example_sprinkler, and the data sample file
-	// (sprinkler.tab) by running example_sprinkler_gibbs
-
-	// Read the factorgraph from the file
 	FactorGraph fg;
 	fg.ReadFromFile( argv[1] );
 
-	// Read sample from file
-	/*
-	   Evidence e;
-	   ifstream estream( argv[2]);
-	   e.addEvidenceTabFile( estream, fg );
-	   cout << "Number of samples: " << e.nrSamples() << endl;
-	   */
-
-	// Iterate EM until convergence
-	//    while( !em.hasSatisfiedTermConditions() ) {
-	//        Real l = em.iterate();
-	//        cout << "Iteration " << em.Iterations() << " likelihood: " << l <<endl;
-	//    }
-
-	// Output true factor graph
 	cout << fg.nrVars() << " variables" << endl;
 	cout << fg.nrFactors() << " factors" << endl;
 	cout << endl << "Given factor graph:" << endl << "##################" << endl;
@@ -60,15 +29,7 @@ void displayStats(char** argv) {
 	size_t maxiter = 10000;
 	Real   tol = 1e-9;
 	size_t verb = 1;
-	// Calculate joint probability of all four variables
-	//Factor P;
-	//for( size_t I = 0; I < fg.nrFactors(); I++ )
-	//	P *= fg.factor( I );
 
-	// Calculate some probabilities
-	//Real denom = P.marginal( fg.var(0) )[0];
-	//cout << "P([node 0]=1) = " << denom << endl;
-	// Store the constants in a PropertySet object
 	PropertySet opts;
 	opts.set("maxiter",maxiter);  // Maximum number of iterations
 	opts.set("tol",tol);          // Tolerance for convergence
@@ -135,7 +96,7 @@ void displayStats(char** argv) {
 	mp.run();
 	// Calculate joint state of all variables that has maximum probability
 	// based on the max-product result
-	vector<size_t> mpstate = mp.findMaximum();
+	vector<size_t> mpstate = mp.findMaximum();  //fails for adapt.fg
 
 	// Construct a decimation algorithm object from the FactorGraph fg
 	// using the parameters specified by opts and three additional properties,
@@ -211,7 +172,7 @@ void displayStats(char** argv) {
 
 }
 
-void generateTab(char* input, int numSamples) {
+string generateTab(char* input, int numSamples) {
 	string outName = input;
 
 	string::size_type pos = 0;
@@ -232,6 +193,8 @@ void generateTab(char* input, int numSamples) {
 	cout << factorIn.nrFactors() << " factors" << endl;
 	cout << "Generating " << outName << endl;
 	cout << "Number of samples: " << numSamples << endl;
+
+	srand ( time(NULL) ); // set random seed
 
 	// Prepare a Gibbs sampler
 	PropertySet gibbsProps;
@@ -268,7 +231,30 @@ void generateTab(char* input, int numSamples) {
 
 	// Close the .tab file
 	outfile.close();
+	return outName;
+}
 
+void printEMIntermediates(stringstream* s_out, InfAlg* inf) {
+	//print intermediate variables in python format
+	FactorGraph int_fg = inf->fg();
+	vector<Factor> factors = int_fg.factors();
+	size_t size = factors.size();
+	*s_out << "[";
+	for (size_t i = 0; i<size; i++) {
+		Factor fac = int_fg.factor(i);
+		size_t var_size = fac.nrStates();
+		*s_out << "[";
+		for (size_t j=0; j<var_size; j++) {
+			*s_out << fac.get(j);
+			if (j != var_size-1)
+				*s_out << ", ";
+		}
+		*s_out << "]";
+		if (i != size-1){
+		  *s_out << ", ";
+		}
+	}
+	*s_out << "]";
 }
 
 void doEm(char* fgIn, char* tabIn, char* emIn) {
@@ -292,15 +278,30 @@ void doEm(char* fgIn, char* tabIn, char* emIn) {
 	ifstream emstream( emIn );
 	EMAlg em(e, *inf, emstream);
 
+	cout.precision(16);
+
+	stringstream s_out;
+	s_out << "[\n";
+	s_out.precision(16);
+
+	// initial values
+	printEMIntermediates(&s_out, inf);
+	s_out << endl;
 	// Iterate EM until convergence
 	while( !em.hasSatisfiedTermConditions() ) {
+
 		Real l = em.iterate();
 		cout << "Iteration " << em.Iterations() << " likelihood: " << l <<endl;
+
+		printEMIntermediates(&s_out, inf);
+		s_out << endl;
 	}
+	s_out << "]";
 
 	// Output true factor graph
 	cout << endl << "True factor graph:" << endl << "##################" << endl;
 	cout.precision(12);
+
 	cout << fg;
 
 	// Output learned factor graph
@@ -310,7 +311,113 @@ void doEm(char* fgIn, char* tabIn, char* emIn) {
 
 	// Clean up
 	delete inf;
+	cout << "Intermediate values: an array of [iterations][variable][state]" << endl;
+	cout << "Includes initial values (i.e. iteration 0)" << endl;
+	cout << endl << s_out.str() << endl;
+}
 
+void printUsage() {
+	//cout << "Not enough args [" << argc-1 <<"]. Requires 2: an .fg file and .tab file." << endl;
+	//cout << "Builtin inference algorithms: " << builtinInfAlgNames() << endl << endl;
+	cout << "--- Usage ---" << endl;
+
+	cout << "display fg stats/marginals:\n\t./simple asd.fg" << endl;
+	cout << "generate tab file (output will be *.tab): \n\t./simple asd.fg num_samples" << endl;
+	cout << "run EM (now w/ intermediate results) \n\t./simple asd.fg asd.tab asd.em" << endl;
+	cout << "compare EM files (e.g. for shared/non-shared)\n\t" << 
+			"./simple -c asd.fg asd1.em asd2.em" << endl;
+	//cout << "compare FG files (e.g. checking difference from true vs. EM generated FGs)\n\t" << 
+	//	"./simple -f asd.fg asd2.fg" << endl;
+}
+
+double compareFG(FactorGraph* fg1, FactorGraph* fg2) {
+	size_t numFactors = fg1->nrFactors();
+	if (fg2->nrFactors() != numFactors)
+		throw;
+	double sum=0;
+	for (size_t i=0; i< numFactors; i++) {
+		Factor f1 = fg1->factor(i);
+		Factor f2 = fg2->factor(i);
+		cout << "sum: " << (f1-f2).sumAbs() << endl;
+		sum += abs((f1-f2).sumAbs());
+	}
+	//sum = sqrt(sum);
+
+	return sum;
+}
+
+void compareEM(char* fgIn, char* emIn1, char* emIn2) {
+	int num_tests = 25;	
+
+	FactorGraph fg;
+	fg.ReadFromFile( fgIn );
+
+	// Prepare junction-tree object for doing exact inference for E-step
+	PropertySet infprops;
+	infprops.set( "verbose", (size_t)1 );
+	infprops.set( "updates", string("HUGIN") );
+
+	ofstream fout("shared_compare.dat");
+	fout.precision(12);
+	fout << "numSamples\tlikelihood1\titerations1\tlikelihood2\titerations2" << endl;
+	for (int i=1; i<=num_tests; i++) {
+		InfAlg* inf1 = newInfAlg( "JTREE", fg, infprops );
+		inf1->init();
+		InfAlg* inf2 = newInfAlg( "JTREE", fg, infprops );
+		inf2->init();
+		string tabIn = generateTab(fgIn, i);
+		Evidence e;
+		ifstream estream( tabIn.c_str() );
+		ifstream emstream1( emIn1 );
+		ifstream emstream2( emIn2 );
+		e.addEvidenceTabFile( estream, fg );
+		estream.close();
+		fout << e.nrSamples() << "\t";
+
+		// Read EM specification
+
+		EMAlg em1(e, *inf1, emstream1);
+		EMAlg em2(e, *inf2, emstream2);
+
+		Real l1;
+		// Iterate EM until convergence
+		while( !em1.hasSatisfiedTermConditions() ) {
+			l1 = em1.iterate();
+			cout << "em1: Iteration " << em1.Iterations() << " likelihood: " << l1 
+					<< " avg: " << l1/100*(i+1)<<endl;
+		}
+
+		Real l2;
+		// Iterate EM until convergence
+		while( !em2.hasSatisfiedTermConditions() ) {
+			l2 = em2.iterate();
+			cout << "em2: Iteration " << em2.Iterations() << " likelihood: " << l2 
+					<< " avg: " << l1/100*(i+1) <<endl;
+		}
+
+		FactorGraph fg_non = inf1->fg();
+		FactorGraph fg_shared = inf2->fg();
+
+		double fg_diff_shared_from_true = compareFG(&fg_shared, &fg);
+		double fg_diff_from_true = compareFG(&fg_non, &fg);
+		double fg_diff_shared_from_non_shared = compareFG(&fg_non, &fg_shared);
+
+		cout << "FG diff shared from true: " << fg_diff_shared_from_true << endl;
+		cout << "FG diff non-shared from true: " << fg_diff_from_true << endl;
+		cout << "FG diff shared from non-shared: " << fg_diff_shared_from_non_shared << endl;
+
+		fout << l1 << "\t" << em1.Iterations() << "\t";
+		fout << l2 << "\t" << em2.Iterations() << "\t";
+		fout << fg_diff_shared_from_true << "\t" << fg_diff_from_true << "\t" <<
+				fg_diff_shared_from_non_shared << endl;
+		emstream1.close();
+		emstream2.close();
+		delete inf1;
+		delete inf2;
+	}
+	// Clean up
+
+	fout.close();
 
 }
 
@@ -332,19 +439,28 @@ int main(int argc, char* argv[]) {
 		// expecting .fg, .tab, .em 
 		doEm(argv[1], argv[2], argv[3]);
 	}
-	else {
-		//cout << "Not enough args [" << argc-1 <<"]. Requires 2: an .fg file and .tab file." << endl;
-		//cout << "Builtin inference algorithms: " << builtinInfAlgNames() << endl << endl;
-		cout << "--- Usage ---" << endl;
+	else if (argc == 5) {
+		// expecting -c, fg, em, em
+		if (strcmp(argv[1],"-c") == 0) {
+			compareEM(argv[2], argv[3], argv[4]);
+		}
+		else {
+			printUsage();
+			return 0;
+		}
 
-		cout << "display fg stats/marginals:\n\t./simple asd.fg" << endl;
-		cout << "generate tab file (output will be *.tab): \n\t./simple asd.fg num_samples" << endl;
-		cout << "run EM \n\t./simple asd.fg asd.tab asd.em" << endl;
+	}
+	else {
+		printUsage();
 		return 0;
 	}
 
 	clock_t t2 = clock();
+	cout.precision(7);
 	cout << endl << "elapsed time: " << difftime(t2,t1)/1e6 << " seconds" << endl;
 
 	return 0;
 }
+
+
+
