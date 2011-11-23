@@ -10,6 +10,7 @@
 using namespace std;
 using namespace dai;
 
+#define INTERMEDIATE_VALUES
 
 void displayStats(char** argv) {
 	//Builtin inference algorithms: {BP, CBP, DECMAP, EXACT, FBP, GIBBS, HAK, JTREE, LC, MF, MR, TREEEP, TRWBP}
@@ -257,9 +258,11 @@ void printEMIntermediates(stringstream* s_out, InfAlg* inf) {
 	*s_out << "]";
 }
 
-void doEm(char* fgIn, char* tabIn, char* emIn) {
+void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	FactorGraph fg;
 	fg.ReadFromFile( fgIn );
+
+
 
 	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops;
@@ -313,7 +316,10 @@ void doEm(char* fgIn, char* tabIn, char* emIn) {
 	delete inf;
 	cout << "Intermediate values: an array of [iterations][variable][state]" << endl;
 	cout << "Includes initial values (i.e. iteration 0)" << endl;
-	cout << endl << s_out.str() << endl;
+
+	#ifdef INTERMEDIATE_VALUES
+		cout << endl << s_out.str() << endl;
+	#endif
 }
 
 void printUsage() {
@@ -437,12 +443,21 @@ int main(int argc, char* argv[]) {
 	}
 	else if (argc == 4) {
 		// expecting .fg, .tab, .em 
-		doEm(argv[1], argv[2], argv[3]);
+		doEm(argv[1], argv[2], argv[3], 0);
 	}
 	else if (argc == 5) {
 		// expecting -c, fg, em, em
 		if (strcmp(argv[1],"-c") == 0) {
 			compareEM(argv[2], argv[3], argv[4]);
+		}
+		else if (strcmp(argv[1],"-random") == 0) {
+			doEm(argv[1], argv[2], argv[3], 1);
+		}
+		else if (strcmp(argv[1],"-uniform") == 0) {
+			doEm(argv[1], argv[2], argv[3], 2);
+		}
+		else if (strcmp(argv[1],"-noise") == 0) {
+			doEm(argv[1], argv[2], argv[3], 3);
 		}
 		else {
 			printUsage();
