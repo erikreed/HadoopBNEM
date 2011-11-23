@@ -6,11 +6,13 @@
 #include <fstream>
 #include <string>
 #include <time.h>
+#include <fstream>
 
 using namespace std;
 using namespace dai;
 
 #define INTERMEDIATE_VALUES
+#define NOISE_AMOUNT .05 // corresponding to 5%
 
 void displayStats(char** argv) {
 	//Builtin inference algorithms: {BP, CBP, DECMAP, EXACT, FBP, GIBBS, HAK, JTREE, LC, MF, MR, TREEEP, TRWBP}
@@ -240,29 +242,71 @@ void printEMIntermediates(stringstream* s_out, InfAlg* inf) {
 	FactorGraph int_fg = inf->fg();
 	vector<Factor> factors = int_fg.factors();
 	size_t size = factors.size();
-	*s_out << "[";
+	//*s_out << "[";
 	for (size_t i = 0; i<size; i++) {
 		Factor fac = int_fg.factor(i);
 		size_t var_size = fac.nrStates();
-		*s_out << "[";
+
 		for (size_t j=0; j<var_size; j++) {
 			*s_out << fac.get(j);
 			if (j != var_size-1)
 				*s_out << ", ";
 		}
-		*s_out << "]";
+		//*s_out << "]";
 		if (i != size-1){
 		  *s_out << ", ";
 		}
 	}
-	*s_out << "]";
+	//*s_out << "]";
 }
 
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	FactorGraph fg;
 	fg.ReadFromFile( fgIn );
 
+	srand((unsigned)time(NULL));
 
+	if (init == 1) {
+		// random
+		cout << "Using random initialization" << endl;
+		vector<Factor> factors = fg.factors();
+		size_t size = factors.size();
+		for (size_t i = 0; i<size; i++) {
+			Factor f = fg.factor(i);
+			f.randomize();
+			fg.setFactor(i,f,false);
+		}
+	}
+	else if (init == 2) {
+		// uniform
+		cout << "Using uniform initialization" << endl;
+		vector<Factor> factors = fg.factors();
+		size_t size = factors.size();
+		for (size_t i = 0; i<size; i++) {
+			Factor f = fg.factor(i);
+			f.setUniform();
+			fg.setFactor(i,f,false);
+		}
+	}
+	else if (init == 3) {
+		// noise
+		cout << "Using noisy initialization. Noise value: +/- " <<
+				NOISE_AMOUNT*100 << "%" << endl;
+		vector<Factor> factors = fg.factors();
+		size_t size = factors.size();
+		for (size_t i = 0; i<size; i++) {
+			Factor f = fg.factor(i);
+			for (size_t j = 0; j < f.nrStates(); j++) {
+				double init_val = f.get(j);
+				double val = ((double)rand()/(double)RAND_MAX);
+				val *= NOISE_AMOUNT*2;
+				val -= NOISE_AMOUNT;
+				f.set(j, init_val+val*init_val);
+			}
+			f.normalize(NORMPROB);
+			fg.setFactor(i, f, false);
+		}
+	}
 
 	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops;
@@ -284,9 +328,15 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	cout.precision(16);
 
 	stringstream s_out;
-	s_out << "[\n";
+	//s_out << "[\n";
 	s_out.precision(16);
 
+	for (size_t i=0; i< fg.nrFactors(); i++) {
+		s_out << fg.factor(i).nrStates();
+		if (i != fg.nrFactors() - 1)
+			s_out << ", ";
+	}
+	s_out << endl;
 	// initial values
 	printEMIntermediates(&s_out, inf);
 	s_out << endl;
@@ -299,7 +349,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 		printEMIntermediates(&s_out, inf);
 		s_out << endl;
 	}
-	s_out << "]";
+	//s_out << "]";
 
 	// Output true factor graph
 	cout << endl << "True factor graph:" << endl << "##################" << endl;
@@ -314,11 +364,15 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 
 	// Clean up
 	delete inf;
-	cout << "Intermediate values: an array of [iterations][variable][state]" << endl;
+	cout << "Intermediate values: an array of tab delimited K*N " <<
+			"where N=numFactors and K=iterations." << endl;
 	cout << "Includes initial values (i.e. iteration 0)" << endl;
 
 	#ifdef INTERMEDIATE_VALUES
-		cout << endl << s_out.str() << endl;
+		ofstream myfile;
+		myfile.open ("output.dat");
+		myfile << s_out.str() << endl;
+		myfile.close();
 	#endif
 }
 
@@ -330,8 +384,11 @@ void printUsage() {
 	cout << "display fg stats/marginals:\n\t./simple asd.fg" << endl;
 	cout << "generate tab file (output will be *.tab): \n\t./simple asd.fg num_samples" << endl;
 	cout << "run EM (now w/ intermediate results) \n\t./simple asd.fg asd.tab asd.em" << endl;
+	cout << "for different EM initialization types use: -noise, -random, -uniform" << endl;
+	cout << "\te.g. ./simple -noise asd.fg asd.tab asd.em" << endl;
 	cout << "compare EM files (e.g. for shared/non-shared)\n\t" << 
 			"./simple -c asd.fg asd1.em asd2.em" << endl;
+	cout << endl << "Results output to \"output.dat\"" << endl;
 	//cout << "compare FG files (e.g. checking difference from true vs. EM generated FGs)\n\t" << 
 	//	"./simple -f asd.fg asd2.fg" << endl;
 }
@@ -451,13 +508,13 @@ int main(int argc, char* argv[]) {
 			compareEM(argv[2], argv[3], argv[4]);
 		}
 		else if (strcmp(argv[1],"-random") == 0) {
-			doEm(argv[1], argv[2], argv[3], 1);
+			doEm(argv[2], argv[3], argv[4], 1);
 		}
 		else if (strcmp(argv[1],"-uniform") == 0) {
-			doEm(argv[1], argv[2], argv[3], 2);
+			doEm(argv[2], argv[3], argv[4], 2);
 		}
 		else if (strcmp(argv[1],"-noise") == 0) {
-			doEm(argv[1], argv[2], argv[3], 3);
+			doEm(argv[2], argv[3], argv[4], 3);
 		}
 		else {
 			printUsage();
