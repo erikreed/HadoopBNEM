@@ -13,6 +13,12 @@ using namespace dai;
 
 #define INTERMEDIATE_VALUES
 #define NOISE_AMOUNT .05 // corresponding to 5%
+#define INF_TYPE "JTREE"
+
+// constants for compareEM(...)
+#define EM_MAX_SAMPLES 25
+#define EM_SAMPLES_DELTA 1
+#define EM_INIT_SAMPLES 1
 
 void displayStats(char** argv) {
 	//Builtin inference algorithms: {BP, CBP, DECMAP, EXACT, FBP, GIBBS, HAK, JTREE, LC, MF, MR, TREEEP, TRWBP}
@@ -312,7 +318,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	PropertySet infprops;
 	infprops.set( "verbose", (size_t)1 );
 	infprops.set( "updates", string("HUGIN") );
-	InfAlg* inf = newInfAlg( "JTREE", fg, infprops );
+	InfAlg* inf = newInfAlg( INF_TYPE, fg, infprops );
 	inf->init();
 
 	// Read sample from file
@@ -348,6 +354,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 
 		printEMIntermediates(&s_out, inf);
 		s_out << endl;
+		s_out.flush();
 	}
 	//s_out << "]";
 
@@ -388,7 +395,11 @@ void printUsage() {
 	cout << "\te.g. ./simple -noise asd.fg asd.tab asd.em" << endl;
 	cout << "compare EM files (e.g. for shared/non-shared)\n\t" << 
 			"./simple -c asd.fg asd1.em asd2.em" << endl;
-	cout << endl << "Results output to \"output.dat\"" << endl;
+	
+	cout << endl << "--- Info ---" << endl;
+	cout << "Results output to \"output.dat\"" << endl;
+	cout << "Builtin inference algorithms: " << builtinInfAlgNames() << endl;
+	cout << "Currently used inference algorithm: " << INF_TYPE << endl;
 	//cout << "compare FG files (e.g. checking difference from true vs. EM generated FGs)\n\t" << 
 	//	"./simple -f asd.fg asd2.fg" << endl;
 }
@@ -410,7 +421,6 @@ double compareFG(FactorGraph* fg1, FactorGraph* fg2) {
 }
 
 void compareEM(char* fgIn, char* emIn1, char* emIn2) {
-	int num_tests = 25;	
 
 	FactorGraph fg;
 	fg.ReadFromFile( fgIn );
@@ -423,10 +433,10 @@ void compareEM(char* fgIn, char* emIn1, char* emIn2) {
 	ofstream fout("shared_compare.dat");
 	fout.precision(12);
 	fout << "numSamples\tlikelihood1\titerations1\tlikelihood2\titerations2" << endl;
-	for (int i=1; i<=num_tests; i++) {
-		InfAlg* inf1 = newInfAlg( "JTREE", fg, infprops );
+	for (int i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i+=EM_SAMPLES_DELTA) {
+		InfAlg* inf1 = newInfAlg( INF_TYPE, fg, infprops );
 		inf1->init();
-		InfAlg* inf2 = newInfAlg( "JTREE", fg, infprops );
+		InfAlg* inf2 = newInfAlg( INF_TYPE, fg, infprops );
 		inf2->init();
 		string tabIn = generateTab(fgIn, i);
 		Evidence e;
