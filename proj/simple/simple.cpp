@@ -16,9 +16,9 @@ using namespace dai;
 #define INF_TYPE "JTREE"
 
 // constants for compareEM(...)
-#define EM_MAX_SAMPLES 25
-#define EM_SAMPLES_DELTA 1
-#define EM_INIT_SAMPLES 1
+#define EM_MAX_SAMPLES 1000
+#define EM_SAMPLES_DELTA 25
+#define EM_INIT_SAMPLES 50
 
 void displayStats(char** argv) {
 	//Builtin inference algorithms: {BP, CBP, DECMAP, EXACT, FBP, GIBBS, HAK, JTREE, LC, MF, MR, TREEEP, TRWBP}
@@ -266,6 +266,45 @@ void printEMIntermediates(stringstream* s_out, InfAlg* inf) {
 	//*s_out << "]";
 }
 
+void randomize_fg(FactorGraph* fg) {
+	srand((unsigned)time(NULL));
+	vector<Factor> factors = fg->factors();
+	size_t size = factors.size();
+	for (size_t i = 0; i<size; i++) {
+		Factor f = fg->factor(i);
+		f.randomize();
+		fg->setFactor(i,f,false);
+	}
+}
+
+void uniformize_fg(FactorGraph* fg) {
+	vector<Factor> factors = fg->factors();
+	size_t size = factors.size();
+	for (size_t i = 0; i<size; i++) {
+		Factor f = fg->factor(i);
+		f.setUniform();
+		fg->setFactor(i,f,false);
+	}
+}
+
+void noise_fg(FactorGraph* fg) {
+	srand((unsigned)time(NULL));
+	vector<Factor> factors = fg->factors();
+	size_t size = factors.size();
+	for (size_t i = 0; i<size; i++) {
+		Factor f = fg->factor(i);
+		for (size_t j = 0; j < f.nrStates(); j++) {
+			double init_val = f.get(j);
+			double val = ((double)rand()/(double)RAND_MAX);
+			val *= NOISE_AMOUNT*2;
+			val -= NOISE_AMOUNT;
+			f.set(j, init_val+val*init_val);
+		}
+		f.normalize(NORMPROB);
+		fg->setFactor(i, f, false);
+	}
+}
+
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	FactorGraph fg;
 	fg.ReadFromFile( fgIn );
@@ -391,7 +430,7 @@ void printUsage() {
 	cout << "display fg stats/marginals:\n\t./simple asd.fg" << endl;
 	cout << "generate tab file (output will be *.tab): \n\t./simple asd.fg num_samples" << endl;
 	cout << "run EM (now w/ intermediate results) \n\t./simple asd.fg asd.tab asd.em" << endl;
-	cout << "for different EM initialization types use: -noise, -random, -uniform" << endl;
+	cout << "for different EM initialization types use: -noise, -random, -uniform, -all" << endl;
 	cout << "\te.g. ./simple -noise asd.fg asd.tab asd.em" << endl;
 	cout << "compare EM files (e.g. for shared/non-shared)\n\t" << 
 			"./simple -c asd.fg asd1.em asd2.em" << endl;
@@ -424,12 +463,15 @@ void compareEM(char* fgIn, char* emIn1, char* emIn2) {
 
 	FactorGraph fg;
 	fg.ReadFromFile( fgIn );
-
+	cout << "Initial samples: " << EM_INIT_SAMPLES << endl;
+	cout << "Max samples: " << EM_MAX_SAMPLES << ". Increase by " <<
+		EM_SAMPLES_DELTA << endl;
 	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops;
 	infprops.set( "verbose", (size_t)1 );
 	infprops.set( "updates", string("HUGIN") );
 
+	cout << "Creating file: shared_compare.dat" << endl;
 	ofstream fout("shared_compare.dat");
 	fout.precision(12);
 	fout << "numSamples\tlikelihood1\titerations1\tlikelihood2\titerations2" << endl;
@@ -523,7 +565,13 @@ int main(int argc, char* argv[]) {
 		else if (strcmp(argv[1],"-uniform") == 0) {
 			doEm(argv[2], argv[3], argv[4], 2);
 		}
+
 		else if (strcmp(argv[1],"-noise") == 0) {
+			doEm(argv[2], argv[3], argv[4], 3);
+		}
+		else if (strcmp(argv[1],"-all") == 0) {
+			doEm(argv[2], argv[3], argv[4], 1);
+			doEm(argv[2], argv[3], argv[4], 2);
 			doEm(argv[2], argv[3], argv[4], 3);
 		}
 		else {

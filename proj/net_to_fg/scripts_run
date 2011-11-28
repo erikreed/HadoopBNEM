@@ -1,0 +1,9 @@
+cohend@hpcc01:/data01/Projects/David_and_Erik/ml/libdai/proj/net_to_fg> python hide_vars.py AdaptSubsets/adapt_mini1.tab AdaptSubsets/adapt_mini1.dat AdaptSubsets/adapt_mini1_hidden1.tab Voltage_breaker_ey136_op
+set([2])
+cohend@hpcc01:/data01/Projects/David_and_Erik/ml/libdai/proj/net_to_fg> python hide_vars.py AdaptSubsets/adapt_mini2.tab AdaptSubsets/adapt_mini2.dat AdaptSubsets/adapt_mini1_hidden2.tab Voltage_breaker_ey236_op
+set([4])
+cohend@hpcc01:/data01/Projects/David_and_Erik/ml/libdai/proj/net_to_fg> rm AdaptSubsets/adapt_mini1_hidden2.tab 
+cohend@hpcc01:/data01/Projects/David_and_Erik/ml/libdai/proj/net_to_fg> python hide_vars.py AdaptSubsets/adapt_mini2.tab AdaptSubsets/adapt_mini2.dat AdaptSubsets/adapt_mini2_hidden1.tab Voltage_breaker_ey236_op
+set([4])
+cohend@hpcc01:/data01/Projects/David_and_Erik/ml/libdai/proj/net_to_fg> python hide_vars.py AdaptSubsets/adapt_mini3.tab AdaptSubsets/adapt_mini3.dat AdaptSubsets/adapt_mini3_hidden1.tab Voltage_breaker_ey336_op
+set([0])
