@@ -43,4 +43,4 @@ run: simple
 	./simple/simple ./simple/simple.fg ./simple/simple.tab
 
 clean :
-	-rm -f uai2010-aie-solver asia simple/simple sprinker/sprinkler
+	-rm -f uai2010-aie-solver asia simple/simple sprinker/sprinkler simple/*.log simple/output.dat.*

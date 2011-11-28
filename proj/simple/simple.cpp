@@ -311,48 +311,32 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 
 	srand((unsigned)time(NULL));
 
+	string outname;
+
 	if (init == 1) {
 		// random
 		cout << "Using random initialization" << endl;
-		vector<Factor> factors = fg.factors();
-		size_t size = factors.size();
-		for (size_t i = 0; i<size; i++) {
-			Factor f = fg.factor(i);
-			f.randomize();
-			fg.setFactor(i,f,false);
-		}
+		randomize_fg(&fg);
+		outname = "output.dat.random";
 	}
 	else if (init == 2) {
 		// uniform
 		cout << "Using uniform initialization" << endl;
-		vector<Factor> factors = fg.factors();
-		size_t size = factors.size();
-		for (size_t i = 0; i<size; i++) {
-			Factor f = fg.factor(i);
-			f.setUniform();
-			fg.setFactor(i,f,false);
-		}
+		uniformize_fg(&fg);
+		outname = "output.dat.uniform";
 	}
 	else if (init == 3) {
 		// noise
 		cout << "Using noisy initialization. Noise value: +/- " <<
 				NOISE_AMOUNT*100 << "%" << endl;
-		vector<Factor> factors = fg.factors();
-		size_t size = factors.size();
-		for (size_t i = 0; i<size; i++) {
-			Factor f = fg.factor(i);
-			for (size_t j = 0; j < f.nrStates(); j++) {
-				double init_val = f.get(j);
-				double val = ((double)rand()/(double)RAND_MAX);
-				val *= NOISE_AMOUNT*2;
-				val -= NOISE_AMOUNT;
-				f.set(j, init_val+val*init_val);
-			}
-			f.normalize(NORMPROB);
-			fg.setFactor(i, f, false);
-		}
+		noise_fg(&fg);
+		outname = "output.dat.noise";
 	}
-
+	else {
+		cout << "Using given .fg for initialization" << endl;
+		outname = "output.dat.default";
+	}
+	cout << "Writing results to: " << outname.c_str() << endl;
 	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops;
 	infprops.set( "verbose", (size_t)1 );
@@ -396,7 +380,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 		s_out.flush();
 	}
 	//s_out << "]";
-
+/*
 	// Output true factor graph
 	cout << endl << "True factor graph:" << endl << "##################" << endl;
 	cout.precision(12);
@@ -407,7 +391,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	cout << endl << "Learned factor graph:" << endl << "#####################" << endl;
 	cout.precision(12);
 	cout << inf->fg();
-
+*/
 	// Clean up
 	delete inf;
 	cout << "Intermediate values: an array of tab delimited K*N " <<
@@ -416,7 +400,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 
 	#ifdef INTERMEDIATE_VALUES
 		ofstream myfile;
-		myfile.open ("output.dat");
+		myfile.open (outname.c_str());
 		myfile << s_out.str() << endl;
 		myfile.close();
 	#endif
