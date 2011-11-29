@@ -4,13 +4,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
-if len(sys.argv) < 2:
-    print "Usage: python plotOutput.py output_file"
+if len(sys.argv) < 4:
+    print "Usage: python plotOutput.py data_file_to_plot output_file.png plot's_title"
     exit()
 
 print "Plotting data from", sys.argv[1]
 
 f = open(sys.argv[1], 'r')
+outfile = sys.argv[2]
+title = sys.argv[3]
 
 first_line = True
 data = []
@@ -40,5 +42,6 @@ for i in new_data:
     plt.plot(range(len(i)), i)
 
 #plt.plot(range(len(new_data[0])), new_data[0])
-plt.savefig('figure1.png')
+plt.title(title)
+plt.savefig(outfile)
 plt.clf()
