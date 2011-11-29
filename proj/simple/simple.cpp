@@ -310,6 +310,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	fg.ReadFromFile( fgIn );
 
 	srand((unsigned)time(NULL));
+	rnd_seed((unsigned)time(NULL));
 
 	string outname;
 
