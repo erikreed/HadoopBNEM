@@ -5,6 +5,7 @@ import pickle as p
 
 if len(sys.argv) < 2:
     print "Usage: python summarize_net.py dat_file"
+    exit()
 
 dat_file = sys.argv[1]
 
@@ -24,5 +25,11 @@ class potential:
 #pseudonym is a dict from actual node names to their psudonyms (integer node numbers)
 #name is the opposite
 
-print "Node names:"
-print nodes.keys()
+#print "Node names:"
+#print nodes.keys()
+
+for n in nodes.values():
+    print "Node name:", n.name
+    print "adaptvartype:", eval(n.properties['adaptvartype'])
+    print "adaptcomponenttype:", eval(n.properties['adaptcomponenttype'])
+    print "states:", n.states

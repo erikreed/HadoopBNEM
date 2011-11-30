@@ -76,6 +76,49 @@ Prob CondProbEstimation::estimate() {
     return result;
 }
 
+ParameterEstimation* FixedProbEstimation::factory( const PropertySet &p ) {
+    size_t target_dimension = p.getStringAs<size_t>("target_dim");
+    size_t total_dimension = p.getStringAs<size_t>("total_dim");
+    Real pseudo_count = 1;
+    if( p.hasKey("pseudo_count") )
+        pseudo_count = p.getStringAs<Real>("pseudo_count");
+    return new FixedProbEstimation( target_dimension, Prob( total_dimension, pseudo_count ) );
+}
+
+
+FixedProbEstimation::FixedProbEstimation( size_t target_dimension, const Prob &pseudocounts )
+  : _target_dim(target_dimension), _stats(pseudocounts), _initial_stats(pseudocounts)
+{
+    DAI_ASSERT( !(_stats.size() % _target_dim) );
+}
+
+
+void FixedProbEstimation::addSufficientStatistics( const Prob &p ) {
+    _stats += p;
+}
+
+
+Prob FixedProbEstimation::estimate() {
+    // normalize pseudocounts
+//    for( size_t parent = 0; parent < _stats.size(); parent += _target_dim ) {
+//        // calculate norm
+//        size_t top = parent + _target_dim;
+//        Real norm = 0.0;
+//        for( size_t i = parent; i < top; ++i )
+//            norm += _stats[i];
+//        if( norm != 0.0 )
+//            norm = 1.0 / norm;
+//        // normalize
+//        for( size_t i = parent; i < top; ++i )
+//            _stats.set( i, _stats[i] * norm );
+//    }
+//    // reset _stats to _initial_stats
+//    Prob result = _stats;
+//    _stats = _initial_stats;
+//    return result;
+	return _initial_stats;
+}
+
 
 Permute SharedParameters::calculatePermutation( const std::vector<Var> &varOrder, VarSet &outVS ) {
     outVS = VarSet( varOrder.begin(), varOrder.end(), varOrder.size() );

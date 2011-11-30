@@ -4,12 +4,24 @@ import sys
 import pickle as p
 
 if len(sys.argv) < 4:
-    print "\nUsage:\n python write_em.py .fg_file .dat_file output_file.em"
+    print "\nUsage:\n python write_em.py .fg_file .dat_file output_file.em [extras]\nextras:\n-S adaptvartype adaptcomponenttype\n    shares all nodes that have both adaptvartype and adaptcomponenttype\n-F node_name\n    fixes node_name"
     exit()
 
 fg_file = sys.argv[1]
 dat_file = sys.argv[2]
 output_file = sys.argv[3]
+
+stuffToShare = None
+stuffToFix = []
+ignoreList = []
+
+for i in range(4,len(sys.argv)):
+    if not(i in ignoreList):
+        if sys.argv[i] == "-S":
+            ignoreList.append(i+1)
+            ignoreList.append(i+2)
+
+
 
 class node:
     def __init__(self):
@@ -32,6 +44,8 @@ print potentials
 for i in potentials:
     print i.node
     print i.parents
+
+#sharedParamBlocks are lists of potentials
 
 
 #p is a potential

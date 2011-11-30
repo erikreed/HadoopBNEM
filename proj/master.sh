@@ -16,11 +16,12 @@ mkdir -p out
 
 NET=$1
 filename=$(basename $NET)
-FG=${filename%%.net}.fg
-DAT=${filename%%.net}.dat
-TAB=${filename%%.net}.tab
-HIDDEN=${filename%%.net}.hid
-EM=${filename%%.net}.em
+filename=${filename%%.net}
+FG=$filename.fg
+DAT=$filename.dat
+TAB=$filename.tab
+HIDDEN=$filename.hid
+EM=$filename.em
 
 echo Reading $NET
 echo Creating: $FG $DAT
@@ -62,11 +63,11 @@ echo Plotting results in out/$DAT.INIT_TYPE.png
 echo
 
 python net_to_fg/plot_output.py out/$DAT.default out/$filename.default.png \
-	Default Initialization
+	Default Initialization $NUM_SAMPLES Samples
 python net_to_fg/plot_output.py out/$DAT.noise out/$filename.noise.png \
-	Noisy Initialization
+	Noisy Initialization $NUM_SAMPLES Samples
 python net_to_fg/plot_output.py out/$DAT.uniform out/$filename.uniform.png \
-	Uniform Initialization
+	Uniform Initialization $NUM_SAMPLES Samples
 python net_to_fg/plot_output.py out/$DAT.random out/$filename.random.png \
-	Random Initialization
+	Random Initialization - $NUM_SAMPLES Samples
 
