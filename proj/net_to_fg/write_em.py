@@ -1,6 +1,7 @@
 #write_em.py
 
 import sys
+import os
 import pickle as p
 
 if len(sys.argv) < 4:
@@ -11,17 +12,26 @@ fg_file = sys.argv[1]
 dat_file = sys.argv[2]
 output_file = sys.argv[3]
 
-stuffToShare = None
+fixed_file = os.path.splitext(dat_file)[0] + ".fixed"
+
+stuffToShare = []
 stuffToFix = []
-ignoreList = []
 
-for i in range(4,len(sys.argv)):
-    if not(i in ignoreList):
-        if sys.argv[i] == "-S":
-            ignoreList.append(i+1)
-            ignoreList.append(i+2)
+i=4
+while i<len(sys.argv):
+    if sys.argv[i] == "-S":
+        stuffToShare.append([sys.argv[i+1], sys.argv[i+2]])
+        i += 2
+    elif sys.argv[i] == "-F":
+        stuffToFix.append(sys.argv[i+1])
+        i += 1
+    else:
+        print "Error: extras should be either -S of -F. You appear to have entered", sys.argv[i]
+        exit()
+    i += 1
 
-
+print "Stuff to share:", stuffToShare
+print "Stuff to fix:", stuffToFix
 
 class node:
     def __init__(self):
@@ -39,19 +49,25 @@ class potential:
 #pseudonym is a dict from actual node names to their psudonyms (integer node numbers)
 #name is the opposite
 
-print nodes
-print potentials
-for i in potentials:
-    print i.node
-    print i.parents
+#print nodes
+#print potentials
+#for i in potentials:
+#    print i.node
+#    print i.parents
 
 #sharedParamBlocks are lists of potentials
 
+fixedNodes = ""
 
 #p is a potential
 def printSharedParamBlock(p):
     tmp = ""
-    tmp += "CondProbEstimation [target_dim="
+    if p.node in stuffToFix:
+        tmp += "FixedProbEstimation [target_dim="
+        global fixedNodes # i know...
+        fixedNodes += str(pseudonym[p.node]) + " "
+    else:
+        tmp += "CondProbEstimation [target_dim="
     target_dim = len(nodes[p.node].states)
     tmp += str(target_dim)
     tmp += ",total_dim="
@@ -82,6 +98,10 @@ outfile.write('\n')
 
 for i in potentials:
     outfile.write(printSharedParamBlock(i))
+
+fixedOutFile = open(fixed_file, 'w')
+fixedOutFile.write(fixedNodes)
+fixedOutFile.close()
 
 
 

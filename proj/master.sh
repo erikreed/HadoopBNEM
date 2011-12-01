@@ -1,7 +1,9 @@
 #!/bin/bash
 
+# params -- NODES = nodes to hide
 NUM_SAMPLES=500
 NODES="Health_ish136 Closed_breaker_ey136_op Voltage_breaker_ey136_op Health_breaker_ey136_op"
+
 
 if test "$1" == "" ; then
 	echo Usage: ./master.sh net/my_cool_net.net
