@@ -25,6 +25,7 @@ TAB=$filename.tab
 HIDDEN=$filename.hid
 EM=$filename.em
 FIXED=$filename.fixed
+SAMPLES=$filename.samp
 
 echo Reading $NET
 echo Creating: $FG $DAT
@@ -55,11 +56,20 @@ echo Running EM using all initialization types
 echo
 
 simple/simple -all fg/$FG tab/$HIDDEN em/$EM
-simple/simple fg/$FG tab/$HIDDEN em/$EM
 mv output.dat.default out/$DAT.default
 mv output.dat.noise out/$DAT.noise
 mv output.dat.random out/$DAT.random
 mv output.dat.uniform out/$DAT.uniform
+
+echo
+echo Running EM with increasing number of samples for all initialization types
+echo
+simple/simple -s -all fg/$FG em/$EM
+mv output.samp.default out/$SAMPLES.default
+mv output.samp.noise out/$SAMPLES.noise
+mv output.samp.random out/$SAMPLES.random
+mv output.samp.uniform out/$SAMPLES.uniform
+rm fg/*.tab
 
 echo
 echo Plotting results in out/$DAT.INIT_TYPE.png
@@ -73,4 +83,5 @@ python net_to_fg/plot_output.py out/$DAT.uniform out/$filename.uniform.png \
 	Uniform Initialization $NUM_SAMPLES Samples
 python net_to_fg/plot_output.py out/$DAT.random out/$filename.random.png \
 	Random Initialization - $NUM_SAMPLES Samples
+
 

@@ -17,7 +17,7 @@ using namespace dai;
 
 // constants for compareEM(...)
 #define EM_MAX_SAMPLES 1000
-#define EM_SAMPLES_DELTA 25
+#define EM_SAMPLES_DELTA 50
 #define EM_INIT_SAMPLES 50
 
 void displayStats(char** argv) {
@@ -271,7 +271,7 @@ void printEMIntermediates(stringstream* s_out, InfAlg* inf) {
 		}
 		//*s_out << "]";
 		if (i != size-1){
-		  *s_out << ", ";
+			*s_out << ", ";
 		}
 	}
 	//*s_out << "]";
@@ -330,7 +330,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	vector<int> fixedVars;
 
 	if (ifile) {
-	  // The file exists, and is open for input
+		// The file exists, and is open for input
 		cout << "Using fixed values from: " << fixedIn << endl;
 		ifstream fin(fixedIn.c_str());
 		int var;
@@ -426,7 +426,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 		s_out.flush();
 	}
 	//s_out << "]";
-/*
+	/*
 	// Output true factor graph
 	cout << endl << "True factor graph:" << endl << "##################" << endl;
 	cout.precision(12);
@@ -437,19 +437,19 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	cout << endl << "Learned factor graph:" << endl << "#####################" << endl;
 	cout.precision(12);
 	cout << inf->fg();
-*/
+	 */
 	// Clean up
 	delete inf;
 	cout << "Intermediate values: an array of tab delimited K*N " <<
 			"where N=numFactors and K=iterations." << endl;
 	cout << "Includes initial values (i.e. iteration 0)" << endl;
 
-	#ifdef INTERMEDIATE_VALUES
-		ofstream myfile;
-		myfile.open (outname.c_str());
-		myfile << s_out.str() << endl;
-		myfile.close();
-	#endif
+#ifdef INTERMEDIATE_VALUES
+	ofstream myfile;
+	myfile.open (outname.c_str());
+	myfile << s_out.str() << endl;
+	myfile.close();
+#endif
 }
 
 void printUsage() {
@@ -464,8 +464,13 @@ void printUsage() {
 	cout << "\te.g. ./simple -noise asd.fg asd.tab asd.em" << endl;
 	cout << "compare EM files (e.g. for shared/non-shared)\n\t" << 
 			"./simple -c asd.fg asd1.em asd2.em" << endl;
-	
+	cout << "Run EM with increasing number of samples\n\t" <<
+			".simple -s asd.fg asd.em\n\t" <<
+			".simple -s -noise asd.fg asd.em" << endl;
+
 	cout << endl << "--- Info ---" << endl;
+	cout << "If running EM and a *.fixed file exists, where * is the given .em file,\n" <<
+			"  integers in the fixed file will be used for parameter fixing." << endl;
 	cout << "Results output to \"output.dat\"" << endl;
 	cout << "Builtin inference algorithms: " << builtinInfAlgNames() << endl;
 	cout << "Currently used inference algorithm: " << INF_TYPE << endl;
@@ -489,13 +494,136 @@ double compareFG(FactorGraph* fg1, FactorGraph* fg2) {
 	return sum;
 }
 
+//
+//	".simple -s asd.fg asd.em\n\t" <<
+//				".simple -s -noise asd.fg asd.em" << endl;
+
+void doEmSamples(char* fgIn, char* emIn, int init) {
+	string fixedIn = emIn;
+
+	string::size_type pos = 0;
+	pos = fixedIn.find(".em", pos);
+	if (pos != string::npos)
+		fixedIn.replace(pos, fixedIn.size(), ".fixed");
+
+	ifstream ifile(fixedIn.c_str());
+	vector<int> fixedVars;
+
+	if (ifile) {
+		// The file exists, and is open for input
+		cout << "Using fixed values from: " << fixedIn << endl;
+		ifstream fin(fixedIn.c_str());
+		int var;
+		cout << "Fixed params: ";
+		while (fin >> var) {
+			cout  << var << " ";
+			fixedVars.push_back(var);
+		}
+		cout << endl;
+		fin.close();
+	}
+
+	FactorGraph fg;
+	fg.ReadFromFile( fgIn );
+
+	srand((unsigned)time(NULL));
+	rnd_seed((unsigned)time(NULL));
+
+	string outname;
+
+	if (init == 1) {
+		// random
+		cout << "Using random initialization" << endl;
+		randomize_fg(&fg);
+		outname = "output.samp.random";
+	}
+	else if (init == 2) {
+		// uniform
+		cout << "Using uniform initialization" << endl;
+		uniformize_fg(&fg);
+		outname = "output.samp.uniform";
+	}
+	else if (init == 3) {
+		// noise
+		cout << "Using noisy initialization. Noise value: +/- " <<
+				NOISE_AMOUNT*100 << "%" << endl;
+		noise_fg(&fg);
+		outname = "output.samp.noise";
+	}
+	else {
+		cout << "Using given .fg for initialization" << endl;
+		outname = "output.samp.default";
+	}
+	cout << "Initial samples: " << EM_INIT_SAMPLES << endl;
+	cout << "Max samples: " << EM_MAX_SAMPLES << ". Increase by " <<
+			EM_SAMPLES_DELTA << endl;
+	cout << "Writing results to: " << outname.c_str() << endl;
+
+	ofstream fout;
+	fout.open (outname.c_str());
+	fout.precision(12);
+	fout << "numSamples\tlikelihood\titerations" << endl;
+
+	PropertySet infprops;
+	infprops.set( "verbose", (size_t)1 );
+	infprops.set( "updates", string("HUGIN") );
+
+	for (int i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i+=EM_SAMPLES_DELTA) {
+		if (init == 1)
+			randomize_fg(&fg);
+		else if (init == 3) {
+			fg.ReadFromFile( fgIn );
+			noise_fg(&fg);
+
+		}
+
+		InfAlg* inf1 = newInfAlg( INF_TYPE, fg, infprops );
+		inf1->init();
+
+		string tabIn = generateTab(fgIn, i);
+		Evidence e;
+		ifstream estream( tabIn.c_str() );
+		ifstream emstream1( emIn );
+		e.addEvidenceTabFile( estream, fg );
+		estream.close();
+		fout << e.nrSamples() << "\t";
+
+		// Read EM specification
+
+		EMAlg em1(e, *inf1, emstream1);
+
+
+		Real l1;
+		// Iterate EM until convergence
+		while( !em1.hasSatisfiedTermConditions() ) {
+			if (fixedVars.size() > 0) {
+				for (size_t i =0; i<fixedVars.size(); i++)
+					inf1->backupFactor(fixedVars[i]);
+			}
+			l1 = em1.iterate();
+			cout << "em1: Iteration " << em1.Iterations() << " likelihood: " << l1
+					<< endl;
+			if (fixedVars.size() > 0) {
+				for (size_t i =0; i<fixedVars.size(); i++)
+					inf1->restoreFactor(fixedVars[i]);
+			}
+		}
+
+		fout << l1 << "\t" << em1.Iterations() << endl;
+		emstream1.close();
+		delete inf1;
+	}
+	fout.close();
+}
+
+
 void compareEM(char* fgIn, char* emIn1, char* emIn2) {
 
 	FactorGraph fg;
 	fg.ReadFromFile( fgIn );
 	cout << "Initial samples: " << EM_INIT_SAMPLES << endl;
 	cout << "Max samples: " << EM_MAX_SAMPLES << ". Increase by " <<
-		EM_SAMPLES_DELTA << endl;
+			EM_SAMPLES_DELTA << endl;
 	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops;
 	infprops.set( "verbose", (size_t)1 );
@@ -566,6 +694,7 @@ void compareEM(char* fgIn, char* emIn1, char* emIn2) {
 
 }
 
+
 int main(int argc, char* argv[]) {
 	clock_t t1 = clock();
 	if (argc == 3) {
@@ -580,15 +709,34 @@ int main(int argc, char* argv[]) {
 		displayStats(argv);
 		//generateTab(argv[1], 100);
 	}
+
 	else if (argc == 4) {
 		// expecting .fg, .tab, .em 
-		doEm(argv[1], argv[2], argv[3], 0);
+		if (strcmp(argv[1],"-s") == 0)
+			doEmSamples(argv[2], argv[3], 0);
+		else
+			doEm(argv[1], argv[2], argv[3], 0);
 	}
 	else if (argc >= 5) {
 		// expecting -c, fg, em, em
 		if (strcmp(argv[1],"-c") == 0) {
 			compareEM(argv[2], argv[3], argv[4]);
-		}		// expecting -random fg tab em
+		}
+		else if (strcmp(argv[1],"-s") == 0) {
+			if (strcmp(argv[2],"-random") == 0)
+				doEmSamples(argv[3], argv[4], 1);
+			else if (strcmp(argv[2],"-uniform") == 0)
+				doEmSamples(argv[3], argv[4], 2);
+			else if (strcmp(argv[2],"-noise") == 0)
+				doEmSamples(argv[3], argv[4], 3);
+			else if (strcmp(argv[2],"-all") == 0) {
+				doEmSamples(argv[3], argv[4], 0);
+				doEmSamples(argv[3], argv[4], 1);
+				doEmSamples(argv[3], argv[4], 2);
+				doEmSamples(argv[3], argv[4], 3);
+			}
+		}
+		// expecting -random fg tab em
 		else if (strcmp(argv[1],"-random") == 0) {
 			doEm(argv[2], argv[3], argv[4], 1);
 		}
@@ -600,6 +748,7 @@ int main(int argc, char* argv[]) {
 			doEm(argv[2], argv[3], argv[4], 3);
 		}
 		else if (strcmp(argv[1],"-all") == 0) {
+			doEm(argv[2], argv[3], argv[4], 0);
 			doEm(argv[2], argv[3], argv[4], 1);
 			doEm(argv[2], argv[3], argv[4], 2);
 			doEm(argv[2], argv[3], argv[4], 3);
