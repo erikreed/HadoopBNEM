@@ -243,6 +243,17 @@ string generateTab(char* input, int numSamples) {
 	return outName;
 }
 
+void fixParams(vector<int>* fixedVars, FactorGraph* fg, InfAlg* inf) {
+	FactorGraph inf_fg = inf->fg();
+
+	// this is broken...
+	for (size_t i=0; i< fixedVars->size(); i++) {
+		int ind = (*fixedVars)[i];
+		Factor f = fg->factor(ind);
+		inf_fg.setFactor(ind, f, false);
+	}
+}
+
 void printEMIntermediates(stringstream* s_out, InfAlg* inf) {
 	//print intermediate variables in python format
 	FactorGraph int_fg = inf->fg();
@@ -306,6 +317,32 @@ void noise_fg(FactorGraph* fg) {
 }
 
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
+
+
+	string fixedIn = emIn;
+
+	string::size_type pos = 0;
+	pos = fixedIn.find(".em", pos);
+	if (pos != string::npos)
+		fixedIn.replace(pos, fixedIn.size(), ".fixed");
+
+	ifstream ifile(fixedIn.c_str());
+	vector<int> fixedVars;
+
+	if (ifile) {
+	  // The file exists, and is open for input
+		cout << "Using fixed values from: " << fixedIn << endl;
+		ifstream fin(fixedIn.c_str());
+		int var;
+		cout << "Fixed params: ";
+		while (fin >> var) {
+			cout  << var << " ";
+			fixedVars.push_back(var);
+		}
+		cout << endl;
+		fin.close();
+	}
+
 	FactorGraph fg;
 	fg.ReadFromFile( fgIn );
 
@@ -373,9 +410,17 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	// Iterate EM until convergence
 	while( !em.hasSatisfiedTermConditions() ) {
 
+		if (fixedVars.size() > 0) {
+			for (size_t i =0; i<fixedVars.size(); i++)
+				inf->backupFactor(fixedVars[i]);
+		}
+
 		Real l = em.iterate();
 		cout << "Iteration " << em.Iterations() << " likelihood: " << l <<endl;
-
+		if (fixedVars.size() > 0) {
+			for (size_t i =0; i<fixedVars.size(); i++)
+				inf->restoreFactor(fixedVars[i]);
+		}
 		printEMIntermediates(&s_out, inf);
 		s_out << endl;
 		s_out.flush();
@@ -539,11 +584,11 @@ int main(int argc, char* argv[]) {
 		// expecting .fg, .tab, .em 
 		doEm(argv[1], argv[2], argv[3], 0);
 	}
-	else if (argc == 5) {
+	else if (argc >= 5) {
 		// expecting -c, fg, em, em
 		if (strcmp(argv[1],"-c") == 0) {
 			compareEM(argv[2], argv[3], argv[4]);
-		}
+		}		// expecting -random fg tab em
 		else if (strcmp(argv[1],"-random") == 0) {
 			doEm(argv[2], argv[3], argv[4], 1);
 		}

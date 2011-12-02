@@ -24,6 +24,7 @@ DAT=$filename.dat
 TAB=$filename.tab
 HIDDEN=$filename.hid
 EM=$filename.em
+FIXED=$filename.fixed
 
 echo Reading $NET
 echo Creating: $FG $DAT

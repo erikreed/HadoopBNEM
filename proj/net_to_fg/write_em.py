@@ -12,7 +12,7 @@ fg_file = sys.argv[1]
 dat_file = sys.argv[2]
 output_file = sys.argv[3]
 
-fixed_file = os.path.splitext(dat_file)[0] + ".fixed"
+fixed_file = os.path.splitext(output_file)[0] + ".fixed"
 
 stuffToShare = []
 stuffToFix = []
