@@ -38,7 +38,8 @@ for i in range(len(data[0])):
 
 plt.figure(111)
 
-indecesToPlot = [0,4,8]
+indecesToPlot = range(len(new_data))
+#indecesToPlot = [0,4,8]
 
 for i in indecesToPlot:
     plt.plot(range(len(new_data[i])), new_data[i])
