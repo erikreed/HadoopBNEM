@@ -27,12 +27,11 @@ class potential:
 
 #print "Node names:"
 #print nodes.keys()
-"""
+
 for n in nodes.values():
     print "Node name:", n.name
     print "adaptvartype:", eval(n.properties['adaptvartype'])
     print "adaptcomponenttype:", eval(n.properties['adaptcomponenttype'])
     print "states:", n.states
-"""
 
 print pseudonym

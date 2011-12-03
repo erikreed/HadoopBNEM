@@ -351,6 +351,11 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 
 	string outname;
 
+	if (fixedVars.size() > 0) {
+		for (size_t i =0; i<fixedVars.size(); i++)
+			fg.backupFactor(fixedVars[i]);
+	}
+
 	if (init == 1) {
 		// random
 		cout << "Using random initialization" << endl;
@@ -374,6 +379,12 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 		cout << "Using given .fg for initialization" << endl;
 		outname = "output.dat.default";
 	}
+
+	if (fixedVars.size() > 0) {
+		for (size_t i =0; i<fixedVars.size(); i++)
+			fg.restoreFactor(fixedVars[i]);
+	}
+
 	cout << "Writing results to: " << outname.c_str() << endl;
 	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops;
@@ -530,6 +541,10 @@ void doEmSamples(char* fgIn, char* emIn, int init) {
 	rnd_seed((unsigned)time(NULL));
 
 	string outname;
+	if (fixedVars.size() > 0) {
+		for (size_t i =0; i<fixedVars.size(); i++)
+			fg.backupFactor(fixedVars[i]);
+	}
 
 	if (init == 1) {
 		// random
@@ -554,6 +569,12 @@ void doEmSamples(char* fgIn, char* emIn, int init) {
 		cout << "Using given .fg for initialization" << endl;
 		outname = "output.samp.default";
 	}
+
+	if (fixedVars.size() > 0) {
+		for (size_t i =0; i<fixedVars.size(); i++)
+			fg.restoreFactor(fixedVars[i]);
+	}
+
 	cout << "Initial samples: " << EM_INIT_SAMPLES << endl;
 	cout << "Max samples: " << EM_MAX_SAMPLES << ". Increase by " <<
 			EM_SAMPLES_DELTA << endl;
