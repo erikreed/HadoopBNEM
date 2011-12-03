@@ -5,10 +5,21 @@ NUM_SAMPLES=500
 
 # all nodes : Health_ish136 Closed_breaker_ey136_op Voltage_breaker_ey136_op Health_breaker_ey136_op Sensor_ish136 Command_breaker_ey136_op
 
+#typical fixed: Health_ish136 Health_breaker_ey136_op
+
+# mini1
 HIDDEN_NODES="Closed_breaker_ey136_op Voltage_breaker_ey136_op Sensor_ish136 Command_breaker_ey136_op"
+# mini2
 HIDDEN_NODES="$HIDDEN_NODES Closed_breaker_ey236_op Voltage_breaker_ey236_op Sensor_ish236 Command_breaker_ey236_op"
-FIXED_NODES="" # prefix each with -F
-SHARED_NODES="-S health breaker" # prefix each with -S
+
+# default -- just comment/uncomment remaining
+FIXED_NODES=""
+# mini1
+FIXED_NODES="-F Health_ish136 -F Health_breaker_ey136_op" # prefix each with -F
+# mini2
+FIXED_NODES="$FIXED_NODES -F Health_ish236 -F Health_breaker_ey236_op"
+
+SHARED_NODES="" # prefix each with -S
 
 if test "$1" == "" ; then
 	echo Usage: ./master.sh net/my_cool_net.net
@@ -93,12 +104,12 @@ echo Plotting results in out/$DAT.INIT_TYPE.png
 echo
 
 python net_to_fg/plot_output.py out/$DAT.default out/$filename.default.png \
-	Default Initialization $NUM_SAMPLES Samples
+	"Default Initialization - $NUM_SAMPLES Samples"
 python net_to_fg/plot_output.py out/$DAT.noise out/$filename.noise.png \
-	Noisy Initialization $NUM_SAMPLES Samples
+	"Noisy Initialization - $NUM_SAMPLES Samples"
 python net_to_fg/plot_output.py out/$DAT.uniform out/$filename.uniform.png \
-	Uniform Initialization $NUM_SAMPLES Samples
+	"Uniform Initialization - $NUM_SAMPLES Samples"
 python net_to_fg/plot_output.py out/$DAT.random out/$filename.random.png \
-	Random Initialization - $NUM_SAMPLES Samples
+	"Random Initialization - $NUM_SAMPLES Samples"
 
 
