@@ -1,4 +1,4 @@
-#write_em.py
+#write_em2.py
 
 import sys
 import os
@@ -38,66 +38,94 @@ class node:
         self.properties = None
         self.states = None
         self.name = None
+    def theRightStuff(self, stuff):
+        if not(eval(self.properties['adaptvartype']) == stuff[0]):
+            return False
+        if not(eval(self.properties['adaptcomponenttype']) == stuff[1]):
+            return False
+        return True
 
 class potential:
     def __init__(self):
         self.data = None
         self.node = None
         self.parents = None
+    def theRightStuff(self, stuff, nodes):
+        return nodes[self.node].theRightStuff(stuff)
+
+#sharedParamBlocks are lists of potentials
+class sharedParamBlock:
+    def __init__(self, stuff):
+        self.stuff = stuff
+        self.members = []
+    def addMember(self, p):
+        self.members.append(p)
+    def writeBlock(self, nodes, pseudonym, fixedNodes):
+        tmp = ""
+        if self.members[0].node in stuffToFix:
+            tmp += "FixedProbEstimation [target_dim="
+            fixedNodes += str(pseudonym[p.node]) + " "
+        else:
+            tmp += "CondProbEstimation [target_dim="
+        target_dim = len(nodes[self.members[0].node].states)
+
+        tmp += str(target_dim)
+        tmp += ",total_dim="
+        total_dim = target_dim
+        for i in [nodes[x] for x in self.members[0].parents]:
+            total_dim *= len(i.states)
+        tmp += str(total_dim)
+        tmp += ",pseudo_count=1]\n"
+
+        tmp += str(len(self.members))
+        tmp += "\n"
+
+        for i in self.members:
+            tmp += str(pseudonym[i.node])
+            tmp += " "
+            tmp += str(pseudonym[i.node])
+            for j in range(len(i.parents)):
+                tmp += " "
+                tmp += str(pseudonym[i.parents[j]])
+            tmp += "\n"
+        return tmp
 
 [nodes, potentials, pseudonym, name] = p.load(open(dat_file, 'r'))
 #pseudonym is a dict from actual node names to their psudonyms (integer node numbers)
 #name is the opposite
 
-#print nodes
-#print potentials
-#for i in potentials:
-#    print i.node
-#    print i.parents
-
-#sharedParamBlocks are lists of potentials
-
 fixedNodes = ""
 
-#p is a potential
-def printSharedParamBlock(p):
-    tmp = ""
-    if p.node in stuffToFix:
-        tmp += "FixedProbEstimation [target_dim="
-        global fixedNodes # i know...
-        fixedNodes += str(pseudonym[p.node]) + " "
-    else:
-        tmp += "CondProbEstimation [target_dim="
-    target_dim = len(nodes[p.node].states)
-    tmp += str(target_dim)
-    tmp += ",total_dim="
-    total_dim = target_dim
-    for i in [nodes[x] for x in p.parents]:
-        total_dim *= len(i.states)
-    tmp += str(total_dim)
-    tmp += ",pseudo_count=1]\n"
-    tmp += "1\n"
-    tmp += str(pseudonym[p.node])
-    tmp += " "
-    tmp += str(pseudonym[p.node])
-    for i in range(len(p.parents)):
-        tmp += " "
-        tmp += str(pseudonym[p.parents[i]])
-    tmp += "\n"
-    return tmp
+def toShare(stuff, stuffToShare):
+    for i in stuffToShare:
+        if stuff[0] == i[0] and stuff[1] == i[1]:
+            return True
+    return False
 
-print printSharedParamBlock(potentials[0])
+#assemble sharedParamBlocks
+spb = []
+for p in potentials:
+    withoutAHome = True
+    for i in spb:
+        if toShare(i.stuff, stuffToShare) and p.theRightStuff(i.stuff, nodes):
+            i.addMember(p)
+            withoutAHome = False
+    if withoutAHome:
+        tmp = sharedParamBlock([eval(nodes[p.node].properties['adaptvartype']),
+                                eval(nodes[p.node].properties['adaptcomponenttype'])])
+        tmp.addMember(p)
+        spb.append(tmp)
 
 outfile = open(output_file, 'w')
 
 outfile.write('1')
 outfile.write('\n\n')
 
-outfile.write(str(len(potentials)))
+outfile.write(str(len(spb)))
 outfile.write('\n')
 
-for i in potentials:
-    outfile.write(printSharedParamBlock(i))
+for i in spb:
+    outfile.write(i.writeBlock(nodes, pseudonym, fixedNodes))
 
 fixedOutFile = open(fixed_file, 'w')
 fixedOutFile.write(fixedNodes)
