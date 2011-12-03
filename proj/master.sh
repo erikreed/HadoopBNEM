@@ -6,8 +6,9 @@ NUM_SAMPLES=500
 # all nodes : Health_ish136 Closed_breaker_ey136_op Voltage_breaker_ey136_op Health_breaker_ey136_op Sensor_ish136 Command_breaker_ey136_op
 
 HIDDEN_NODES="Closed_breaker_ey136_op Voltage_breaker_ey136_op Sensor_ish136 Command_breaker_ey136_op"
+HIDDEN_NODES="$HIDDEN_NODES Closed_breaker_ey236_op Voltage_breaker_ey236_op Sensor_ish236 Command_breaker_ey236_op"
 FIXED_NODES="" # prefix each with -F
-SHARED_NODES="" # prefix each with -S
+SHARED_NODES="-S health breaker" # prefix each with -S
 
 if test "$1" == "" ; then
 	echo Usage: ./master.sh net/my_cool_net.net

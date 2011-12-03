@@ -38,8 +38,10 @@ for i in range(len(data[0])):
 
 plt.figure(111)
 
-for i in new_data:
-    plt.plot(range(len(i)), i)
+indecesToPlot = [0,4,8]
+
+for i in indecesToPlot:
+    plt.plot(range(len(new_data[i])), new_data[i])
 
 #plt.plot(range(len(new_data[0])), new_data[0])
 plt.title(title)
