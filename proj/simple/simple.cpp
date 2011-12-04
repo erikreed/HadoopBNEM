@@ -327,7 +327,7 @@ double compareFG(FactorGraph* fg1, FactorGraph* fg2) {
 		Factor f2 = fg2->factor(i);
 		//cout << "sum: " << (f1-f2).sumAbs() << endl;
 		//sum += abs((f1-f2).sumAbs());
-		sum += dist(f1,f2, DISTL1);
+		sum += abs(dist(f1,f2, DISTL1));
 	}
 	//sum = sqrt(sum);
 
