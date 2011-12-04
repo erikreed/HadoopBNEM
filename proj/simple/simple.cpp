@@ -7,6 +7,7 @@
 #include <string>
 #include <time.h>
 #include <fstream>
+#include <math.h>
 
 using namespace std;
 using namespace dai;
@@ -316,6 +317,23 @@ void noise_fg(FactorGraph* fg) {
 	}
 }
 
+double compareFG(FactorGraph* fg1, FactorGraph* fg2) {
+	size_t numFactors = fg1->nrFactors();
+	if (fg2->nrFactors() != numFactors)
+		throw "compareFG: factors not equal";
+	double sum=0;
+	for (size_t i=0; i< numFactors; i++) {
+		Factor f1 = fg1->factor(i);
+		Factor f2 = fg2->factor(i);
+		//cout << "sum: " << (f1-f2).sumAbs() << endl;
+		//sum += abs((f1-f2).sumAbs());
+		sum += dist(f1,f2, DISTL1);
+	}
+	//sum = sqrt(sum);
+
+	return sum;
+}
+
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 
 
@@ -346,10 +364,13 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	FactorGraph fg;
 	fg.ReadFromFile( fgIn );
 
+	FactorGraph fg_orig = fg;
+
 	srand((unsigned)time(NULL));
 	rnd_seed((unsigned)time(NULL));
 
 	string outname;
+	string outname_l;
 
 	if (fixedVars.size() > 0) {
 		for (size_t i =0; i<fixedVars.size(); i++)
@@ -384,8 +405,11 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 		for (size_t i =0; i<fixedVars.size(); i++)
 			fg.restoreFactor(fixedVars[i]);
 	}
-
+	outname_l = outname;
+	outname_l = outname_l.append(".lhood");
 	cout << "Writing results to: " << outname.c_str() << endl;
+	cout << "Writing likelihoods to: " << outname_l.c_str() << endl;
+
 	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops;
 	infprops.set( "verbose", (size_t)1 );
@@ -404,11 +428,12 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	EMAlg em(e, *inf, emstream);
 
 	cout.precision(16);
-
+	stringstream s_out_l;
 	stringstream s_out;
 	//s_out << "[\n";
 	s_out.precision(16);
-
+	s_out_l.precision(16);
+	s_out_l << "Iteration\tLikelihood\tError_from_true" << endl;
 	for (size_t i=0; i< fg.nrFactors(); i++) {
 		s_out << fg.factor(i).nrStates();
 		if (i != fg.nrFactors() - 1)
@@ -425,9 +450,14 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 			for (size_t i =0; i<fixedVars.size(); i++)
 				inf->backupFactor(fixedVars[i]);
 		}
-
-		Real l = em.iterate();
-		cout << "Iteration " << em.Iterations() << " likelihood: " << l <<endl;
+		
+		double l = em.iterate();
+		FactorGraph current_fg = inf->fg();
+		// TODO: verify exp is correct. assuming log likelihood.
+		cout << "Iteration " << em.Iterations() << " likelihood: " << l
+			 << endl;
+		s_out_l << em.Iterations() << "\t" << l << "\t" << 
+			compareFG(&current_fg, &fg_orig) << endl;
 		if (fixedVars.size() > 0) {
 			for (size_t i =0; i<fixedVars.size(); i++)
 				inf->restoreFactor(fixedVars[i]);
@@ -435,6 +465,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 		printEMIntermediates(&s_out, inf);
 		s_out << endl;
 		s_out.flush();
+		s_out_l.flush();
 	}
 	//s_out << "]";
 	/*
@@ -454,6 +485,11 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	cout << "Intermediate values: an array of tab delimited K*N " <<
 			"where N=numFactors and K=iterations." << endl;
 	cout << "Includes initial values (i.e. iteration 0)" << endl;
+
+	ofstream f_outl;
+	f_outl.open(outname_l.c_str());
+	f_outl << s_out_l.str() << endl;
+	f_outl.close();
 
 #ifdef INTERMEDIATE_VALUES
 	ofstream myfile;
@@ -489,21 +525,6 @@ void printUsage() {
 	//	"./simple -f asd.fg asd2.fg" << endl;
 }
 
-double compareFG(FactorGraph* fg1, FactorGraph* fg2) {
-	size_t numFactors = fg1->nrFactors();
-	if (fg2->nrFactors() != numFactors)
-		throw;
-	double sum=0;
-	for (size_t i=0; i< numFactors; i++) {
-		Factor f1 = fg1->factor(i);
-		Factor f2 = fg2->factor(i);
-		cout << "sum: " << (f1-f2).sumAbs() << endl;
-		sum += abs((f1-f2).sumAbs());
-	}
-	//sum = sqrt(sum);
-
-	return sum;
-}
 
 //
 //	".simple -s asd.fg asd.em\n\t" <<
