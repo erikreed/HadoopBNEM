@@ -11,13 +11,17 @@ NUM_SAMPLES=500
 HIDDEN_NODES="Closed_breaker_ey136_op Voltage_breaker_ey136_op Sensor_ish136 Command_breaker_ey136_op"
 # mini2
 HIDDEN_NODES="$HIDDEN_NODES Closed_breaker_ey236_op Voltage_breaker_ey236_op Sensor_ish236 Command_breaker_ey236_op"
+# mini3
+HIDDEN_NODES="$HIDDEN_NODES Closed_breaker_ey336_op Voltage_breaker_ey336_op Sensor_ish336 Command_breaker_ey336_op"
 
 # default -- just comment/uncomment remaining
 FIXED_NODES=""
 # mini1
-FIXED_NODES="-F Health_ish136 -F Health_breaker_ey136_op" # prefix each with -F
+#FIXED_NODES="-F Health_ish136 -F Health_breaker_ey136_op" # prefix each with -F
 # mini2
-FIXED_NODES="$FIXED_NODES -F Health_ish236 -F Health_breaker_ey236_op"
+#FIXED_NODES="$FIXED_NODES -F Health_ish236 -F Health_breaker_ey236_op"
+# mini3
+#FIXED_NODES="$FIXED_NODES -F Health_ish336 -F Health_breaker_ey336_op"
 
 SHARED_NODES="" # prefix each with -S
 

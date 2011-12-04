@@ -64,7 +64,7 @@ class sharedParamBlock:
         tmp = ""
         if self.members[0].node in stuffToFix:
             tmp += "FixedProbEstimation [target_dim="
-            fixedNodes += str(pseudonym[p.node]) + " "
+            fixedNodes += str(pseudonym[self.members[0].node]) + " "
         else:
             tmp += "CondProbEstimation [target_dim="
         target_dim = len(nodes[self.members[0].node].states)
@@ -88,7 +88,7 @@ class sharedParamBlock:
                 tmp += " "
                 tmp += str(pseudonym[i.parents[j]])
             tmp += "\n"
-        return tmp
+        return tmp, fixedNodes
 
 [nodes, potentials, pseudonym, name] = p.load(open(dat_file, 'r'))
 #pseudonym is a dict from actual node names to their psudonyms (integer node numbers)
@@ -125,7 +125,8 @@ outfile.write(str(len(spb)))
 outfile.write('\n')
 
 for i in spb:
-    outfile.write(i.writeBlock(nodes, pseudonym, fixedNodes))
+    tmp, fixedNodes = i.writeBlock(nodes, pseudonym, fixedNodes)
+    outfile.write(tmp)
 
 fixedOutFile = open(fixed_file, 'w')
 fixedOutFile.write(fixedNodes)
