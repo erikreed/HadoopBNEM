@@ -280,6 +280,7 @@ void printEMIntermediates(stringstream* s_out, InfAlg* inf) {
 
 void randomize_fg(FactorGraph* fg) {
 	srand((unsigned)time(NULL));
+	rnd_seed((unsigned)time(NULL));
 	vector<Factor> factors = fg->factors();
 	size_t size = factors.size();
 	for (size_t i = 0; i<size; i++) {
@@ -300,6 +301,7 @@ void uniformize_fg(FactorGraph* fg) {
 }
 
 void noise_fg(FactorGraph* fg) {
+	rnd_seed((unsigned)time(NULL));
 	srand((unsigned)time(NULL));
 	vector<Factor> factors = fg->factors();
 	size_t size = factors.size();
@@ -322,21 +324,39 @@ double compareFG(FactorGraph* fg1, FactorGraph* fg2) {
 	if (fg2->nrFactors() != numFactors)
 		throw "compareFG: factors not equal";
 	double sum=0;
+	vector<Factor> ff1 = fg1->factors();
+	vector<Factor> ff2 = fg2->factors();
+	/*
+	vector<Var> v1 = fg1->vars();
+	vector<Var> v2 = fg2->vars();
+	for (size_t j=0; j<v1.size(); j++) {
+		for (size_t k=0; k<v1[j].states(); k++)
+		sum += abs((v1[j]) - (v2[j]));
+	}
+	*/
 	for (size_t i=0; i< numFactors; i++) {
-		Factor f1 = fg1->factor(i);
-		Factor f2 = fg2->factor(i);
+		Factor f1 = ff1[i];//fg1->factor(i);
+		Factor f2 = ff2[i];//fg2->factor(i);
 		//cout << "sum: " << (f1-f2).sumAbs() << endl;
 		//sum += abs((f1-f2).sumAbs());
-		sum += abs(dist(f1,f2, DISTL1));
+		
+		Prob p1 = f1.p();
+		Prob p2 = f2.p();
+
+		for (size_t j=0; j<p1.size(); j++)
+			sum += std::pow(p1[j] - p2[j],2);
+			//cout << p1[j] << "\t" << p2[j] << endl;
+		//cout << f1 << endl << f2 << endl;
+		//sum += dist(f2,f1, DISTLINF);
+		//cout << sum << endl;
 	}
+	
 	//sum = sqrt(sum);
 
 	return sum;
 }
 
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
-
-
 	string fixedIn = emIn;
 
 	string::size_type pos = 0;
@@ -364,7 +384,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	FactorGraph fg;
 	fg.ReadFromFile( fgIn );
 
-	FactorGraph fg_orig = fg;
+	FactorGraph* fg_orig = fg.clone();
 
 	srand((unsigned)time(NULL));
 	rnd_seed((unsigned)time(NULL));
@@ -426,7 +446,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	// Read EM specification
 	ifstream emstream( emIn );
 	EMAlg em(e, *inf, emstream);
-
+	//compareFG(&fg, inf->fg().clone());
 	cout.precision(16);
 	stringstream s_out_l;
 	stringstream s_out;
@@ -452,34 +472,26 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 		}
 		
 		double l = em.iterate();
-		FactorGraph current_fg = inf->fg();
+		FactorGraph* current_fg = inf->fg().clone();
 		// TODO: verify exp is correct. assuming log likelihood.
 		cout << "Iteration " << em.Iterations() << " likelihood: " << l
 			 << endl;
-		s_out_l << em.Iterations() << "\t" << l << "\t" << 
-			compareFG(&current_fg, &fg_orig) << endl;
+		
 		if (fixedVars.size() > 0) {
 			for (size_t i =0; i<fixedVars.size(); i++)
 				inf->restoreFactor(fixedVars[i]);
 		}
+
+		double fg_diff = compareFG(current_fg, fg_orig);
+		s_out_l << em.Iterations() << "\t" << l << "\t" << 
+			fg_diff << endl;
+		
 		printEMIntermediates(&s_out, inf);
 		s_out << endl;
 		s_out.flush();
 		s_out_l.flush();
 	}
-	//s_out << "]";
-	/*
-	// Output true factor graph
-	cout << endl << "True factor graph:" << endl << "##################" << endl;
-	cout.precision(12);
-
-	cout << fg;
-
-	// Output learned factor graph
-	cout << endl << "Learned factor graph:" << endl << "#####################" << endl;
-	cout.precision(12);
-	cout << inf->fg();
-	 */
+	
 	// Clean up
 	delete inf;
 	cout << "Intermediate values: an array of tab delimited K*N " <<
@@ -490,7 +502,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	f_outl.open(outname_l.c_str());
 	f_outl << s_out_l.str() << endl;
 	f_outl.close();
-
+	cout << s_out_l.str() << endl;
 #ifdef INTERMEDIATE_VALUES
 	ofstream myfile;
 	myfile.open (outname.c_str());

@@ -8,11 +8,12 @@ NUM_SAMPLES=500
 #typical fixed: Health_ish136 Health_breaker_ey136_op
 
 # mini1
-HIDDEN_NODES="Closed_breaker_ey136_op Voltage_breaker_ey136_op Sensor_ish136 Command_breaker_ey136_op"
-# mini2
-HIDDEN_NODES="$HIDDEN_NODES Closed_breaker_ey236_op Voltage_breaker_ey236_op Sensor_ish236 Command_breaker_ey236_op"
-# mini3
-HIDDEN_NODES="$HIDDEN_NODES Closed_breaker_ey336_op Voltage_breaker_ey336_op Sensor_ish336 Command_breaker_ey336_op"
+HIDDEN_NODES=""
+#HIDDEN_NODES="Closed_breaker_ey136_op Voltage_breaker_ey136_op Health_ish136 Health_breaker_ey136_op"
+# mini2 TODO: fix
+#HIDDEN_NODES="$HIDDEN_NODES Closed_breaker_ey236_op Voltage_breaker_ey236_op Sensor_ish236 Command_breaker_ey236_op"
+# mini3 TODO: fix
+#HIDDEN_NODES="$HIDDEN_NODES Closed_breaker_ey336_op Voltage_breaker_ey336_op Sensor_ish336 Command_breaker_ey336_op"
 
 # default -- just comment/uncomment remaining
 FIXED_NODES=""
