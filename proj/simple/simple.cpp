@@ -530,6 +530,15 @@ void printUsage() {
 //	".simple -s asd.fg asd.em\n\t" <<
 //				".simple -s -noise asd.fg asd.em" << endl;
 
+void printDot(char* fgIn) {
+	FactorGraph fg;
+	fg.ReadFromFile(fgIn);
+	ofstream fout;
+	fout.open("fg.dot");
+	fg.printDot(fout);
+	cout << "Printing to fg.dot" << endl;
+}
+
 void doEmSamples(char* fgIn, char* emIn, int init) {
 	string fixedIn = emIn;
 
@@ -740,14 +749,18 @@ void compareEM(char* fgIn, char* emIn1, char* emIn2) {
 int main(int argc, char* argv[]) {
 	clock_t t1 = clock();
 	if (argc == 3) {
+		if (strcmp(argv[1],"-dot") == 0)
+			printDot(argv[2]);
+		else {
 		int argCheck = atoi(argv[2]);
 		if (argCheck == 0)
 			displayStats(argv);
 		else
 			generateTab(argv[1], argCheck);
-
+	}
 	}
 	else if(argc == 2) {
+
 		displayStats(argv);
 		//generateTab(argv[1], 100);
 	}
