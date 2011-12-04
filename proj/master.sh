@@ -23,7 +23,7 @@ FIXED_NODES=""
 # mini3
 #FIXED_NODES="$FIXED_NODES -F Health_ish336 -F Health_breaker_ey336_op"
 
-SHARED_NODES="" # prefix each with -S
+SHARED_NODES="-S health breaker" # prefix each with -S
 
 if test "$1" == "" ; then
 	echo Usage: ./master.sh net/my_cool_net.net
