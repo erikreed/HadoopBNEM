@@ -11,6 +11,7 @@
 #include <omp.h>
 #include <stdio.h>
 #include <jni.h>
+#include <DaiControl.h>
 
 using namespace std;
 using namespace dai;
@@ -59,28 +60,38 @@ public:
 		if (_em != NULL)
 			delete _em;
 	}
-	void readInFactorgraph(string path) {
-		_fg.ReadFromFile(path.c_str());
+	JNIEXPORT void JNICALL Java_DaiControl_readInFactorgraph
+	  (JNIEnv *env, jobject jobj, jstring jstr) {
+
+		const char *str = env->GetStringUTFChars(jstr, 0);
+		_fg.ReadFromFile(str);
+		env->ReleaseStringUTFChars(jstr, str);
 		_hasFG = true;
 	}
 
-	void readInEvidence(string path) {
-		ifstream estream(path.c_str());
+	JNIEXPORT void JNICALL Java_DaiControl_readInEvidence
+		(JNIEnv *env, jobject jobj, jstring jstr) {
+		const char *path = env->GetStringUTFChars(jstr, 0);
+		ifstream estream(path);
 		_e.addEvidenceTabFile(estream, _fg);
+		env->ReleaseStringUTFChars(jstr, path);
 		_hasEvidence = true;
 	}
 
-	void readInEMfile(string path) {
-		_emFile = readFile(path.c_str());
+	JNIEXPORT void JNICALL Java_DaiControl_readInEMfile
+	(JNIEnv *env, jobject jobj, jstring jstr) {
+		const char *path = env->GetStringUTFChars(jstr, 0);
+		_emFile = readFile(path);
+		env->ReleaseStringUTFChars(jstr, path);
 		_hasEMfile = true;
 	}
 
-	void prepEM() {
+	JNIEXPORT void JNICALL Java_DaiControl_prepEM
+	  (JNIEnv *env, jobject jobj) {
 		if (!(_hasEvidence && _hasFG && _hasEMfile)) {
 			cerr << "evidence, em file, or fg not initialized";
 			throw;
 		}
-
 
 		_infAlg = newInfAlg(INF_TYPE, _fg, _infprops);
 		_infAlg->init();
@@ -90,7 +101,8 @@ public:
 		_emReady = true;
 	}
 
-	double runEM(int numIterations) {
+	JNIEXPORT jdouble JNICALL Java_DaiControl_runEM
+	  (JNIEnv *env, jobject jobj, jint numIterations) {
 		if (!_emReady) {
 			cerr << "EM not ready";
 			throw;
