@@ -21,15 +21,87 @@ using namespace dai;
 #define INF_TYPE "JTREE"
 
 // constants for compareEM(...)
-#define EM_MAX_SAMPLES 5000
-#define EM_SAMPLES_DELTA 50
-#define EM_INIT_SAMPLES 50
+const size_t EM_MAX_SAMPLES =5000;
+const size_t EM_SAMPLES_DELTA= 50;
+const size_t EM_INIT_SAMPLES =50;
 const Real LIB_EM_TOLERANCE = 1e-9; // doesn't have an effect...
 const size_t EM_MAX_ITER = 100;
 //#define OLD_FIXING
 
 class DaiControl {
+private:
+	FactorGraph _fg;
+	bool _hasEvidence;
+	bool _hasFG;
+	bool _hasEMfile;
+	bool _emReady;
+	string _emFile;
+	Evidence _e;
+	InfAlg* _infAlg;
+	EMAlg* _em;
+	PropertySet _infprops;
 public:
+
+	DaiControl() {
+		_hasFG = false;
+		_hasEvidence = false;
+		_emReady = false;
+		_hasEMfile = false;
+		_em = NULL;
+		_infAlg = NULL;
+		_infprops.set("verbose", (size_t) 1);
+		_infprops.set("updates", string("HUGIN"));
+	}
+
+	~DaiControl() {
+		if (_infAlg != NULL)
+			delete _infAlg;
+		if (_em != NULL)
+			delete _em;
+	}
+	void readInFactorgraph(string path) {
+		_fg.ReadFromFile(path.c_str());
+		_hasFG = true;
+	}
+
+	void readInEvidence(string path) {
+		ifstream estream(path.c_str());
+		_e.addEvidenceTabFile(estream, _fg);
+		_hasEvidence = true;
+	}
+
+	void readInEMfile(string path) {
+		_emFile = readFile(path.c_str());
+		_hasEMfile = true;
+	}
+
+	void prepEM() {
+		if (!(_hasEvidence && _hasFG && _hasEMfile)) {
+			cerr << "evidence, em file, or fg not initialized";
+			throw;
+		}
+
+
+		_infAlg = newInfAlg(INF_TYPE, _fg, _infprops);
+		_infAlg->init();
+
+		stringstream emstream(_emFile);
+		_em = new EMAlg(_e, *_infAlg, emstream);
+		_emReady = true;
+	}
+
+	double runEM(int numIterations) {
+		if (!_emReady) {
+			cerr << "EM not ready";
+			throw;
+		}
+		double l;
+		for (int i=0; i<numIterations; i++)
+			l = _em->iterate();
+		return l;
+	}
+
+
 	static void displayStats(char** argv) {
 		//Builtin inference algorithms: {BP, CBP, DECMAP, EXACT, FBP, GIBBS, HAK, JTREE, LC, MF, MR, TREEEP, TRWBP}
 
@@ -610,7 +682,7 @@ public:
 		return ss.str();//return a string with the contents of the stream
 	}
 
-	static inline string readFile(char* path) {
+	static inline string readFile(const char* path) {
 
 		int length;
 		char * buffer;
