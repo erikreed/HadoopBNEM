@@ -1,3 +1,9 @@
+import java.util.Arrays;
+
+/**
+ * DaiControl
+ * @author erikreed@cmu.edu
+ */
 class DaiControl {
 
 	//TODO: implement age layered for single core
@@ -16,8 +22,8 @@ class DaiControl {
 		//System.load("/data01/Projects/David_and_Erik/bullshit/ml/libdai/stochastic/DaiControl.so");
 	}
 
-	public static final int POPULATION = 100;
-	public static final int NUM_ITERATIONS = 5;
+	public static final int POPULATION = 10;
+	public static final int NUM_ITERATIONS = 1;
 	
 	public static void main(String[] args) {
 		DaiControl dai = new DaiControl();
@@ -42,7 +48,7 @@ class DaiControl {
 		dai.freeMem(dai_data);
 		for (int i=0; i<POPULATION; i++)
 			dai.freeMem(dais[i]);
-		
+		//System.out.println(Arrays.toString(dais));
 		System.out.println("Terminated successfully");
 	}
 

@@ -338,8 +338,6 @@ public:
 	}
 
 	static void randomize_fg(FactorGraph* fg) {
-		srand((unsigned) time(NULL));
-		rnd_seed((unsigned) time(NULL));
 		vector<Factor> factors = fg->factors();
 		size_t size = factors.size();
 		for (size_t i = 0; i < size; i++) {
@@ -1195,7 +1193,7 @@ struct EM_Data {
 			_e(other->_e),
 			_infprops(other->_infprops),
 			_fg(other->_fg)
-			{}
+	{}
 
 	EM_Data() {
 		_em = NULL;
@@ -1262,6 +1260,10 @@ JNIEXPORT jlong JNICALL Java_DaiControl_createDai
 	env->ReleaseStringUTFChars(jstr1, fgIn);
 	env->ReleaseStringUTFChars(jstr2, evIn);
 	env->ReleaseStringUTFChars(jstr3, emIn);
+
+	srand((unsigned) time(NULL));
+	rnd_seed((unsigned) time(NULL));
+
 	return (jlong) dat;
 }
 
