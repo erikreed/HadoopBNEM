@@ -8,7 +8,7 @@ all: DaiControl.class daicontrol DaiControl.so
 .PHONY: run clean
 
 clean:
-	rm -f DaiControl.so DaiControl.o daicontrol DaiControl.class DaiControl.h
+	rm -f *.log DaiControl.so DaiControl.o daicontrol DaiControl.class DaiControl.h
 
 run: all
 	java -Djava.library.path=. DaiControl

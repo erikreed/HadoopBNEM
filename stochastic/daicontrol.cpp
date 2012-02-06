@@ -29,6 +29,7 @@ const Real LIB_EM_TOLERANCE = 1e-9; // doesn't have an effect...
 const size_t EM_MAX_ITER = 100;
 //#define OLD_FIXING
 
+
 class DaiControl {
 private:
 	FactorGraph _fg;
@@ -60,59 +61,6 @@ public:
 		if (_em != NULL)
 			delete _em;
 	}
-	JNIEXPORT void JNICALL Java_DaiControl_readInFactorgraph
-	(JNIEnv *env, jobject jobj, jstring jstr) {
-
-		const char *str = env->GetStringUTFChars(jstr, 0);
-		_fg.ReadFromFile(str);
-		env->ReleaseStringUTFChars(jstr, str);
-		_hasFG = true;
-	}
-
-	JNIEXPORT void JNICALL Java_DaiControl_readInEvidence
-	(JNIEnv *env, jobject jobj, jstring jstr) {
-		const char *path = env->GetStringUTFChars(jstr, 0);
-		ifstream estream(path);
-		_e.addEvidenceTabFile(estream, _fg);
-		env->ReleaseStringUTFChars(jstr, path);
-		_hasEvidence = true;
-	}
-
-	JNIEXPORT void JNICALL Java_DaiControl_readInEMfile
-	(JNIEnv *env, jobject jobj, jstring jstr) {
-		const char *path = env->GetStringUTFChars(jstr, 0);
-		_emFile = readFile(path);
-		env->ReleaseStringUTFChars(jstr, path);
-		_hasEMfile = true;
-	}
-
-	JNIEXPORT void JNICALL Java_DaiControl_prepEM
-	(JNIEnv *env, jobject jobj) {
-		if (!(_hasEvidence && _hasFG && _hasEMfile)) {
-			cerr << "evidence, em file, or fg not initialized";
-			throw;
-		}
-
-		_infAlg = newInfAlg(INF_TYPE, _fg, _infprops);
-		_infAlg->init();
-
-		stringstream emstream(_emFile);
-		_em = new EMAlg(_e, *_infAlg, emstream);
-		_emReady = true;
-	}
-
-	JNIEXPORT jdouble JNICALL Java_DaiControl_runEM
-	(JNIEnv *env, jobject jobj, jint numIterations) {
-		if (!_emReady) {
-			cerr << "EM not ready";
-			throw;
-		}
-		double l;
-		for (int i=0; i<numIterations; i++)
-			l = _em->iterate();
-		return l;
-	}
-
 
 	static void displayStats(char** argv) {
 		//Builtin inference algorithms: {BP, CBP, DECMAP, EXACT, FBP, GIBBS, HAK, JTREE, LC, MF, MR, TREEEP, TRWBP}
@@ -269,7 +217,7 @@ public:
 		if (do_jt) {
 			// Report exact MAP joint state
 			cout << "Exact MAP state (log score = " << fg.logScore(jtmapstate)
-							<< "):" << endl;
+											<< "):" << endl;
 			for (size_t i = 0; i < jtmapstate.size(); i++)
 				cout << fg.var(i) << ": " << jtmapstate[i] << endl;
 		}
@@ -669,7 +617,7 @@ public:
 		<< endl;
 		cout << "Results output to \"out/TYPE\"" << endl;
 		cout << "Builtin inference algorithms: " << builtinInfAlgNames()
-						<< endl;
+										<< endl;
 		cout << "Currently used inference algorithm: " << INF_TYPE << endl;
 		//cout << "compare FG files (e.g. checking difference from true vs. EM generated FGs)\n\t" <<
 		//	"./simple -f asd.fg asd2.fg" << endl;
@@ -1049,7 +997,7 @@ public:
 #pragma omp critical
 			{
 				fout << e.nrSamples() << "\t" << l1 << "\t" << em.Iterations()
-								<< "\t" << fg_diff << endl;
+												<< "\t" << fg_diff << endl;
 			}
 			delete inf1;
 		}
@@ -1099,8 +1047,8 @@ public:
 			while (!em1.hasSatisfiedTermConditions()) {
 				l1 = em1.iterate();
 				cout << "em1: Iteration " << em1.Iterations()
-								<< " likelihood: " << l1 << " avg: " << l1 / 100 * (i
-										+ 1) << endl;
+												<< " likelihood: " << l1 << " avg: " << l1 / 100 * (i
+														+ 1) << endl;
 			}
 
 			Real l2;
@@ -1108,8 +1056,8 @@ public:
 			while (!em2.hasSatisfiedTermConditions()) {
 				l2 = em2.iterate();
 				cout << "em2: Iteration " << em2.Iterations()
-								<< " likelihood: " << l2 << " avg: " << l1 / 100 * (i
-										+ 1) << endl;
+												<< " likelihood: " << l2 << " avg: " << l1 / 100 * (i
+														+ 1) << endl;
 			}
 
 			FactorGraph fg_non = inf1->fg();
@@ -1230,4 +1178,103 @@ int main(int argc, char* argv[]) {
 			<< " seconds" << endl;
 
 	return 0;
+}
+
+
+struct EM_Data {
+	string _emFile;
+	Evidence _e;
+	InfAlg* _infAlg;
+	EMAlg* _em;
+	PropertySet _infprops;
+	FactorGraph _fg;
+
+	EM_Data() {
+		_em = NULL;
+		_infAlg = NULL;
+		_infprops.set("verbose", (size_t) 1);
+		_infprops.set("updates", string("HUGIN"));
+	}
+
+	~EM_Data() {
+		if (_infAlg != NULL)
+			delete _infAlg;
+		if (_em != NULL)
+			delete _em;
+	}
+
+	void readInFactorgraph(const char* path) {
+		_fg.ReadFromFile(path);
+	}
+
+	void readInEvidence(const char* path) {
+		ifstream estream(path);
+		_e.addEvidenceTabFile(estream, _fg);
+	}
+
+	void readInEMfile(const char* path) {
+		_emFile = DaiControl::readFile(path);
+	}
+
+	void prepEM() {
+		_infAlg = newInfAlg(INF_TYPE, _fg, _infprops);
+		_infAlg->init();
+
+		stringstream emstream(_emFile);
+		_em = new EMAlg(_e, *_infAlg, emstream);
+	}
+
+	double runEM(int numIterations) {
+		double l = 9999999999;
+		for (int i=0; i<numIterations; i++)
+			l = _em->iterate();
+		return l;
+	}
+};
+
+/*
+ * Class:     DaiControl
+ * Method:    prepEM
+ * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
+ */
+JNIEXPORT jlong JNICALL Java_DaiControl_prepEM
+  (JNIEnv *env, jobject obj, jstring jstr1, jstring jstr2, jstring jstr3) {
+	EM_Data *dat = new EM_Data();
+
+	const char *fgIn = env->GetStringUTFChars(jstr1, 0);
+	const char *evIn = env->GetStringUTFChars(jstr2, 0);
+	const char *emIn = env->GetStringUTFChars(jstr3, 0);
+
+	dat->readInFactorgraph(fgIn);
+	dat->readInEvidence(evIn);
+	dat->readInEMfile(emIn);
+	dat->prepEM();
+
+	env->ReleaseStringUTFChars(jstr1, fgIn);
+	env->ReleaseStringUTFChars(jstr2, evIn);
+	env->ReleaseStringUTFChars(jstr3, emIn);
+	return (jlong) dat;
+}
+
+/*
+ * Class:     DaiControl
+ * Method:    runEM
+ * Signature: (Ljava/lang/Object;I)D
+ */
+JNIEXPORT jdouble JNICALL Java_DaiControl_runEM
+  (JNIEnv *env, jobject obj, jlong em_jobj, jint numIter) {
+
+	EM_Data* dat = (EM_Data*) em_jobj;
+	double l = dat->runEM(numIter);
+	return l;
+}
+/*
+ * Class:     DaiControl
+ * Method:    freeMem
+ * Signature: (Ljava/lang/Object;)V
+ */
+JNIEXPORT void JNICALL Java_DaiControl_freeMem
+  (JNIEnv *env, jobject job1, jlong em_jobj) {
+	EM_Data* dat = (EM_Data*) em_jobj;
+	delete dat;
 }
