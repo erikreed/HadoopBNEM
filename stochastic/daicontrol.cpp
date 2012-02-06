@@ -337,7 +337,7 @@ public:
 		//*s_out << "]";
 	}
 
-	static inline void randomize_fg(FactorGraph* fg) {
+	static void randomize_fg(FactorGraph* fg) {
 		srand((unsigned) time(NULL));
 		rnd_seed((unsigned) time(NULL));
 		vector<Factor> factors = fg->factors();
@@ -1189,6 +1189,14 @@ struct EM_Data {
 	PropertySet _infprops;
 	FactorGraph _fg;
 
+	// only copies evidence, em file, and fg. not fully initialized
+	explicit EM_Data(EM_Data* other) :
+			_emFile(other->_emFile),
+			_e(other->_e),
+			_infprops(other->_infprops),
+			_fg(other->_fg)
+			{}
+
 	EM_Data() {
 		_em = NULL;
 		_infAlg = NULL;
@@ -1210,6 +1218,7 @@ struct EM_Data {
 	void readInEvidence(const char* path) {
 		ifstream estream(path);
 		_e.addEvidenceTabFile(estream, _fg);
+		estream.close();
 	}
 
 	void readInEMfile(const char* path) {
@@ -1237,7 +1246,7 @@ struct EM_Data {
  * Method:    prepEM
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
  */
-JNIEXPORT jlong JNICALL Java_DaiControl_prepEM
+JNIEXPORT jlong JNICALL Java_DaiControl_createDai
   (JNIEnv *env, jobject obj, jstring jstr1, jstring jstr2, jstring jstr3) {
 	EM_Data *dat = new EM_Data();
 
@@ -1248,7 +1257,7 @@ JNIEXPORT jlong JNICALL Java_DaiControl_prepEM
 	dat->readInFactorgraph(fgIn);
 	dat->readInEvidence(evIn);
 	dat->readInEMfile(emIn);
-	dat->prepEM();
+//	dat->prepEM();
 
 	env->ReleaseStringUTFChars(jstr1, fgIn);
 	env->ReleaseStringUTFChars(jstr2, evIn);
@@ -1278,3 +1287,39 @@ JNIEXPORT void JNICALL Java_DaiControl_freeMem
 	EM_Data* dat = (EM_Data*) em_jobj;
 	delete dat;
 }
+
+/*
+ * Class:     DaiControl
+ * Method:    copyDai
+ * Signature: (J)J
+ */
+JNIEXPORT jlong JNICALL Java_DaiControl_copyDai
+  (JNIEnv *env, jobject jobj, jlong em_jobj) {
+	EM_Data* dat = (EM_Data*) em_jobj;
+	EM_Data* datCopy = new EM_Data(dat);
+	return (jlong) datCopy;
+}
+
+/*
+ * Class:     DaiControl
+ * Method:    randomizeFG
+ * Signature: (J)V
+ */
+JNIEXPORT void JNICALL Java_DaiControl_randomizeFG
+(JNIEnv *env, jobject jobj, jlong em_jobj) {
+	EM_Data* dat = (EM_Data*) em_jobj;
+	DaiControl::randomize_fg(&dat->_fg);
+}
+
+/*
+ * Class:     DaiControl
+ * Method:    prepEM
+ * Signature: (J)J
+ */
+JNIEXPORT void JNICALL Java_DaiControl_prepEM
+(JNIEnv *env, jobject jobj, jlong em_jobj) {
+	EM_Data* dat = (EM_Data*) em_jobj;
+	dat->prepEM();
+}
+
+
