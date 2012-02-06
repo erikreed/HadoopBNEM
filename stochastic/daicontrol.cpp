@@ -61,7 +61,7 @@ public:
 			delete _em;
 	}
 	JNIEXPORT void JNICALL Java_DaiControl_readInFactorgraph
-	  (JNIEnv *env, jobject jobj, jstring jstr) {
+	(JNIEnv *env, jobject jobj, jstring jstr) {
 
 		const char *str = env->GetStringUTFChars(jstr, 0);
 		_fg.ReadFromFile(str);
@@ -70,7 +70,7 @@ public:
 	}
 
 	JNIEXPORT void JNICALL Java_DaiControl_readInEvidence
-		(JNIEnv *env, jobject jobj, jstring jstr) {
+	(JNIEnv *env, jobject jobj, jstring jstr) {
 		const char *path = env->GetStringUTFChars(jstr, 0);
 		ifstream estream(path);
 		_e.addEvidenceTabFile(estream, _fg);
@@ -87,7 +87,7 @@ public:
 	}
 
 	JNIEXPORT void JNICALL Java_DaiControl_prepEM
-	  (JNIEnv *env, jobject jobj) {
+	(JNIEnv *env, jobject jobj) {
 		if (!(_hasEvidence && _hasFG && _hasEMfile)) {
 			cerr << "evidence, em file, or fg not initialized";
 			throw;
@@ -102,7 +102,7 @@ public:
 	}
 
 	JNIEXPORT jdouble JNICALL Java_DaiControl_runEM
-	  (JNIEnv *env, jobject jobj, jint numIterations) {
+	(JNIEnv *env, jobject jobj, jint numIterations) {
 		if (!_emReady) {
 			cerr << "EM not ready";
 			throw;
@@ -206,12 +206,12 @@ public:
 		// specifying that the decimation algorithm should use the max-product
 		// algorithm and should completely reinitalize its state at every step
 		DecMAP
-				decmap(
-						fg,
-						opts("reinit", true)("ianame", string("BP"))(
-								"iaopts",
-								string(
-										"[damping=0.1,inference=MAXPROD,logdomain=0,maxiter=1000,tol=1e-9,updates=SEQRND,verbose=1]")));
+		decmap(
+				fg,
+				opts("reinit", true)("ianame", string("BP"))(
+						"iaopts",
+						string(
+								"[damping=0.1,inference=MAXPROD,logdomain=0,maxiter=1000,tol=1e-9,updates=SEQRND,verbose=1]")));
 		decmap.init();
 		decmap.run();
 		vector<size_t> decmapstate = decmap.findMaximum();
@@ -257,19 +257,19 @@ public:
 			cout << "Exact MAP factor marginals:" << endl;
 			for (size_t I = 0; I < fg.nrFactors(); I++)
 				cout << jtmap.belief(fg.factor(I).vars()) << " == "
-						<< jtmap.beliefF(I) << endl;
+				<< jtmap.beliefF(I) << endl;
 		}
 
 		// Report max-product factor marginals
 		cout << "Approximate (max-product) MAP factor marginals:" << endl;
 		for (size_t I = 0; I < fg.nrFactors(); I++)
 			cout << mp.belief(fg.factor(I).vars()) << " == " << mp.beliefF(I)
-					<< endl;
+			<< endl;
 
 		if (do_jt) {
 			// Report exact MAP joint state
 			cout << "Exact MAP state (log score = " << fg.logScore(jtmapstate)
-					<< "):" << endl;
+							<< "):" << endl;
 			for (size_t i = 0; i < jtmapstate.size(); i++)
 				cout << fg.var(i) << ": " << jtmapstate[i] << endl;
 		}
@@ -473,7 +473,7 @@ public:
 		string::size_type pos = 0;
 		pos = fixedIn.find(".em", pos);
 		if (pos != string::npos)
-		fixedIn.replace(pos, fixedIn.size(), ".fixed");
+			fixedIn.replace(pos, fixedIn.size(), ".fixed");
 
 		ifstream ifile(fixedIn.c_str());
 		vector<int> fixedVars;
@@ -507,7 +507,7 @@ public:
 #ifdef OLD_FIXING
 		if (fixedVars.size() > 0) {
 			for (size_t i =0; i<fixedVars.size(); i++)
-			fg.backupFactor(fixedVars[i]);
+				fg.backupFactor(fixedVars[i]);
 		}
 #endif
 
@@ -594,7 +594,7 @@ public:
 #ifdef OLD_FIXING
 			if (fixedVars.size() > 0) {
 				for (size_t i =0; i<fixedVars.size(); i++)
-				inf->backupFactor(fixedVars[i]);
+					inf->backupFactor(fixedVars[i]);
 			}
 #endif
 			double l = em.iterate();
@@ -605,13 +605,13 @@ public:
 #ifdef OLD_FIXING
 			if (fixedVars.size() > 0) {
 				for (size_t i =0; i<fixedVars.size(); i++)
-				inf->restoreFactor(fixedVars[i]);
+					inf->restoreFactor(fixedVars[i]);
 			}
 #endif
 			double fg_diff = compareFG(current_fg, fg_orig);
 			s_out_l << em.Iterations() << "\t" << l << "\t" << fg_diff << "\t"
 					<< l / e.nrSamples() << "\t" << KLcompareFG(current_fg,
-					fg_orig) << endl;
+							fg_orig) << endl;
 
 			printEMIntermediates(&s_out, inf);
 			s_out << endl;
@@ -645,14 +645,14 @@ public:
 
 		cout << "display fg stats/marginals:\n\t./simple asd.fg" << endl;
 		cout
-				<< "generate tab file (output will be *.tab): \n\t./simple asd.fg num_samples"
-				<< endl;
+		<< "generate tab file (output will be *.tab): \n\t./simple asd.fg num_samples"
+		<< endl;
 		cout
-				<< "run EM (now w/ intermediate results) \n\t./simple asd.fg asd.tab asd.em"
-				<< endl;
+		<< "run EM (now w/ intermediate results) \n\t./simple asd.fg asd.tab asd.em"
+		<< endl;
 		cout
-				<< "for different EM initialization types use: -noise, -random, -uniform, -all"
-				<< endl;
+		<< "for different EM initialization types use: -noise, -random, -uniform, -all"
+		<< endl;
 		cout << "\te.g. ./simple -noise asd.fg asd.tab asd.em" << endl;
 		cout << "compare EM files (e.g. for shared/non-shared)\n\t"
 				<< "./simple -c asd.fg asd1.em asd2.em" << endl;
@@ -664,12 +664,12 @@ public:
 				<< "./simple -many_random asd.fg asd.tab asd.em" << endl;
 		cout << endl << "--- Info ---" << endl;
 		cout
-				<< "If running EM and a *.fixed file exists, where * is the given .em file,\n"
-				<< "  integers in the fixed file will be used for parameter fixing."
-				<< endl;
+		<< "If running EM and a *.fixed file exists, where * is the given .em file,\n"
+		<< "  integers in the fixed file will be used for parameter fixing."
+		<< endl;
 		cout << "Results output to \"out/TYPE\"" << endl;
 		cout << "Builtin inference algorithms: " << builtinInfAlgNames()
-				<< endl;
+						<< endl;
 		cout << "Currently used inference algorithm: " << INF_TYPE << endl;
 		//cout << "compare FG files (e.g. checking difference from true vs. EM generated FGs)\n\t" <<
 		//	"./simple -f asd.fg asd2.fg" << endl;
@@ -726,7 +726,7 @@ public:
 		string::size_type pos = 0;
 		pos = fixedIn.find(".em", pos);
 		if (pos != string::npos)
-		fixedIn.replace(pos, fixedIn.size(), ".fixed");
+			fixedIn.replace(pos, fixedIn.size(), ".fixed");
 
 		ifstream ifile(fixedIn.c_str());
 
@@ -785,22 +785,22 @@ public:
 			rnd_seed((unsigned) time(NULL));
 			stringstream trials_out;
 			trials_out
-					<< "Iteration\tLikelihood\tL1_error\tLikelihood/n\tKL_error"
-					<< endl;
+			<< "Iteration\tLikelihood\tL1_error\tLikelihood/n\tKL_error"
+			<< endl;
 
 			cout << "random trial: " << trials << endl;
 			fg = *(fg_orig.clone());
 #ifdef OLD_FIXING
 			if (fixedVars.size() > 0) {
 				for (size_t i =0; i<fixedVars.size(); i++)
-				fg.backupFactor(fixedVars[i]);
+					fg.backupFactor(fixedVars[i]);
 			}
 #endif
 			randomize_fg(&fg);
 #ifdef OLD_FIXING
 			if (fixedVars.size() > 0) {
 				for (size_t i =0; i<fixedVars.size(); i++)
-				fg.restoreFactor(fixedVars[i]);
+					fg.restoreFactor(fixedVars[i]);
 			}
 #endif
 			// Read sample from file
@@ -844,7 +844,7 @@ public:
 				double fg_diff = compareFG(current_fg, &fg_orig);
 				trials_out << em.Iterations() << "\t" << l << "\t" << fg_diff
 						<< "\t" << l / e.nrSamples() << "\t" << KLcompareFG(
-						current_fg, &fg_orig) << endl;
+								current_fg, &fg_orig) << endl;
 
 			}
 
@@ -889,7 +889,7 @@ public:
 		string::size_type pos = 0;
 		pos = fixedIn.find(".em", pos);
 		if (pos != string::npos)
-		fixedIn.replace(pos, fixedIn.size(), ".fixed");
+			fixedIn.replace(pos, fixedIn.size(), ".fixed");
 
 		ifstream ifile(fixedIn.c_str());
 		vector<int> fixedVars;
@@ -921,7 +921,7 @@ public:
 #ifdef OLD_FIXING
 		if (fixedVars.size() > 0) {
 			for (size_t i =0; i<fixedVars.size(); i++)
-			fg.backupFactor(fixedVars[i]);
+				fg.backupFactor(fixedVars[i]);
 		}
 #endif
 		if (init == 1) {
@@ -947,7 +947,7 @@ public:
 #ifdef OLD_FIXING
 		if (fixedVars.size() > 0) {
 			for (size_t i =0; i<fixedVars.size(); i++)
-			fg.restoreFactor(fixedVars[i]);
+				fg.restoreFactor(fixedVars[i]);
 		}
 #endif
 		cout << "Initial samples: " << EM_INIT_SAMPLES << endl;
@@ -966,7 +966,7 @@ public:
 		firstprivate(fg_orig, emFile,fg, init, py_cmd) \
 		num_threads(32)
 		for (int i = EM_INIT_SAMPLES; i <= EM_MAX_SAMPLES; i
-				+= EM_SAMPLES_DELTA) {
+		+= EM_SAMPLES_DELTA) {
 			FactorGraph local_fg = *fg.clone();
 			if (init == 1)
 				randomize_fg(&local_fg);
@@ -1031,7 +1031,7 @@ public:
 #ifdef OLD_FIXING
 				if (fixedVars.size() > 0) {
 					for (size_t i =0; i<fixedVars.size(); i++)
-					inf1->backupFactor(fixedVars[i]);
+						inf1->backupFactor(fixedVars[i]);
 				}
 #endif
 				l1 = em.iterate();
@@ -1041,7 +1041,7 @@ public:
 #ifdef OLD_FIXING
 				if (fixedVars.size() > 0) {
 					for (size_t i =0; i<fixedVars.size(); i++)
-					inf1->restoreFactor(fixedVars[i]);
+						inf1->restoreFactor(fixedVars[i]);
 				}
 #endif
 			}
@@ -1049,7 +1049,7 @@ public:
 #pragma omp critical
 			{
 				fout << e.nrSamples() << "\t" << l1 << "\t" << em.Iterations()
-						<< "\t" << fg_diff << endl;
+								<< "\t" << fg_diff << endl;
 			}
 			delete inf1;
 		}
@@ -1072,10 +1072,10 @@ public:
 		ofstream fout("shared_compare.dat");
 		fout.precision(12);
 		fout
-				<< "numSamples\tlikelihood1\titerations1\tlikelihood2\titerations2"
-				<< endl;
+		<< "numSamples\tlikelihood1\titerations1\tlikelihood2\titerations2"
+		<< endl;
 		for (int i = EM_INIT_SAMPLES; i <= EM_MAX_SAMPLES; i
-				+= EM_SAMPLES_DELTA) {
+		+= EM_SAMPLES_DELTA) {
 			InfAlg* inf1 = newInfAlg(INF_TYPE, fg, infprops);
 			inf1->init();
 			InfAlg* inf2 = newInfAlg(INF_TYPE, fg, infprops);
@@ -1099,8 +1099,8 @@ public:
 			while (!em1.hasSatisfiedTermConditions()) {
 				l1 = em1.iterate();
 				cout << "em1: Iteration " << em1.Iterations()
-						<< " likelihood: " << l1 << " avg: " << l1 / 100 * (i
-						+ 1) << endl;
+								<< " likelihood: " << l1 << " avg: " << l1 / 100 * (i
+										+ 1) << endl;
 			}
 
 			Real l2;
@@ -1108,8 +1108,8 @@ public:
 			while (!em2.hasSatisfiedTermConditions()) {
 				l2 = em2.iterate();
 				cout << "em2: Iteration " << em2.Iterations()
-						<< " likelihood: " << l2 << " avg: " << l1 / 100 * (i
-						+ 1) << endl;
+								<< " likelihood: " << l2 << " avg: " << l1 / 100 * (i
+										+ 1) << endl;
 			}
 
 			FactorGraph fg_non = inf1->fg();
@@ -1145,89 +1145,89 @@ public:
 };
 
 int main(int argc, char* argv[]) {
-		clock_t t1 = clock();
-		if (argc == 3) {
-			if (strcmp(argv[1], "-dot") == 0)
-				DaiControl::printDot(argv[2]);
-			else {
-				int argCheck = atoi(argv[2]);
-				if (argCheck == 0)
-					DaiControl::displayStats(argv);
-				else
-					DaiControl::generateTab(argv[1], argCheck, NULL);
-			}
-		} else if (argc == 2) {
+	clock_t t1 = clock();
+	if (argc == 3) {
+		if (strcmp(argv[1], "-dot") == 0)
+			DaiControl::printDot(argv[2]);
+		else {
+			int argCheck = atoi(argv[2]);
+			if (argCheck == 0)
+				DaiControl::displayStats(argv);
+			else
+				DaiControl::generateTab(argv[1], argCheck, NULL);
+		}
+	} else if (argc == 2) {
 
-			DaiControl::displayStats(argv);
-			//generateTab(argv[1], 100);
+		DaiControl::displayStats(argv);
+		//generateTab(argv[1], 100);
+	}
+
+	else if (argc == 4) {
+		// expecting .fg, .tab, .em
+		if (strcmp(argv[1], "-s") == 0)
+			DaiControl::doEmSamples(argv[2], argv[3], 0, NULL);
+		else
+			DaiControl::doEm(argv[1], argv[2], argv[3], 0);
+	} else if (argc >= 5) {
+		// expecting -c, fg, em, em
+		if (strcmp(argv[1], "-c") == 0) {
+			DaiControl::compareEM(argv[2], argv[3], argv[4]);
+		} else if (strcmp(argv[1], "-s") == 0) {
+			string py_cmd = "NULL";
+			if (argc >= 6) {
+				stringstream py_cmd_str;
+				for (int k = 5; k < argc; k++)
+					py_cmd_str << argv[k] << " ";
+				py_cmd = py_cmd_str.str();
+			}
+			if (strcmp(argv[2], "-random") == 0)
+				DaiControl::doEmSamples(argv[3], argv[4], 1, py_cmd);
+			else if (strcmp(argv[2], "-uniform") == 0)
+				DaiControl::doEmSamples(argv[3], argv[4], 2, py_cmd);
+			else if (strcmp(argv[2], "-noise") == 0)
+				DaiControl::doEmSamples(argv[3], argv[4], 3, py_cmd);
+			else if (strcmp(argv[2], "-all") == 0) {
+				DaiControl::doEmSamples(argv[3], argv[4], 0, py_cmd);
+				DaiControl::doEmSamples(argv[3], argv[4], 1, py_cmd);
+				DaiControl::doEmSamples(argv[3], argv[4], 2, py_cmd);
+				DaiControl::doEmSamples(argv[3], argv[4], 3, py_cmd);
+			}
+
+		}
+		// expecting -random fg tab em
+		else if (strcmp(argv[1], "-random") == 0) {
+			DaiControl::doEm(argv[2], argv[3], argv[4], 1);
+		} else if (strcmp(argv[1], "-uniform") == 0) {
+			DaiControl::doEm(argv[2], argv[3], argv[4], 2);
 		}
 
-		else if (argc == 4) {
-			// expecting .fg, .tab, .em
-			if (strcmp(argv[1], "-s") == 0)
-				DaiControl::doEmSamples(argv[2], argv[3], 0, NULL);
-			else
-				DaiControl::doEm(argv[1], argv[2], argv[3], 0);
-		} else if (argc >= 5) {
-			// expecting -c, fg, em, em
-			if (strcmp(argv[1], "-c") == 0) {
-				DaiControl::compareEM(argv[2], argv[3], argv[4]);
-			} else if (strcmp(argv[1], "-s") == 0) {
-				string py_cmd = "NULL";
-				if (argc >= 6) {
-					stringstream py_cmd_str;
-					for (int k = 5; k < argc; k++)
-						py_cmd_str << argv[k] << " ";
-					py_cmd = py_cmd_str.str();
-				}
-				if (strcmp(argv[2], "-random") == 0)
-					DaiControl::doEmSamples(argv[3], argv[4], 1, py_cmd);
-				else if (strcmp(argv[2], "-uniform") == 0)
-					DaiControl::doEmSamples(argv[3], argv[4], 2, py_cmd);
-				else if (strcmp(argv[2], "-noise") == 0)
-					DaiControl::doEmSamples(argv[3], argv[4], 3, py_cmd);
-				else if (strcmp(argv[2], "-all") == 0) {
-					DaiControl::doEmSamples(argv[3], argv[4], 0, py_cmd);
-					DaiControl::doEmSamples(argv[3], argv[4], 1, py_cmd);
-					DaiControl::doEmSamples(argv[3], argv[4], 2, py_cmd);
-					DaiControl::doEmSamples(argv[3], argv[4], 3, py_cmd);
-				}
-
-			}
-			// expecting -random fg tab em
-			else if (strcmp(argv[1], "-random") == 0) {
-				DaiControl::doEm(argv[2], argv[3], argv[4], 1);
-			} else if (strcmp(argv[1], "-uniform") == 0) {
-				DaiControl::doEm(argv[2], argv[3], argv[4], 2);
-			}
-
-			else if (strcmp(argv[1], "-noise") == 0) {
-				DaiControl::doEm(argv[2], argv[3], argv[4], 3);
-			} else if (strcmp(argv[1], "-all") == 0) {
-				DaiControl::doEm(argv[2], argv[3], argv[4], 0);
-				DaiControl::doEm(argv[2], argv[3], argv[4], 1);
-				DaiControl::doEm(argv[2], argv[3], argv[4], 2);
-				DaiControl::doEm(argv[2], argv[3], argv[4], 3);
+		else if (strcmp(argv[1], "-noise") == 0) {
+			DaiControl::doEm(argv[2], argv[3], argv[4], 3);
+		} else if (strcmp(argv[1], "-all") == 0) {
+			DaiControl::doEm(argv[2], argv[3], argv[4], 0);
+			DaiControl::doEm(argv[2], argv[3], argv[4], 1);
+			DaiControl::doEm(argv[2], argv[3], argv[4], 2);
+			DaiControl::doEm(argv[2], argv[3], argv[4], 3);
 #ifdef DO_RANDOM_EM
-				doRandomEM(argv[2], argv[3], argv[4], 600, 15);
-				//doRandomEM(argv[2], argv[3], argv[4], 500, 3);
+			doRandomEM(argv[2], argv[3], argv[4], 600, 15);
+			//doRandomEM(argv[2], argv[3], argv[4], 500, 3);
 #endif
-			} else if (strcmp(argv[1], "-many_random") == 0)
-				DaiControl::doRandomEM(argv[2], argv[3], argv[4], 100, 15);
-			else {
-				DaiControl::printUsage();
-				return 0;
-			}
-
-		} else {
+		} else if (strcmp(argv[1], "-many_random") == 0)
+			DaiControl::doRandomEM(argv[2], argv[3], argv[4], 100, 15);
+		else {
 			DaiControl::printUsage();
 			return 0;
 		}
 
-		clock_t t2 = clock();
-		cout.precision(7);
-		cout << endl << "elapsed time (CPU): " << difftime(t2, t1) / 1e6
-				<< " seconds" << endl;
-
+	} else {
+		DaiControl::printUsage();
 		return 0;
 	}
+
+	clock_t t2 = clock();
+	cout.precision(7);
+	cout << endl << "elapsed time (CPU): " << difftime(t2, t1) / 1e6
+			<< " seconds" << endl;
+
+	return 0;
+}

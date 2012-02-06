@@ -8,7 +8,7 @@ class DaiControl {
 	private native double runEM(int numIterations);
 
 	static {
-		System.loadLibrary("DaiControl");
+		System.load("/data01/Projects/David_and_Erik/bullshit/ml/libdai/stochastic/DaiControl.so");
 	}
 
 	public static void main(String[] args) {
