@@ -63,7 +63,7 @@ public class DaiReduce2 extends Configured implements Tool {
 
 			DaiMapper dai = new DaiMapper();
 			FileSystem fs = FileSystem.get(conf);
-			String s = fs.getWorkingDirectory().getName();
+			//String s = fs.getWorkingDirectory().getName();
 			long dai_data = dai.createDai("dat/fg", "dat/tab", "dat/em");
 			dai.randomizeFG(dai_data);
 			dai.prepEM(dai_data);
@@ -133,10 +133,11 @@ public class DaiReduce2 extends Configured implements Tool {
 		//DistributedCache.addLocalFiles(jobConf, "libdaicontrol.so");
 		//DistributedCache.addFileToClassPath(new Path(), jobConf);
 		try{
-			DistributedCache.addCacheFile(
-					new URI("/data01/Projects/David_and_Erik/bullshit/ml/libdai/stochastic/libdaicontrol.so" +
-							"#libdaicontrol.so"), jobConf); 
-			//DistributedCache.addCacheFile(new URI("hdfs://host:port/libraries/libdaicontrol.so"),jobConf);
+//			DistributedCache.addCacheFile(
+//					new URI("/data01/Projects/David_and_Erik/bullshit/ml/libdai/stochastic/libdaicontrol.so" +
+//							"#libdaicontrol.so"), jobConf); 
+			//DistributedCache.addCacheFile(new URI("hdfs://host:port/libraries/libdaicontrol.so#libdaicontrol.so"),jobConf);
+			DistributedCache.addCacheFile(new URI("hdfs://localhost:9001/libraries/libdaicontrol.so#libdaicontrol.so"),jobConf);
 		} catch (URISyntaxException e) {
 			System.err.println(e);
 		}
