@@ -51,6 +51,10 @@ class Evidence {
          */
         void addEvidenceTabFile( std::istream& is, FactorGraph& fg );
 
+        std::vector<Observation> getEvidence() {
+        	return _samples;
+        }
+
         /// Returns number of stored samples
         size_t nrSamples() const { return _samples.size(); }
 
