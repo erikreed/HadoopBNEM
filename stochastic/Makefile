@@ -5,11 +5,19 @@ JAVA2=/usr/lib64/jvm/java-1.6.0-openjdk-1.6.0/include
 
 all: DaiControl.class libdaicontrol.so 
 
+lib.jar: hadoop/DaiReduce2.java
+	~/hadoop/apache-ant-1.8.2/bin/ant -f hadoop/make_jar.xml
 
-.PHONY: run clean
+hadoop: libdaicontrol.so lib.jar
+	#hadoop fs -copyFromLocal libdaicontrol.so /libraries/libdaicontrol.so && 
+	rm -rf DaiReduce2dai_temp && \
+		hadoop jar lib.jar -files libdaicontrol.so -Djava.library.path=. 3 3
+
+.PHONY: run clean hadoop
 
 clean:
 	rm -f *.log *.o *.so daicontrol *.class DaiControl.h
+	rm -rf DaiReduce2dai_temp
 
 run: all
 	java -Djava.library.path=. DaiControl
