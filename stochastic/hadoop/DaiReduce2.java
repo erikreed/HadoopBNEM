@@ -49,12 +49,32 @@ public class DaiReduce2 extends Configured implements Tool {
 		}
 
 		private JobConf conf;
-
+		private static Path fg_path = null;
+		private static Path em_path = null;
+		private static Path tab_path = null;
 		@Override
 		public void configure(JobConf job) {
 			conf = job;
+			Path[] cacheFiles;
+			try {
+				cacheFiles = DistributedCache.getLocalCacheFiles(conf);
+				if (null != cacheFiles && cacheFiles.length > 0) {
+					for (Path cachePath : cacheFiles) {
+						if (cachePath.getName().equals("fg")) 
+							fg_path = cachePath;
+						else if (cachePath.getName().equals("em")) 
+							em_path = cachePath;
+						else if (cachePath.getName().equals("tab")) 
+							tab_path = cachePath;
+					}
+				}
+			} catch (IOException e) {
+				System.err.println("IOException reading from distributed cache");
+				System.err.println(e.toString());
+			}
+
 		}
-		
+
 		public void map(LongWritable seed,
 				IntWritable numIter,
 				OutputCollector<LongWritable, DoubleWritable> out,
@@ -64,7 +84,8 @@ public class DaiReduce2 extends Configured implements Tool {
 			DaiMapper dai = new DaiMapper();
 			FileSystem fs = FileSystem.get(conf);
 			//String s = fs.getWorkingDirectory().getName();
-			long dai_data = dai.createDai("fg", "tab", "em");
+			long dai_data = dai.createDai(fg_path.toString(), 
+					tab_path.toString(), em_path.toString());
 			dai.randomizeFG(dai_data);
 			dai.prepEM(dai_data);
 			double l = dai.runEM(dai_data, numIter.get());
@@ -95,18 +116,18 @@ public class DaiReduce2 extends Configured implements Tool {
 		/**
 		 * Reduce task done, write output to a file.
 		 */
-//		@Override
-//		public void close() throws IOException {
-//			//write output to a file
-//			Path outDir = new Path(TMP_DIR, "out");
-//			Path outFile = new Path(outDir, "reduce-out");
-//			FileSystem fileSys = FileSystem.get(conf);
-//			SequenceFile.Writer writer = SequenceFile.createWriter(fileSys, conf,
-//					outFile, LongWritable.class, LongWritable.class, 
-//					CompressionType.NONE);
-//			writer.append(new LongWritable(numInside), new LongWritable(numOutside));
-//			writer.close();
-//		}
+		//		@Override
+		//		public void close() throws IOException {
+		//			//write output to a file
+		//			Path outDir = new Path(TMP_DIR, "out");
+		//			Path outFile = new Path(outDir, "reduce-out");
+		//			FileSystem fileSys = FileSystem.get(conf);
+		//			SequenceFile.Writer writer = SequenceFile.createWriter(fileSys, conf,
+		//					outFile, LongWritable.class, LongWritable.class, 
+		//					CompressionType.NONE);
+		//			writer.append(new LongWritable(numInside), new LongWritable(numOutside));
+		//			writer.close();
+		//		}
 	}
 
 	public static void start_mapreduce(int numMaps, int numIter, JobConf jobConf
@@ -128,14 +149,14 @@ public class DaiReduce2 extends Configured implements Tool {
 		// turn off speculative execution, because DFS doesn't handle
 		// multiple writers to the same file.
 		jobConf.setSpeculativeExecution(false);
-//http://developer.yahoo.com/hadoop/tutorial/module5.html might have better syntax for distr. cache
-		
+		//http://developer.yahoo.com/hadoop/tutorial/module5.html might have better syntax for distr. cache
+
 		//DistributedCache.addLocalFiles(jobConf, "libdaicontrol.so");
 		//DistributedCache.addFileToClassPath(new Path(), jobConf);
 		try{
-//			DistributedCache.addCacheFile(
-//					new URI("/data01/Projects/David_and_Erik/bullshit/ml/libdai/stochastic/libdaicontrol.so" +
-//							"#libdaicontrol.so"), jobConf); 
+			//			DistributedCache.addCacheFile(
+			//					new URI("/data01/Projects/David_and_Erik/bullshit/ml/libdai/stochastic/libdaicontrol.so" +
+			//							"#libdaicontrol.so"), jobConf); 
 			//DistributedCache.addCacheFile(new URI("hdfs://host:port/libraries/libdaicontrol.so#libdaicontrol.so"),jobConf);
 
 
@@ -154,10 +175,10 @@ public class DaiReduce2 extends Configured implements Tool {
 		FileOutputFormat.setOutputPath(jobConf, outDir);
 
 		final FileSystem fs = FileSystem.get(jobConf);
-//		if (fs.exists(TMP_DIR)) {
-//			throw new IOException("Tmp directory " + fs.makeQualified(TMP_DIR)
-//					+ " already exists.  Please remove it first.");
-//		}
+		//		if (fs.exists(TMP_DIR)) {
+		//			throw new IOException("Tmp directory " + fs.makeQualified(TMP_DIR)
+		//					+ " already exists.  Please remove it first.");
+		//		}
 		if (!fs.mkdirs(inDir)) {
 			throw new IOException("Cannot create input directory " + inDir);
 		}
@@ -186,17 +207,17 @@ public class DaiReduce2 extends Configured implements Tool {
 			JobClient.runJob(jobConf);
 			final double duration = (System.currentTimeMillis() - startTime)/1000.0;
 			System.out.println("Job Finished in " + duration + " seconds");
-//
-//			//read outputs
-//			Path inFile = new Path(outDir, "reduce-out");
-//			LongWritable numInside = new LongWritable();
-//			LongWritable numOutside = new LongWritable();
-//			SequenceFile.Reader reader = new SequenceFile.Reader(fs, inFile, jobConf);
-//			try {
-//				reader.next(numInside, numOutside);
-//			} finally {
-//				reader.close();
-//			}
+			//
+			//			//read outputs
+			//			Path inFile = new Path(outDir, "reduce-out");
+			//			LongWritable numInside = new LongWritable();
+			//			LongWritable numOutside = new LongWritable();
+			//			SequenceFile.Reader reader = new SequenceFile.Reader(fs, inFile, jobConf);
+			//			try {
+			//				reader.next(numInside, numOutside);
+			//			} finally {
+			//				reader.close();
+			//			}
 		}
 		finally {
 			fs.delete(TMP_DIR, true);
