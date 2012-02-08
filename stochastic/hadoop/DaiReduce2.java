@@ -64,7 +64,7 @@ public class DaiReduce2 extends Configured implements Tool {
 			DaiMapper dai = new DaiMapper();
 			FileSystem fs = FileSystem.get(conf);
 			//String s = fs.getWorkingDirectory().getName();
-			long dai_data = dai.createDai("dat/fg", "dat/tab", "dat/em");
+			long dai_data = dai.createDai("fg", "tab", "em");
 			dai.randomizeFG(dai_data);
 			dai.prepEM(dai_data);
 			double l = dai.runEM(dai_data, numIter.get());
@@ -128,7 +128,7 @@ public class DaiReduce2 extends Configured implements Tool {
 		// turn off speculative execution, because DFS doesn't handle
 		// multiple writers to the same file.
 		jobConf.setSpeculativeExecution(false);
-
+//http://developer.yahoo.com/hadoop/tutorial/module5.html might have better syntax for distr. cache
 		
 		//DistributedCache.addLocalFiles(jobConf, "libdaicontrol.so");
 		//DistributedCache.addFileToClassPath(new Path(), jobConf);
@@ -137,7 +137,12 @@ public class DaiReduce2 extends Configured implements Tool {
 //					new URI("/data01/Projects/David_and_Erik/bullshit/ml/libdai/stochastic/libdaicontrol.so" +
 //							"#libdaicontrol.so"), jobConf); 
 			//DistributedCache.addCacheFile(new URI("hdfs://host:port/libraries/libdaicontrol.so#libdaicontrol.so"),jobConf);
-			DistributedCache.addCacheFile(new URI("hdfs://localhost:9001/libraries/libdaicontrol.so#libdaicontrol.so"),jobConf);
+
+
+			DistributedCache.addCacheFile(new URI("hdfs://localhost:9000/user/erik/dat/em#em"),jobConf);
+			DistributedCache.addCacheFile(new URI("hdfs://localhost:9000/user/erik/dat/fg#fgm"),jobConf);
+			DistributedCache.addCacheFile(new URI("hdfs://localhost:9000/user/erik/dat/tab#tab"),jobConf);
+			DistributedCache.addCacheFile(new URI("hdfs://localhost:9000/libraries/libdaicontrol.so#libdaicontrol.so"),jobConf);
 		} catch (URISyntaxException e) {
 			System.err.println(e);
 		}
@@ -194,7 +199,7 @@ public class DaiReduce2 extends Configured implements Tool {
 //			}
 		}
 		finally {
-//			fs.delete(TMP_DIR, true);
+			fs.delete(TMP_DIR, true);
 		}
 	}
 
