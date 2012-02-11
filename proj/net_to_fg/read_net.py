@@ -45,8 +45,19 @@ class potential:
         tmp = tmp.replace('(','').replace(')','').replace('|',' ').split()
         #print tmp
         self.node = tmp[0]
+        #print self.data
+        #print self.node
         self.parents = [tmp[x] for x in range(1,len(tmp))]
-        print self.parents
+        #print self.parents
+        share(self)
+
+#a map from node parameter tuple -> list of all node names that share identical parameters
+sharable = dict()
+def share(p):
+    if p.data in sharable:
+        sharable[p.data].append(p.node)
+    else:
+        sharable[p.data] = [p.node]
 
 nodes = []
 potentials = []
@@ -81,7 +92,7 @@ for line in open(infile, 'r'):
     prevline = line
     lnum +=1
 
-print 'We have', len(nodes), 'nodes and', len(potentials), 'potentials.'
+#print 'We have', len(nodes), 'nodes and', len(potentials), 'potentials.'
 
 #assign unique integer pseudonyms to the nodes
 pseudonym = dict()
@@ -133,6 +144,8 @@ def print_potential(i, f):
     ans += '\n'
     f.write(ans)
 
+for s in sharable.values():
+    print ' '.join(s)
 
 f = open(outfile, 'w')
 f.write(str(len(nodes))+'\n\n')

@@ -1,4 +1,5 @@
-#write_em2.py
+#write_em.py
+#input parameters specifically for sharing in adapt
 
 import sys
 import os
