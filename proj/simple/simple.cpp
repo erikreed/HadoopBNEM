@@ -691,7 +691,7 @@ void doRandomEM(char* fgIn, char* tabIn, char* emIn, size_t rand_trials, size_t 
 #pragma omp parallel for \
 		private(fg) \
 		schedule(static, 4)
-		//firstprivate(rand_trials,fg_orig, trials_dir, fixedVars,emFile, samples)
+	//firstprivate(rand_trials,fg_orig, trials_dir, fixedVars,emFile, samples)
 	for (size_t trials=1; trials<=rand_trials; trials++) {
 
 		stringstream trials_out;
@@ -868,12 +868,12 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 	cout << "Max samples: " << EM_MAX_SAMPLES << ". Increase by " <<
 			EM_SAMPLES_DELTA << endl;
 	cout << "Writing results to: " << outname.c_str() << endl;
-/*
+	/*
 	ofstream fout;
 	fout.open (outname.c_str());
 	fout.precision(12);
 	fout << "numSamples\tlikelihood\titerations\terror" << endl;
-*/
+	 */
 	// check if .tab exists
 	//scope hack
 	string::size_type pos = 0;
@@ -1012,24 +1012,25 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 				}
 #endif
 				double fg_diff = compareFG(&inf1->fg(), &fg_orig);
-//				trials_out << em.Iterations() << "\t" << l1 << "\t" <<
-//						fg_diff << endl;
+				//				trials_out << em.Iterations() << "\t" << l1 << "\t" <<
+				//						fg_diff << endl;
 				ss_data[(i-EM_INIT_SAMPLES)/EM_SAMPLES_DELTA*RANDOM_EM_TRIALS+k] << em.Iterations() << "\t" << l1 << "\t" <<
 						fg_diff << endl;
 			}
 			double fg_diff = compareFG(&inf1->fg(), &fg_orig);
-//			sampledataout << e.nrSamples() << "\t" << l1 << "\t"
-//					<< em.Iterations() << "\t" << fg_diff << endl;
+			//			sampledataout << e.nrSamples() << "\t" << l1 << "\t"
+			//					<< em.Iterations() << "\t" << fg_diff << endl;
 
 			delete inf1;
 
 		}
-//#pragma omp critical
-//		{
-//			fout << sampledataout.str();
-//		}
+		//#pragma omp critical
+		//		{
+		//			fout << sampledataout.str();
+		//		}
 
 	}
+
 	cout << "writing data to files... " << trials_dir << endl;
 	//fout.close();
 
