@@ -21,10 +21,10 @@ using namespace dai;
 
 // constants for compareEM(...)
 const size_t EM_MAX_SAMPLES =5000;
-const size_t EM_SAMPLES_DELTA= 250;
-const size_t EM_INIT_SAMPLES =250;
+const size_t EM_SAMPLES_DELTA= 1000;
+const size_t EM_INIT_SAMPLES =1000;
 
-const Real LIB_EM_TOLERANCE = 1e-4; // doesn't have an effect...
+const Real LIB_EM_TOLERANCE = 1e-4;
 const size_t EM_MAX_ITER = 100;
 //#define OLD_FIXING
 
@@ -947,6 +947,8 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 	e1.addEvidenceTabFile( estream2, fg );
 	typedef std::map<Var, size_t> Observation;
 	vector<Observation> samples = e1.getEvidence();
+
+	ParameterEstimation::loadDefaultRegistry();
 	//	EMAlg::LOG_Z_TOL_DEFAULT = LIB_EM_TOLERANCE;
 	//	EMAlg::MAX_ITERS_DEFAULT = EM_MAX_ITER;
 
@@ -955,35 +957,30 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 	stringstream *ss_data = new stringstream[num_sample_iterations*RANDOM_EM_TRIALS];
 
 	// TODO: fixed params not local in this loop
-#pragma omp parallel for \
-		schedule(static, 1) \
-		firstprivate(fg_orig, emFile,init, py_cmd, samples)
+
 	for (size_t i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i+=EM_SAMPLES_DELTA) {
 		cout << "samples: " << i << endl;
-		stringstream maxiterss;
-		stringstream sampledataout;
-		FactorGraph local_fg = *fg.clone();
-
-
+		vector<Observation> samples_copy = samples;
+		random_shuffle ( samples_copy.begin(), samples_copy.end() );
+		samples_copy.resize(i);
+#pragma omp parallel for \
+		schedule(static, 1)
 		for (size_t k=0; k<RANDOM_EM_TRIALS; k++) {
+			stringstream maxiterss;
+			stringstream sampledataout;
+			//FactorGraph local_fg = *fg.clone();
 			PropertySet infprops;
 			infprops.set( "verbose", VERBOSE );
 			infprops.set( "updates", string("HUGIN") );
-			InfAlg* inf1 = newInfAlg( INF_TYPE, local_fg, infprops );
+			InfAlg* inf1 = newInfAlg( INF_TYPE, fg, infprops );
 			if (init == 1)
 				randomize_fg(&inf1->fg());
 			else if (init == 3)
-				noise_fg(&local_fg);
+				noise_fg(&inf1->fg());
 
 			//			stringstream trials_out;
 			//			trials_out << "Iteration\tLikelihood\tL2_error" << endl;
 			ss_data[(i-EM_INIT_SAMPLES)/EM_SAMPLES_DELTA*RANDOM_EM_TRIALS+k] << "Iteration\tLikelihood\tL2_error" << endl;
-
-			vector<Observation> samples_copy = samples;
-			random_shuffle ( samples_copy.begin(), samples_copy.end() );
-			samples_copy.resize(i);
-
-
 
 			inf1->init();
 			Evidence e(samples_copy);
@@ -1040,7 +1037,8 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 		system(string("mkdir -p ").append(temp_s).c_str());
 		for (size_t k=0; k<RANDOM_EM_TRIALS; k++) {
 			ofstream f_outl2;
-			f_outl2.open(temp_s.append(convertInt(k)).c_str());
+			string tmp = temp_s;
+			f_outl2.open(tmp.append(convertInt(k)).c_str());
 			f_outl2 << ss_data[(i-EM_INIT_SAMPLES)/EM_SAMPLES_DELTA*RANDOM_EM_TRIALS+k].str() << endl;
 			f_outl2.close();
 		}

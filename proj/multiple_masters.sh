@@ -7,14 +7,14 @@ DEST=new_bnet_results
 
 #BNETS="adapt_mini1 adapt_subset2_large adapt10_v7e \
 	#		diabetes link mildew pigs water"
-BNETS="diabetes"  #pigs water link adapt10_v7e mildew diabetes"
+BNETS="alarm"  #pigs water link adapt10_v7e mildew diabetes"
 BNET_DIR=bnets
 
 export NUM_SAMPLES=5000
 
 echo Using $BNETS
 
-export OMP_NUM_THREADS=64 #uncomment for maxthreads (64)
+export OMP_NUM_THREADS=50 #uncomment for maxthreads (64)
 echo Using $OMP_NUM_THREADS threads
 
 
@@ -28,15 +28,19 @@ do
 	do
 		sharedvars=`python net_to_fg/read_net_erik.py $BNET_DIR/$net.net $s`
 		echo trying hidden/shared nodes: $sharedvars
-		export HIDDEN_NODES=$sharedvars
-		export SHARED_NODES=$sharedvars
-		./master.sh $BNET_DIR/$net.net
-		mkdir -p $DEST/$net
-		mv out $DEST/$net/s$s
 
-		export SHARED_NODES=''
-		./master.sh $BNET_DIR/$net.net
-		mv out $DEST/$net/h$s
+		export HIDDEN_NODES=$sharedvars
+		if [ ! -f "$DEST/$net/s$s/rand_trials/n5000/1" ]; then
+			export SHARED_NODES=$sharedvars
+			./master.sh $BNET_DIR/$net.net
+			mkdir -p $DEST/$net
+			mv out $DEST/$net/s$s
+		fi
+		if [ ! -f "$DEST/$net/h$s/rand_trials/n5000/1" ]; then
+			export SHARED_NODES=''
+			./master.sh $BNET_DIR/$net.net
+			mv out $DEST/$net/h$s
+		fi
 	done
 	echo completed $net
 done
