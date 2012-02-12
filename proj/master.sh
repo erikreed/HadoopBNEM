@@ -79,8 +79,8 @@ else
 	echo
 	mv fg/$TAB tab/$TAB
 fi
-SUMMARY=`python net_to_fg/summarize_net.py dat/$DAT`
-echo $SUMMARY
+#SUMMARY=`python net_to_fg/summarize_net.py dat/$DAT`
+#echo $SUMMARY
 echo
 echo Hiding nodes: $NODES
 echo Writing .tab with hidden nodes to dat/$DAT

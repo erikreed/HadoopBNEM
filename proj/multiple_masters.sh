@@ -7,7 +7,7 @@ DEST=new_bnet_results
 
 #BNETS="adapt_mini1 adapt_subset2_large adapt10_v7e \
 	#		diabetes link mildew pigs water"
-BNETS="alarm"  #pigs water link adapt10_v7e mildew diabetes"
+BNETS="alarm water pigs"  #pigs water link adapt10_v7e mildew diabetes"
 BNET_DIR=bnets
 
 export NUM_SAMPLES=5000
