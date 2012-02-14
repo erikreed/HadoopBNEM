@@ -36,12 +36,12 @@ public class DaiReduce2 extends Configured implements Tool {
     public static class DaiMapper extends MapReduceBase
         implements Mapper<LongWritable, IntWritable, LongWritable, DoubleWritable> {
 
-            private native long createDai(String fg, String ev, String em);
-            private native void prepEM(long data);
-            private native double runEM(long data, int numIterations);
-            private native void freeMem(long data);
-            private native long copyDai(long data);
-            private native void randomizeFG(long data);
+            private static native long createDai(String fg, String ev, String em);
+            private static native void prepEM(long data);
+            private static native double runEM(long data, int numIterations);
+            private static native void freeMem(long data);
+            private static native long copyDai(long data);
+            private static native void randomizeFG(long data);
 
             static {
                 System.loadLibrary("daicontrol");
@@ -83,15 +83,17 @@ public class DaiReduce2 extends Configured implements Tool {
                     Reporter reporter) throws IOException {
 
 
-                DaiMapper dai = new DaiMapper();
+                //DaiMapper dai = new DaiMapper();
                 FileSystem fs = FileSystem.get(conf);
                 //String s = fs.getWorkingDirectory().getName();
-                long dai_data = dai.createDai(fg_path.toString(), 
+//System.out.println(fg_path.toString() + "," +
+//                        tab_path.toString() + "," + em_path.toString());
+                long dai_data = createDai(fg_path.toString(), 
                         tab_path.toString(), em_path.toString());
-                dai.randomizeFG(dai_data);
-                dai.prepEM(dai_data);
-                double l = dai.runEM(dai_data, numIter.get());
-                dai.freeMem(dai_data);
+                randomizeFG(dai_data);
+                prepEM(dai_data);
+                double l = runEM(dai_data, numIter.get());
+                freeMem(dai_data);
 
                 out.collect(seed, new DoubleWritable(l));
             }

@@ -1233,7 +1233,7 @@ struct EM_Data {
  * Signature: (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/Object;
  */
 JNIEXPORT jlong JNICALL Java_DaiControl_createDai
-  (JNIEnv *env, jobject obj, jstring jstr1, jstring jstr2, jstring jstr3) {
+  (JNIEnv *env, jclass jcl, jstring jstr1, jstring jstr2, jstring jstr3) {
 	EM_Data *dat = new EM_Data();
 
 	const char *fgIn = env->GetStringUTFChars(jstr1, 0);
@@ -1261,7 +1261,7 @@ JNIEXPORT jlong JNICALL Java_DaiControl_createDai
  * Signature: (Ljava/lang/Object;I)D
  */
 JNIEXPORT jdouble JNICALL Java_DaiControl_runEM
-  (JNIEnv *env, jobject obj, jlong em_jobj, jint numIter) {
+  (JNIEnv *env, jclass jcl, jlong em_jobj, jint numIter) {
 
 	EM_Data* dat = (EM_Data*) em_jobj;
 	double l = dat->runEM(numIter);
@@ -1284,7 +1284,7 @@ JNIEXPORT void JNICALL Java_DaiControl_freeMem
  * Signature: (J)J
  */
 JNIEXPORT jlong JNICALL Java_DaiControl_copyDai
-  (JNIEnv *env, jobject jobj, jlong em_jobj) {
+  (JNIEnv *env, jclass jcl, jlong em_jobj) {
 	EM_Data* dat = (EM_Data*) em_jobj;
 	EM_Data* datCopy = new EM_Data(dat);
 	return (jlong) datCopy;
@@ -1296,7 +1296,7 @@ JNIEXPORT jlong JNICALL Java_DaiControl_copyDai
  * Signature: (J)V
  */
 JNIEXPORT void JNICALL Java_DaiControl_randomizeFG
-(JNIEnv *env, jobject jobj, jlong em_jobj) {
+(JNIEnv *env, jclass jcl, jlong em_jobj) {
 	EM_Data* dat = (EM_Data*) em_jobj;
 	DaiControl::randomize_fg(&dat->_fg);
 }
@@ -1307,7 +1307,7 @@ JNIEXPORT void JNICALL Java_DaiControl_randomizeFG
  * Signature: (J)J
  */
 JNIEXPORT void JNICALL Java_DaiControl_prepEM
-(JNIEnv *env, jobject jobj, jlong em_jobj) {
+(JNIEnv *env, jclass jcl, jlong em_jobj) {
 	EM_Data* dat = (EM_Data*) em_jobj;
 	dat->prepEM();
 }
