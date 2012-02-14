@@ -8,7 +8,6 @@
 #include <time.h>
 #include <fstream>
 #include <math.h>
-#include <omp.h>
 #include <stdio.h>
 #include <jni.h>
 #include <DaiControl.h>
@@ -287,7 +286,6 @@ public:
 		std::vector<size_t> state;
 		for (size_t t = 0; t < nrSamples; t++) {
 			gibbsSampler.init();
-#pragma omp critical
 			{
 				gibbsSampler.run();
 			}
@@ -722,10 +720,6 @@ public:
 		typedef std::map<Var, size_t> Observation;
 		vector<Observation> samples = e1.getEvidence();
 
-#pragma omp parallel for \
-		private(fg) \
-		schedule(static, 4) \
-		firstprivate(rand_trials,fg_orig, trials_dir, fixedVars,emFile, samples)
 		for (size_t trials = 1; trials <= rand_trials; trials++) {
 			srand((unsigned) time(NULL));
 			rnd_seed((unsigned) time(NULL));
@@ -804,7 +798,6 @@ public:
 			double fg_diff = compareFG(current_fg, &fg_orig);
 			double kl_diff = KLcompareFG(current_fg, &fg_orig);
 
-#pragma omp critical
 			{
 				s_out_l.precision(16);
 				s_out_l << em.Iterations() << "\t" << l << "\t" << fg_diff
@@ -907,10 +900,6 @@ public:
 		fout << "numSamples\tlikelihood\titerations\terror" << endl;
 
 		// TODO: fixed params not local in this loop
-#pragma omp parallel for \
-		schedule(static, 2) \
-		firstprivate(fg_orig, emFile,fg, init, py_cmd) \
-		num_threads(32)
 		for (int i = EM_INIT_SAMPLES; i <= EM_MAX_SAMPLES; i
 		+= EM_SAMPLES_DELTA) {
 			FactorGraph local_fg = *fg.clone();
@@ -992,7 +981,6 @@ public:
 #endif
 			}
 			double fg_diff = compareFG(&inf1->fg(), &fg_orig);
-#pragma omp critical
 			{
 				fout << e.nrSamples() << "\t" << l1 << "\t" << em.Iterations()
 												<< "\t" << fg_diff << endl;
