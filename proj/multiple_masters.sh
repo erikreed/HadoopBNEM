@@ -4,10 +4,10 @@
 # newerouput (i.e. 2 hidden) 15 | testbed_setup
 
 DEST=new_bnet_results
-MIN_SHARED=10
+MIN_SHARED=1
 #BNETS="adapt_mini1 adapt_subset2_large adapt10_v7e \
 	#		diabetes link mildew pigs water"
-BNETS="pigs ADAPT_PHM10_P2 link"  #pigs water link adapt10_v7e mildew diabetes"
+BNETS="adapt_mini1 adapt_subset2_large alarm pigs"  #pigs water link adapt10_v7e mildew diabetes"
 BNET_DIR=bnets
 
 export NUM_SAMPLES=5000
@@ -32,13 +32,13 @@ do
 		echo trying hidden/shared nodes: $sharedvars
 
 		export HIDDEN_NODES=$sharedvars
-		if [ ! -f "$DEST/$net/s$s/rand_trials/n5000/1" ]; then
+		if [ ! -f "$DEST/$net/s$s/rand_trials/n1600/1" ]; then
 			export SHARED_NODES=$sharedvars
 			./master.sh $BNET_DIR/$net.net
 			mkdir -p $DEST/$net
 			mv out $DEST/$net/s$s
 		fi
-		if [ ! -f "$DEST/$net/h$s/rand_trials/n5000/1" ]; then
+		if [ ! -f "$DEST/$net/h$s/rand_trials/n1600/1" ]; then
 			export SHARED_NODES=''
 			./master.sh $BNET_DIR/$net.net
 			mv out $DEST/$net/h$s

@@ -13,16 +13,16 @@
 
 using namespace std;
 using namespace dai;
-
+// TODO: make random initialization pragma critical
 //#define DO_RANDOM_EM // does the many iterations of random EM
 #define INTERMEDIATE_VALUES
 #define NOISE_AMOUNT .05 // corresponding to 5%
 #define INF_TYPE "JTREE"
 
 // constants for compareEM(...)
-const size_t EM_MAX_SAMPLES =5000;
-const size_t EM_SAMPLES_DELTA= 1000;
-const size_t EM_INIT_SAMPLES =1000;
+const size_t EM_MAX_SAMPLES =1600;
+const size_t EM_SAMPLES_DELTA= 2; // now set to double each time
+const size_t EM_INIT_SAMPLES =100;
 
 const Real LIB_EM_TOLERANCE = 1e-4;
 const size_t EM_MAX_ITER = 100;
@@ -957,11 +957,12 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 	stringstream *ss_data = new stringstream[num_sample_iterations*RANDOM_EM_TRIALS];
 
 	// TODO: fixed params not local in this loop
-
-	for (size_t i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i+=EM_SAMPLES_DELTA) {
+	// TODO: keep samples identical between shared/non-shared
+	//
+	for (size_t i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i*=EM_SAMPLES_DELTA) {
 		cout << "samples: " << i << endl;
 		vector<Observation> samples_copy = samples;
-		random_shuffle ( samples_copy.begin(), samples_copy.end() );
+		//random_shuffle ( samples_copy.begin(), samples_copy.end() );
 		samples_copy.resize(i);
 #pragma omp parallel for \
 		schedule(static, 1)
@@ -1031,7 +1032,7 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 	cout << "writing data to files... " << trials_dir << endl;
 	//fout.close();
 
-	for (size_t i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i+=EM_SAMPLES_DELTA) {
+	for (size_t i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i*=EM_SAMPLES_DELTA) {
 		string temp_s = trials_dir;
 		temp_s = temp_s.append("n").append(convertInt(i)).append("/");
 		system(string("mkdir -p ").append(temp_s).c_str());
