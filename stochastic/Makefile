@@ -14,7 +14,8 @@ lib.jar: hadoop/bin/DaiReduce2.class
 
 hadoop: libdaicontrol.so lib.jar
 	rm -rf DaiReduce2dai_temp && \
-		hadoop jar lib.jar 1 1
+		hadoop jar lib.jar -D mapred.child.env="LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/lib64:/usr/lib/x86_64-linux-gnu"  \
+			1 1
 
 mvso: libdaicontrol.so
 	hadoop fs -copyFromLocal libdaicontrol.so /libraries/libdaicontrol.so && \

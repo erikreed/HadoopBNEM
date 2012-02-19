@@ -1273,7 +1273,7 @@ JNIEXPORT jdouble JNICALL Java_DaiControl_runEM
  * Signature: (Ljava/lang/Object;)V
  */
 JNIEXPORT void JNICALL Java_DaiControl_freeMem
-  (JNIEnv *env, jobject job1, jlong em_jobj) {
+  (JNIEnv *env, jclass jcl, jlong em_jobj) {
 	EM_Data* dat = (EM_Data*) em_jobj;
 	delete dat;
 }
