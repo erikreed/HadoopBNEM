@@ -21,7 +21,7 @@ mvso: libdaicontrol.so
 	hadoop fs -copyFromLocal libdaicontrol.so /libraries/libdaicontrol.so && \
 	hadoop fs -copyFromLocal dat dat
 
-.PHONY: run clean hadoop mvjar
+.PHONY: run clean hadoop mvjar mvso
 
 clean:
 	rm -f *.log *.o *.so *.a *.jar daicontrol *.class DaiControl.h && \
