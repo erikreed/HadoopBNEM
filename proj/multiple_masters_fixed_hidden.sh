@@ -27,24 +27,23 @@ do
 	echo set of possible shared params for $net: $shared_sorted
 	for s in $shared_sorted
 	do
-		if (( SHARED -eq s )); then
+		if [ $SHARED -eq $s ]; then
 			sharedvars=`python net_to_fg/read_net_erik.py $BNET_DIR/$net.net $s`
 			echo using hidden nodes: $sharedvars
-			for j in {2..$SHARED..2}
+			for j in $(seq 2 2 $SHARED)
 			do
-				# split and select only $MIN_SHARED
 				svars=`echo $sharedvars |  tr " " "\n" | head -$j`
 				echo using shared nodes: $svars
 
 				export HIDDEN_NODES=$sharedvars
 				export SHARED_NODES=$svars
-				#./master.sh $BNET_DIR/$net.net
-				#mkdir -p $DEST/$net
-				#mv out $DEST/$net/s$s
+				./master.sh $BNET_DIR/$net.net
+				mkdir -p $DEST/$net
+				mv out $DEST/$net/s$j
 
 				export SHARED_NODES=''
-				#./master.sh $BNET_DIR/$net.net
-				#mv out $DEST/$net/h$s
+				./master.sh $BNET_DIR/$net.net
+				mv out $DEST/$net/h$j
 			done
 		fi
 	done
