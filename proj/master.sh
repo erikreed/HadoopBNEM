@@ -119,6 +119,7 @@ echo >> out/$INFO
 echo "Factorgraph: $filename" >> out/$INFO
 echo "NumSamples: $NUM_SAMPLES" >> out/$INFO
 echo "Hidden nodes: $HIDDEN_NODES" >> out/$INFO
+echo "CPTs [total_entries/num_parents]: `python net_to_fg/CPT_dim.py dat/$DAT $HIDDEN_NODES`" >> out/$INFO
 echo "Fixed nodes: $FIXED_NODES" >> out/$INFO
 echo "Shared nodes: $SHARED_NODES" >> out/$INFO
 echo >> out/$INFO
