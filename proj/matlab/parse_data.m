@@ -13,7 +13,7 @@ MAX_SAMPLES = intmax;
 MIN_HIDDEN = -1;
 MAX_HIDDEN = intmax;
 
-CPT_PLOT_SAMPLES = log2(800);
+CPT_PLOT_SAMPLES = log2(50);
 
 %% Run
 listing1 = dir;
@@ -192,7 +192,9 @@ for i=3:length(listing1)
         [tmp,i4]=sort(cpt_data(:,1));
         cpt_data = cpt_data(i4,:); % sort in ascending order
         % total CPT size / number of parents
-        cpt_data_ratio = cpt_data(1:length(num_hidden_h),2)./cpt_data(1:length(num_hidden_h),3);
+        %         cpt_data_ratio = cpt_data(end-length(num_hidden_h)+1:end,2) ...
+        %             ./cpt_data(end-length(num_hidden_h)+1:end,3);
+        cpt_data_ratio = cpt_data(end-length(num_hidden_h)+1:end,3);
         
         % for each number of samples (of shared)
         for ij = 1:length(num_samples)
@@ -210,20 +212,20 @@ for i=3:length(listing1)
             legendNames2 = [legendNames2; cellstr(strcat(numSamplesStr,'s'))];
             subplot(3,1,1)
             hold all
-            ebl = errorbar(tmp_numHidden,nSamplesData(i3,2),nSamplesData(i3,3), '--*');
+            ebl = errorbar(tmp_numHidden,nSamplesData(i3,2),nSamplesData(i3,3), ':*');
             
             subplot(3,1,2)
             hold all
-            errorbar(tmp_numHidden,nSamplesData(i3,4),nSamplesData(i3,5), '--*');
+            errorbar(tmp_numHidden,nSamplesData(i3,4),nSamplesData(i3,5), ':*');
             
             subplot(3,1,3)
             hold all
-            errorbar(tmp_numHidden,nSamplesData(i3,6),nSamplesData(i3,7), '--*');
+            errorbar(tmp_numHidden,nSamplesData(i3,6),nSamplesData(i3,7), ':*');
             
             % CPT figure
             if num_samples(ij) == CPT_PLOT_SAMPLES
                 [tmp_numHidden,i3]=sort(num_hidden_h);
-                if ~isequal(cpt_data(1:length(num_hidden_h),1),num_hidden_h(i3)')
+                if ~isequal(cpt_data(end-length(num_hidden_h)+1:end,1),num_hidden_h(i3)')
                     error('CPT file does not match!')
                 end
                 figure((i-1)*3+2)
@@ -253,17 +255,17 @@ for i=3:length(listing1)
             legendNames2 = [legendNames2; cellstr(strcat(numSamplesStr,'h'))];
             subplot(3,1,1)
             hold all
-            errorbar(tmp_numHidden,nSamplesData(i3,2),nSamplesData(i3,3), ':*', ...
+            errorbar(tmp_numHidden,nSamplesData(i3,2),nSamplesData(i3,3), '--*', ...
                 'color',ebl_color);
             
             subplot(3,1,2)
             hold all
-            errorbar(tmp_numHidden,nSamplesData(i3,4),nSamplesData(i3,5), ':*', ...
+            errorbar(tmp_numHidden,nSamplesData(i3,4),nSamplesData(i3,5), '--*', ...
                 'color',ebl_color);
             
             subplot(3,1,3)
             hold all
-            errorbar(tmp_numHidden,nSamplesData(i3,6),nSamplesData(i3,7), ':*', ...
+            errorbar(tmp_numHidden,nSamplesData(i3,6),nSamplesData(i3,7), '--*', ...
                 'color',ebl_color);
             
             % CPT begin
@@ -288,10 +290,10 @@ for i=3:length(listing1)
         end
         
         
-%         subplot(3,1,1)
-%         hold all
-%         plot(cpt_data(:,1),cpt_data(:,3),':')
-%         plot(cpt_data(:,1),cpt_data(:,2),':')
+        %         subplot(3,1,1)
+        %         hold all
+        %         plot(cpt_data(:,1),cpt_data(:,3),':')
+        %         plot(cpt_data(:,1),cpt_data(:,2),':')
         
         
         figure((i-1)*3)
@@ -336,7 +338,7 @@ for i=3:length(listing1)
         figure((i-1)*3+2)
         subplot(3,1,2)
         legend('shared','hidden');
-
+        print('-dpng', strcat(listing1(i).name,'3'))
     end
 end
 
