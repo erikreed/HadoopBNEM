@@ -1,21 +1,58 @@
-%% erikreed
-% use in the results folder
+%% erik reed
+%% plot parameter interactions
 clear all
 close all
+hold all
+for i=1:10
+    filenum=round(rand()*600);
+    fprintf('file %i\n',filenum)
+   trial = importdata(num2str(filenum)); 
+   lhood = trial.data(:,2);
+   err = trial.data(:,3);
+   plot(lhood,err,'-*')
+   
+end
+xlabel('log-likelihood')
+ylabel('error')
 
-%% Parameters (TODO)
+%% plot histograms
+clear all
+close all
+err = zeros(1,600)';
+lhood = zeros(1,600)';
+iter = zeros(1,600)';
+parfor i=1:600
+    fprintf('file %i\n',i)
+   trial = importdata(num2str(i)); 
+   lhood(i) = trial.data(end,2);
+   err(i) = trial.data(end,3);
+   iter(i) = length(trial.data(:,1));
+end
+fprintf('iter mean: %f\n',mean(iter))
+fprintf('iter std: %f\n',std(iter))
+% hist(err,20)
+% xlabel('error')
+% ylabel('frequency')
+% use in the results folder
+%% run
+close all
+clear all
+
+MARKER_TYPE = ['+','o','*','.','x','s','d','^','v','>','<'];
+
 ONLY_PLOT_SOME_BNETS = false;
 BNETS_TO_PLOT = [{'asd'},{'ponies'}];
-% strcmp({listing1.name}','pigs')
+
+ONLY_PLOT_SOME_SAMPLES = false;
 MIN_SAMPLES = -1;
 MAX_SAMPLES = intmax;
 
+ONLY_PLOT_SOME_HIDDEN = false;
 MIN_HIDDEN = -1;
 MAX_HIDDEN = intmax;
 
-CPT_PLOT_SAMPLES = log2(50);
+CPT_PLOT_SAMPLES = log2(800);
 
-%% Run
 listing1 = dir;
 
 for i=3:length(listing1)
@@ -23,6 +60,15 @@ for i=3:length(listing1)
         bn_name = listing1(i).name;
         if strcmp(bn_name,'cpt_counts') || listing1(i).name(1) == '.'
             continue;
+        end
+        if ONLY_PLOT_SOME_BNETS
+            for bnet_i=1:length(BNETS_TO_PLOT)
+                if sum(strcmp({listing1.name}',...
+                        BNETS_TO_PLOT(bnet_i)))>=1
+                    break
+                end
+                   continue
+            end
         end
         bn_name = strrep(bn_name, '_', '\_');
         listing2 = dir(listing1(i).name);
@@ -114,8 +160,7 @@ for i=3:length(listing1)
                     fprintf 'unfamiliar prefix\n'
                     continue
                 end
-                listing3 = dir(strcat(currentdir2, '\', ...
-                    'rand_trials'));
+                listing3 = dir(strcat(currentdir2, '\', 'rand_trials'));
                 % stores mean, std
                 num_iters = zeros(length(listing3)-2,2);
                 num_samples = zeros(length(listing3)-2,1);
@@ -163,9 +208,10 @@ for i=3:length(listing1)
                         num_error(i2,1),num_error(i2,2)}]];
                 end
                 % figure w/ num_samples x-axis
-                lineStyle = ':*';
+                marker_index = mod(j+1,length(MARKER_TYPE))+1;
+                lineStyle = strcat(':', MARKER_TYPE(marker_index));
                 if currentType == 'h'
-                    lineStyle = '--*';
+                    lineStyle = strcat('--', MARKER_TYPE(marker_index));
                 end
                 figure((i-1)*3)
                 
@@ -194,7 +240,7 @@ for i=3:length(listing1)
         % total CPT size / number of parents
         %         cpt_data_ratio = cpt_data(end-length(num_hidden_h)+1:end,2) ...
         %             ./cpt_data(end-length(num_hidden_h)+1:end,3);
-        cpt_data_ratio = cpt_data(end-length(num_hidden_h)+1:end,3);
+        cpt_data_ratio = cpt_data(end-length(num_hidden_h)+1:end,2);
         
         % for each number of samples (of shared)
         for ij = 1:length(num_samples)
@@ -206,27 +252,33 @@ for i=3:length(listing1)
             samplesIndicies = cell2mat(num_hidden_s_data(:,1)) == num_samples(ij);
             nSamplesData = allData(samplesIndicies,:);
             
+            marker_index = mod(ij,length(MARKER_TYPE));
+            
             figure((i-1)*3+1)
             % shared
             [tmp_numHidden,i3]=sort(num_hidden_s);
             legendNames2 = [legendNames2; cellstr(strcat(numSamplesStr,'s'))];
             subplot(3,1,1)
             hold all
-            ebl = errorbar(tmp_numHidden,nSamplesData(i3,2),nSamplesData(i3,3), ':*');
+            ebl = errorbar(tmp_numHidden,nSamplesData(i3,2),nSamplesData(i3,3),...
+                strcat(':',MARKER_TYPE(marker_index)));
             
             subplot(3,1,2)
             hold all
-            errorbar(tmp_numHidden,nSamplesData(i3,4),nSamplesData(i3,5), ':*');
+            errorbar(tmp_numHidden,nSamplesData(i3,4),nSamplesData(i3,5),...
+                strcat(':',MARKER_TYPE(marker_index)));
             
             subplot(3,1,3)
             hold all
-            errorbar(tmp_numHidden,nSamplesData(i3,6),nSamplesData(i3,7), ':*');
+            errorbar(tmp_numHidden,nSamplesData(i3,6),nSamplesData(i3,7),...
+                strcat(':',MARKER_TYPE(marker_index)));
             
             % CPT figure
             if num_samples(ij) == CPT_PLOT_SAMPLES
                 [tmp_numHidden,i3]=sort(num_hidden_h);
                 if ~isequal(cpt_data(end-length(num_hidden_h)+1:end,1),num_hidden_h(i3)')
-                    error('CPT file does not match!')
+%                     error('CPT file does not match!')
+                        fprintf('WARNING: CPT figure will be broken \n')
                 end
                 figure((i-1)*3+2)
                 subplot(3,1,1)
@@ -255,17 +307,20 @@ for i=3:length(listing1)
             legendNames2 = [legendNames2; cellstr(strcat(numSamplesStr,'h'))];
             subplot(3,1,1)
             hold all
-            errorbar(tmp_numHidden,nSamplesData(i3,2),nSamplesData(i3,3), '--*', ...
+            errorbar(tmp_numHidden,nSamplesData(i3,2),nSamplesData(i3,3), ...
+                strcat('--',MARKER_TYPE(marker_index)), ...
                 'color',ebl_color);
             
             subplot(3,1,2)
             hold all
-            errorbar(tmp_numHidden,nSamplesData(i3,4),nSamplesData(i3,5), '--*', ...
+            errorbar(tmp_numHidden,nSamplesData(i3,4),nSamplesData(i3,5), ...
+                strcat('--',MARKER_TYPE(marker_index)), ...
                 'color',ebl_color);
             
             subplot(3,1,3)
             hold all
-            errorbar(tmp_numHidden,nSamplesData(i3,6),nSamplesData(i3,7), '--*', ...
+            errorbar(tmp_numHidden,nSamplesData(i3,6),nSamplesData(i3,7), ...
+                strcat('--',MARKER_TYPE(marker_index)), ...
                 'color',ebl_color);
             
             % CPT begin
@@ -317,6 +372,7 @@ for i=3:length(listing1)
         %         subplot(3,1,3)
         %         legend(legendNames);
         print('-dpng', listing1(i).name)
+        saveas(gcf, listing1(i).name, 'fig')
         
         figure((i-1)*3+1)
         subplot(3,1,1)
@@ -333,12 +389,15 @@ for i=3:length(listing1)
             xlim([min(num_hidden_s),max(num_hidden_s)])
         end
         print('-dpng', strcat(listing1(i).name,'2'))
-        %         close all
+        saveas(gcf, strcat(listing1(i).name,'2'), 'fig')
         
         figure((i-1)*3+2)
         subplot(3,1,2)
         legend('shared','hidden');
         print('-dpng', strcat(listing1(i).name,'3'))
+        saveas(gcf, strcat(listing1(i).name,'3'), 'fig')
+        
+        close all
     end
 end
 
