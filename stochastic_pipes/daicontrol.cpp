@@ -9,7 +9,6 @@
 #include <fstream>
 #include <math.h>
 #include <stdio.h>
-
 //#include "hadoop/Pipes.hh"
 //#include "hadoop/TemplateFactory.hh"
 //#include "hadoop/StringUtils.hh"
@@ -802,7 +801,54 @@ std::vector<std::string> str_split(const std::string &s, char delim) {
     return str_split(s, delim, elems);
 }
 
-string mapper(const string& in) {
+Real EMAlg::hadoop_expectation( MaximizationStep &mstep ) {
+    Real logZ = 0;
+    Real likelihood = 0;
+
+    _estep.run();
+    logZ = _estep.logZ();
+
+    // Expectation calculation
+    for( Evidence::const_iterator e = _evidence.begin(); e != _evidence.end(); ++e ) {
+        InfAlg* clamped = _estep.clone();
+        // Apply evidence
+        for( Evidence::Observation::const_iterator i = e->begin(); i != e->end(); ++i )
+            clamped->clamp( clamped->fg().findVar(i->first), i->second );
+        clamped->init();
+        clamped->run();
+
+        likelihood += clamped->logZ() - logZ;
+
+        mstep.addExpectations( *clamped );
+
+        delete clamped;
+    }
+
+    // Maximization of parameters
+//    mstep.maximize( _estep.fg() );
+
+    return likelihood;
+}
+
+Real EMAlg::hadoop_maximization(Real likelihood, MaximizationStep &mstep ) {
+
+    // Maximization of parameters
+    mstep.maximize( _estep.fg() );
+
+    return likelihood;
+}
+
+
+Real EMAlg::hadoop_iterate() {
+    Real likelihood;
+    for( size_t i = 0; i < _msteps.size(); ++i )
+        likelihood = iterate( _msteps[i] );
+    _lastLogZ.push_back( likelihood );
+    ++_iters;
+    return likelihood;
+}
+
+void mapper(const string& in,vector<string>& key,vector<string>& val) {
 
 	vector<string> data = str_split(in, '*');
 	if (data.size() != 3)
@@ -811,6 +857,8 @@ string mapper(const string& in) {
 	string fgFile= data[1];
 	string tabFile= data[2];
 	cout << tabFile.size() << endl;
+
+//	return NULL;
 }
 
 string reduce(vector<string>& key, vector<string>& val) {
@@ -821,16 +869,19 @@ string reduce(vector<string>& key, vector<string>& val) {
 
 int main(int argc, char* argv[]) {
 
-	int numMappers = 5;
+	size_t numMappers = 5;
 
 	string emFile= readFile("dat/em");
 	string fgFile= readFile("dat/fg");
 	string tabFile= readFile("dat/tab");
 
 	vector<string> tabLines = str_split(tabFile, '\n');
-	numMappers = tabLines.size()/numMappers > numMappers ? numMappers : tabLines.size()/numMappers;
+//	numMappers = tabLines.size()/numMappers > numMappers ? numMappers : tabLines.size()/numMappers;
 
-	int samplesPerMapper = tabLines.size()/numMappers;
+	size_t samplesPerMapper = tabLines.size()/numMappers;
+
+	vector<string> mapDatForReducer;
+	vector<string> redDatForReducer;
 
 	size_t t = 0;
 	for (size_t i=0; i<numMappers; i++) {
@@ -838,9 +889,9 @@ int main(int argc, char* argv[]) {
 		datForMapper << emFile << "*" << fgFile << "*";
 		for (size_t j=0; j<samplesPerMapper && t<tabLines.size(); j++){
 			datForMapper << tabLines[t++] << '\n';
-			cout << "t: " << t << ", " << samplesPerMapper << endl;
 		}
-		mapper(datForMapper.str());
+		string s = datForMapper.str();
+		mapper(s,mapDatForReducer,redDatForReducer);
 	}
 
 	return 0;
