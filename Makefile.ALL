@@ -32,7 +32,7 @@ WITH_CBP=true
 WITH_DECMAP=true
 
 # Build with debug info? (slower but safer)
-DEBUG=
+DEBUG=true
 
 # Build doxygen documentation? (doxygen and TeX need to be installed)
 WITH_DOC=

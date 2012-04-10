@@ -141,56 +141,6 @@ class CondProbEstimation : private ParameterEstimation {
         virtual size_t probSize() const { return _stats.size(); }
 };
 
-/// Fixes the parameters.
-/** \author Erik Reed
- */
-class FixedProbEstimation : private ParameterEstimation {
-    private:
-        /// Number of states of the variable of interest
-        size_t _target_dim;
-        /// Current pseudocounts
-        Prob _stats;
-        /// Initial pseudocounts
-        Prob _initial_stats;
-
-    public:
-        /// Constructor
-        /** For a conditional probability \f$ P( X | Y ) \f$,
-         *  \param target_dimension should equal \f$ | X | \f$
-         *  \param pseudocounts are the initial pseudocounts, of length \f$ |X| \cdot |Y| \f$
-         */
-        FixedProbEstimation( size_t target_dimension, const Prob &pseudocounts );
-
-        /// Virtual constructor, using a PropertySet.
-        /** Some keys in the PropertySet are required.
-         *  For a conditional probability \f$ P( X | Y ) \f$,
-         *     - \a target_dimension should be equal to \f$ | X | \f$
-         *     - \a total_dimension should be equal to \f$ |X| \cdot |Y| \f$
-         *
-         *  An optional key is:
-         *     - \a pseudo_count which specifies the initial counts (defaults to 1)
-         */
-        static ParameterEstimation* factory( const PropertySet &p );
-
-        /// Virtual copy constructor
-        virtual ParameterEstimation* clone() const { return new FixedProbEstimation( _target_dim, _initial_stats ); }
-
-        /// Virtual destructor
-        virtual ~FixedProbEstimation() {}
-
-        /// Returns an estimate of the conditional probability distribution.
-        /** The format of the resulting Prob keeps all the values for
-         *  \f$ P(X | Y=y) \f$ in sequential order in the array.
-         */
-        virtual Prob estimate();
-
-        /// Accumulate sufficient statistics from the expectations in \a p
-        virtual void addSufficientStatistics( const Prob &p );
-
-        /// Returns the required size for arguments to addSufficientStatistics().
-        virtual size_t probSize() const { return _stats.size(); }
-};
-
 
 /// Represents a single factor or set of factors whose parameters should be estimated.
 /** To ensure that parameters can be shared between different factors during

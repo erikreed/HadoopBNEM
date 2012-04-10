@@ -2,7 +2,10 @@
 # change lib64 to lib on ubuntu
 JAVA1=/usr/lib/jvm/java-7-openjdk-amd64/include/
 JAVA2=$(JAVA1)linux/
+GNU_LIBS=/usr/lib/gcc/x86_64-linux-gnu/4.6.1/:/usr/lib/gcc/x86_64-linux-gnu/4.6.1/../../../../x86_64-linux-gnu/lib/x86_64-linux-gnu/4.6.1/:/usr/lib/gcc/x86_64-linux-gnu/4.6.1/../../../../x86_64-linux-gnu/lib/x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/4.6.1/../../../../x86_64-linux-gnu/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/4.6.1/../../../x86_64-linux-gnu/4.6.1/:/usr/lib/gcc/x86_64-linux-gnu/4.6.1/../../../x86_64-linux-gnu/:/usr/lib/gcc/x86_64-linux-gnu/4.6.1/../../../../lib/:/lib/x86_64-linux-gnu/4.6.1/:/lib/x86_64-linux-gnu/:/lib/../lib/:/usr/lib/x86_64-linux-gnu/4.6.1/:/usr/lib/x86_64-linux-gnu/:/usr/lib/../lib/:/usr/lib/gcc/x86_64-linux-gnu/4.6.1/../../../../x86_64-linux-gnu/lib/:/usr/lib/gcc/x86_64-linux-gnu/4.6.1/../../../:/lib/:/usr/lib/
+#/lib/x86_64-linux-gnu:/lib64:/usr/lib/x86_64-linux-gnu:/usr/lib:/lib
 
+export LD_LIBRARY_PATH=$(GNU_LIBS)
 
 all: DaiControl.class libdaicontrol.so lib.jar daicontrol
 
@@ -13,10 +16,14 @@ lib.jar: hadoop/bin/DaiReduce2.class
 	ant -f hadoop/make_jar.xml
 
 hadoop: libdaicontrol.so lib.jar
+	export LD_LIBRARY_PATH=$(GNU_LIBS) && \
 	rm -rf DaiReduce2dai_temp && \
-		hadoop jar lib.jar -D mapred.child.env="LD_LIBRARY_PATH=/lib/x86_64-linux-gnu:/lib64:/usr/lib/x86_64-linux-gnu"  \
+		hadoop jar lib.jar \
 			1 1
 
+#-Djava.library.path="$(GNU_LIBS)" /
+#-Dmapred.child.env="LD_LIBRARY_PATH=$(GNU_LIBS)" \
+#-Dmapred.map.child.java.opts="LD_LIBRARY_PATH=$(GNU_LIBS);java.library.path=$(GNU_LIBS)"
 mvso: libdaicontrol.so
 	hadoop fs -copyFromLocal libdaicontrol.so /libraries/libdaicontrol.so && \
 	hadoop fs -copyFromLocal dat dat
