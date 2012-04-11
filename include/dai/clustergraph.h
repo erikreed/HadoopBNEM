@@ -22,7 +22,6 @@
 #include <dai/bipgraph.h>
 #include <dai/factorgraph.h>
 
-
 namespace dai {
 
 
@@ -204,7 +203,6 @@ namespace dai {
 
         /// \name Input/Ouput
         //@{
-            /// Writes a ClusterGraph to an output stream
             friend std::ostream& operator << ( std::ostream& os, const ClusterGraph& cl ) {
                 os << cl.clusters();
                 return os;

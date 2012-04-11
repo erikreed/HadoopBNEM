@@ -30,12 +30,12 @@ else
   CCFLAGS:=$(CCFLAGS) $(CCNODEBUGFLAGS)
 endif
 
-# Define build targets
-TARGETS:=lib tests utils examples
+# Define build targets; tests disabled
+TARGETS:=lib utils examples
 ifdef WITH_MATLAB
   TARGETS:=$(TARGETS) matlabs
 endif
-TARGETS:=$(TARGETS) unittests testregression testem
+#TARGETS:=$(TARGETS) unittests tests testregression testem
 ifdef WITH_DOC
   TARGETS:=$(TARGETS) doc
 endif
@@ -92,7 +92,7 @@ ifdef WITH_DECMAP
 endif
 
 # Define standard libDAI header dependencies, source file names and object file names
-HEADERS=$(foreach name,graph dag bipgraph index var factor varset smallset prob daialg properties alldai enum exceptions util,$(INC)/$(name).h)
+HEADERS=$(foreach name,outstream graph dag bipgraph index var factor varset smallset prob daialg properties alldai enum exceptions util,$(INC)/$(name).h)
 SOURCES:=$(foreach name,$(NAMES),$(SRC)/$(name).cpp)
 OBJECTS:=$(foreach name,$(NAMES),$(name)$(OE))
 

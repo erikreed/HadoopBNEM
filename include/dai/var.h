@@ -17,6 +17,8 @@
 #include <iostream>
 #include <dai/exceptions.h>
 
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 namespace dai {
 
@@ -41,6 +43,12 @@ class Var {
         /// Number of possible values
         size_t  _states;
 
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {
+        	ar &_label;
+        	ar &_states;
+        }
     public:
         /// Default constructor (creates a variable with label 0 and 0 states)
         Var() : _label(0), _states(0) {}

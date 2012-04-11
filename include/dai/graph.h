@@ -21,7 +21,6 @@
 #include <dai/exceptions.h>
 #include <dai/smallset.h>
 
-
 namespace dai {
 
 

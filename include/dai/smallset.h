@@ -31,9 +31,10 @@ template <typename T>
 class SmallSet {
     private:
         /// The elements in this set
-        std::vector<T> _elements;
+
 
     public:
+		std::vector<T> _elements;
     /// \name Constructors and destructors
     //@{
         /// Default constructor (constructs an empty set)

@@ -19,6 +19,9 @@
 #include <map>
 #include <dai/varset.h>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 namespace dai {
 
@@ -140,6 +143,13 @@ class Permute {
         std::vector<size_t>  _ranges;
         /// Stores the permutation
         std::vector<size_t>  _sigma;
+
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {
+        	ar &_ranges;
+        	ar &_sigma;
+        }
 
     public:
         /// Default constructor

@@ -3,6 +3,8 @@
 
 DAI_FLAGS=-DDAI_WITH_BP -DDAI_WITH_FBP -DDAI_WITH_TRWBP -DDAI_WITH_MF -DDAI_WITH_HAK -DDAI_WITH_LC -DDAI_WITH_TREEEP -DDAI_WITH_JTREE -DDAI_WITH_MR -DDAI_WITH_GIBBS -DDAI_WITH_CBP -DDAI_WITH_DECMAP
 
+LIBS=-lgmpxx -lgmp -lboost_serialization
+
 all: daicontrol
 
 mvdat: 
@@ -19,5 +21,5 @@ run: all
 
 daicontrol: daicontrol.cpp 
 	g++ -Wall -g -I../include -I. -g $(DAI_FLAGS) -odaicontrol \
-		daicontrol.cpp ../lib/libdai.a -lgmpxx -lgmp 
+		daicontrol.cpp ../lib/libdai.a $(LIBS) 
 

@@ -19,6 +19,10 @@
 #include <dai/index.h>
 #include <dai/properties.h>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/map.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 /// \file
 /// \brief Defines classes related to Expectation Maximization (EMAlg, ParameterEstimation, CondProbEstimation and SharedParameters)
@@ -88,6 +92,7 @@ class ParameterEstimation {
 
         /// Registers default ParameterEstimation subclasses (currently, only CondProbEstimation).
         static void loadDefaultRegistry();
+
 };
 
 
@@ -103,6 +108,13 @@ class CondProbEstimation : private ParameterEstimation {
         /// Initial pseudocounts
         Prob _initial_stats;
 
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {
+        	ar &_target_dim;
+        	ar &_stats;
+        	ar &_initial_stats;
+        }
     public:
         /// Constructor
         /** For a conditional probability \f$ P( X | Y ) \f$,
@@ -182,6 +194,16 @@ class SharedParameters {
         /// Initializes _varsets and _perms from _varorders and checks whether their state spaces correspond with _estimation.probSize()
         void setPermsAndVarSetsFromVarOrders();
 
+
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {
+        	ar &_varsets;
+        	ar &_varorders;
+        	ar &_perms;
+        	ar &_estimation;
+        }
+
     public:
         /// Constructor
         /** \param varorders  all the factor orientations for this parameter
@@ -236,6 +258,12 @@ class MaximizationStep {
     private:
         /// Vector of parameter estimation tasks of which this maximization step consists
         std::vector<SharedParameters> _params;
+
+        friend class boost::serialization::access;
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version) {
+			ar &_params;
+		}
 
     public:
         /// Default constructor

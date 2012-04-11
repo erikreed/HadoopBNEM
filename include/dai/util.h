@@ -165,7 +165,6 @@ T fromString( const std::string& x ) {
     return boost::lexical_cast<T>(x);
 }
 
-
 /// Writes a \c std::vector<> to a \c std::ostream
 template<class T>
 std::ostream& operator << (std::ostream& os, const std::vector<T> & x) {

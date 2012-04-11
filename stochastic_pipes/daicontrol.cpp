@@ -13,6 +13,8 @@
 //#include "hadoop/TemplateFactory.hh"
 //#include "hadoop/StringUtils.hh"
 
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 using namespace std;
 using namespace dai;
@@ -697,7 +699,7 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 	fout << "numSamples\tlikelihood\titerations\terror" << endl;
 
 	// TODO: fixed params not local in this loop
-	for (int i = EM_INIT_SAMPLES; i <= EM_MAX_SAMPLES; i
+	for (size_t i = EM_INIT_SAMPLES; i <= EM_MAX_SAMPLES; i
 	+= EM_SAMPLES_DELTA) {
 		FactorGraph local_fg = *fg.clone();
 		if (init == 1)
@@ -801,52 +803,52 @@ std::vector<std::string> str_split(const std::string &s, char delim) {
     return str_split(s, delim, elems);
 }
 
-Real EMAlg::hadoop_expectation( MaximizationStep &mstep ) {
-    Real logZ = 0;
-    Real likelihood = 0;
+//Real EMAlg::hadoop_expectation( MaximizationStep &mstep ) {
+//    Real logZ = 0;
+//    Real likelihood = 0;
+//
+//    _estep.run();
+//    logZ = _estep.logZ();
+//
+//    // Expectation calculation
+//    for( Evidence::const_iterator e = _evidence.begin(); e != _evidence.end(); ++e ) {
+//        InfAlg* clamped = _estep.clone();
+//        // Apply evidence
+//        for( Evidence::Observation::const_iterator i = e->begin(); i != e->end(); ++i )
+//            clamped->clamp( clamped->fg().findVar(i->first), i->second );
+//        clamped->init();
+//        clamped->run();
+//
+//        likelihood += clamped->logZ() - logZ;
+//
+//        mstep.addExpectations( *clamped );
+//
+//        delete clamped;
+//    }
+//
+//    // Maximization of parameters
+////    mstep.maximize( _estep.fg() );
+//
+//    return likelihood;
+//}
 
-    _estep.run();
-    logZ = _estep.logZ();
-
-    // Expectation calculation
-    for( Evidence::const_iterator e = _evidence.begin(); e != _evidence.end(); ++e ) {
-        InfAlg* clamped = _estep.clone();
-        // Apply evidence
-        for( Evidence::Observation::const_iterator i = e->begin(); i != e->end(); ++i )
-            clamped->clamp( clamped->fg().findVar(i->first), i->second );
-        clamped->init();
-        clamped->run();
-
-        likelihood += clamped->logZ() - logZ;
-
-        mstep.addExpectations( *clamped );
-
-        delete clamped;
-    }
-
-    // Maximization of parameters
+//Real EMAlg::hadoop_maximization(Real likelihood, MaximizationStep &mstep ) {
+//
+//    // Maximization of parameters
 //    mstep.maximize( _estep.fg() );
-
-    return likelihood;
-}
-
-Real EMAlg::hadoop_maximization(Real likelihood, MaximizationStep &mstep ) {
-
-    // Maximization of parameters
-    mstep.maximize( _estep.fg() );
-
-    return likelihood;
-}
-
-
-Real EMAlg::hadoop_iterate() {
-    Real likelihood;
-    for( size_t i = 0; i < _msteps.size(); ++i )
-        likelihood = iterate( _msteps[i] );
-    _lastLogZ.push_back( likelihood );
-    ++_iters;
-    return likelihood;
-}
+//
+//    return likelihood;
+//}
+//
+//
+// Real EMAlg::hadoop_iterate() {
+//    Real likelihood;
+//    for( size_t i = 0; i < _msteps.size(); ++i )
+//        likelihood = iterate( _msteps[i] );
+//    _lastLogZ.push_back( likelihood );
+//    ++_iters;
+//    return likelihood;
+//}
 
 void mapper(const string& in,vector<string>& key,vector<string>& val) {
 
@@ -858,12 +860,16 @@ void mapper(const string& in,vector<string>& key,vector<string>& val) {
 	string tabFile= data[2];
 	cout << tabFile.size() << endl;
 
+	ostringstream s;
+	MaximizationStep m;
+	boost::archive::text_oarchive oa(s);
+	oa << m;
 //	return NULL;
 }
 
 string reduce(vector<string>& key, vector<string>& val) {
 
-
+	return NULL;
 }
 
 

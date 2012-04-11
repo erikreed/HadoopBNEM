@@ -21,6 +21,10 @@
 #include <dai/util.h>
 #include <dai/smallset.h>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/map.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 namespace dai {
 
@@ -92,6 +96,12 @@ std::map<Var, size_t> calcState( const VarSet &vs, size_t linearState );
  *  according to their labels.
  */
 class VarSet : public SmallSet<Var> {
+	private:
+		friend class boost::serialization::access;
+		template<class Archive>
+		void serialize(Archive & ar, const unsigned int version) {
+			ar &_elements;
+		}
     public:
     /// \name Constructors and destructors
     //@{
