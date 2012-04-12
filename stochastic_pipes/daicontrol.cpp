@@ -318,7 +318,6 @@ inline string readFile(const char* path) {
 	is.seekg(0, ios::end);
 	length = is.tellg();
 	is.seekg(0, ios::beg);
-
 	// allocate memory:
 	buffer = new char[length];
 
@@ -328,157 +327,6 @@ inline string readFile(const char* path) {
 	string out = buffer;
 	delete[] buffer;
 	return out;
-}
-
-void doRandomEM(char* fgIn, char* tabIn, char* emIn, size_t rand_trials,
-		size_t rand_iterations) {
-	vector<int> fixedVars;
-#ifdef OLD_FIXING
-	string fixedIn = emIn;
-	string::size_type pos = 0;
-	pos = fixedIn.find(".em", pos);
-	if (pos != string::npos)
-		fixedIn.replace(pos, fixedIn.size(), ".fixed");
-
-	ifstream ifile(fixedIn.c_str());
-
-	if (ifile) {
-		// The file exists, and is open for input
-		cout << "Using fixed values from: " << fixedIn << endl;
-		ifstream fin(fixedIn.c_str());
-		int var;
-		cout << "Fixed params: ";
-		while (fin >> var) {
-			cout << var << " ";
-			fixedVars.push_back(var);
-		}
-		cout << endl;
-		fin.close();
-	}
-#endif
-	FactorGraph fg;
-	fg.ReadFromFile(fgIn);
-
-	FactorGraph fg_orig = *(fg.clone());
-
-	//string outname;
-	stringstream outname_l;
-	string emFile = readFile(emIn);
-
-	cout << "Using random initialization" << endl;
-	system("mkdir -p out/rand_trials");
-	//outname = "out/random_trials";
-
-	string trials_dir = "out/rand_trials/";
-	cout.precision(16);
-
-	outname_l << "out/random_" << rand_trials << "trials_"
-			<< rand_iterations << "iterations";
-	stringstream s_out_l;
-	s_out_l << "Iterations\tLikelihood\tL1_error\tLikelihood/n\tKL_error"
-			<< endl;
-	cout << "Writing results to: " << outname_l.str().c_str() << endl;
-
-	Evidence e1;
-	//string tabFile = readFile(tabIn);
-	//stringstream estream(tabFile);
-
-	ifstream estream(tabIn);
-	e1.addEvidenceTabFile(estream, fg);
-	typedef std::map<Var, size_t> Observation;
-	vector<Observation> samples = e1.getEvidence();
-
-	for (size_t trials = 1; trials <= rand_trials; trials++) {
-		srand((unsigned) time(NULL));
-		rnd_seed((unsigned) time(NULL));
-		stringstream trials_out;
-		trials_out
-		<< "Iteration\tLikelihood\tL1_error\tLikelihood/n\tKL_error"
-		<< endl;
-
-		cout << "random trial: " << trials << endl;
-		fg = *(fg_orig.clone());
-#ifdef OLD_FIXING
-		if (fixedVars.size() > 0) {
-			for (size_t i =0; i<fixedVars.size(); i++)
-				fg.backupFactor(fixedVars[i]);
-		}
-#endif
-		randomize_fg(&fg);
-#ifdef OLD_FIXING
-		if (fixedVars.size() > 0) {
-			for (size_t i =0; i<fixedVars.size(); i++)
-				fg.restoreFactor(fixedVars[i]);
-		}
-#endif
-		// Read sample from file
-
-		//ifstream estream( tabIn );
-
-		Evidence e(samples);
-
-		// Prepare junction-tree object for doing exact inference for E-step
-		PropertySet infprops;
-		infprops.set("verbose", (size_t) 1);
-		infprops.set("updates", string("HUGIN"));
-		InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
-		inf->init();
-		// Read EM specification
-		//ifstream emstream( emIn );
-		stringstream emstream(emFile);
-		EMAlg em(e, *inf, emstream);
-		//compareFG(&fg, inf->fg().clone());
-
-		trials_out.precision(16);
-
-		double l = 99999999;
-		// Iterate EM until convergence
-
-		//while( ++i <= rand_iterations ) {
-		while (!em.hasSatisfiedTermConditions()) {
-			if (fixedVars.size() > 0) {
-				for (size_t i = 0; i < fixedVars.size(); i++)
-					inf->backupFactor(fixedVars[i]);
-			}
-
-			l = em.iterate();
-
-			if (fixedVars.size() > 0) {
-				for (size_t i = 0; i < fixedVars.size(); i++)
-					inf->restoreFactor(fixedVars[i]);
-			}
-
-			FactorGraph* current_fg = inf->fg().clone();
-			double fg_diff = compareFG(current_fg, &fg_orig);
-			trials_out << em.Iterations() << "\t" << l << "\t" << fg_diff
-					<< "\t" << l / e.nrSamples() << "\t" << KLcompareFG(
-							current_fg, &fg_orig) << endl;
-
-		}
-
-		ofstream f_outl2;
-		string temp_s = trials_dir;
-		f_outl2.open(temp_s.append(convertInt(trials)).c_str());
-		f_outl2 << trials_out.str() << endl;
-		f_outl2.close();
-
-		FactorGraph* current_fg = inf->fg().clone();
-		double fg_diff = compareFG(current_fg, &fg_orig);
-		double kl_diff = KLcompareFG(current_fg, &fg_orig);
-
-		{
-			s_out_l.precision(16);
-			s_out_l << em.Iterations() << "\t" << l << "\t" << fg_diff
-					<< "\t" << l / e.nrSamples() << "\t" << kl_diff << endl;
-		}
-		// Clean up
-		delete inf;
-	}
-	ofstream f_outl;
-	f_outl.open(outname_l.str().c_str());
-	f_outl << s_out_l.str() << endl;
-	f_outl.close();
-
 }
 
 bool str_replace(std::string& str, const std::string& from,
@@ -566,7 +414,7 @@ string testEM(char* fgIn, char* tabIn, char* emIn, bool serial) {
 		if (serial) {
 			ostringstream s;
 			vector<MaximizationStep> m = em._msteps;
-
+			cout << em._msteps[0].numParams() << endl;
 			boost::archive::text_oarchive oa(s);
 			oa << m;
 
@@ -577,6 +425,7 @@ string testEM(char* fgIn, char* tabIn, char* emIn, bool serial) {
 			vector<MaximizationStep> m2;
 			ia >> m2;
 			em._msteps = m2;
+			cout << em._msteps[0].numParams() << endl;
 		}
 		for( size_t i = 0; i < em._msteps.size(); i++ )
 			em._msteps[i].maximize( em._estep.fg() );

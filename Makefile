@@ -6,7 +6,8 @@
 
 run: all
 	cd stochastic_pipes; make run
-
+gdb: all
+	cd stochastic_pipes; make; gdb ./daicontrol
 # Load the platform independent build configuration file
 include Makefile.ALL
 

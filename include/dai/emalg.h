@@ -19,6 +19,9 @@
 #include <dai/index.h>
 #include <dai/properties.h>
 
+#include <boost/serialization/void_cast.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/base_object.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -28,8 +31,12 @@
 /// \brief Defines classes related to Expectation Maximization (EMAlg, ParameterEstimation, CondProbEstimation and SharedParameters)
 /// \todo Implement parameter estimation for undirected models / factor graphs.
 
-
 namespace dai {
+
+//BOOST_CLASS_EXPORT_GUID(CondProbEstimation, "CondProbEstimation")
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(ParameterEstimation)
+BOOST_SERIALIZATION_ASSUME_ABSTRACT(CondProbEstimation)
+
 
 /// Base class for parameter estimation methods.
 /** This class defines the general interface of parameter estimation methods.
@@ -86,7 +93,11 @@ class ParameterEstimation {
         virtual size_t probSize() const = 0;
 
     private:
-        /// A static registry containing all methods registered so far.
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {}
+
+        	/// A static registry containing all methods registered so far.
         static std::map<std::string, ParamEstFactory> *_registry;
 
         /// Registers default ParameterEstimation subclasses (currently, only CondProbEstimation).
@@ -95,10 +106,12 @@ class ParameterEstimation {
 };
 
 
+
 /// Estimates the parameters of a conditional probability table, using pseudocounts.
 /** \author Charles Vaske
  */
-class CondProbEstimation : private ParameterEstimation {
+
+class CondProbEstimation : public ParameterEstimation {
     private:
         /// Number of states of the variable of interest
         size_t _target_dim;
@@ -110,13 +123,17 @@ class CondProbEstimation : private ParameterEstimation {
         friend class boost::serialization::access;
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
-        	BOOST_SERIALIZATION_ASSUME_ABSTRACT(ParameterEstimation)
         	ar & boost::serialization::base_object<ParameterEstimation>(*this);
+//        	boost::serialization::void_cast_register<CondProbEstimation, CondProbEstimation>(
+//        			static_cast<CondProbEstimation *>(NULL),
+//        			static_cast<CondProbEstimation *>(NULL)
+//        	);
         	ar &_target_dim;
         	ar &_stats;
         	ar &_initial_stats;
         }
     public:
+        CondProbEstimation(){}
         /// Constructor
         /** For a conditional probability \f$ P( X | Y ) \f$,
          *  \param target_dimension should equal \f$ | X | \f$
@@ -152,7 +169,10 @@ class CondProbEstimation : private ParameterEstimation {
 
         /// Returns the required size for arguments to addSufficientStatistics().
         virtual size_t probSize() const { return _stats.size(); }
+
 };
+
+
 
 
 /// Represents a single factor or set of factors whose parameters should be estimated.
@@ -199,14 +219,21 @@ class SharedParameters {
         friend class boost::serialization::access;
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
-        	ar &_varsets;
-        	ar &_varorders;
-        	ar &_perms;
+//        	ar &_varsets;
+//        	ar &_varorders;
+//        	ar &_perms;
+//        	ar.template register_type<CondProbEstimation>();
+        	ar.register_type(static_cast<CondProbEstimation *>(NULL));
         	ar &_estimation;
+        	ar &_ownEstimation;
         }
 
     public:
-        SharedParameters(){};
+        SharedParameters(){}
+//        SharedParameters(std::map<FactorIndex, VarSet> &vs, std::map<FactorIndex, Permute> &perms,
+//        		FactorOrientations &vars, ParameterEstimation* est, bool own) :
+//        			_varsets(vs),_perms(perms),_varorders(vars),_estimation(est),_ownEstimation(own)
+//        		{};
         /// Constructor
         /** \param varorders  all the factor orientations for this parameter
          *  \param estimation a pointer to the parameter estimation method
@@ -252,7 +279,6 @@ class SharedParameters {
         void setParameters( FactorGraph &fg );
 };
 
-
 /// A MaximizationStep groups together several parameter estimation tasks (SharedParameters objects) into a single unit.
 /** \author Charles Vaske
  */
@@ -284,6 +310,8 @@ class MaximizationStep {
 
         /// Using all of the currently added expectations, make new factors with maximized parameters and set them in the FactorGraph.
         void maximize( FactorGraph &fg );
+
+        size_t numParams() {return _params.size();}
 
     /// \name Iterator interface
     //@{
