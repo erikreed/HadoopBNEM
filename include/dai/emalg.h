@@ -31,7 +31,6 @@
 
 namespace dai {
 
-
 /// Base class for parameter estimation methods.
 /** This class defines the general interface of parameter estimation methods.
  *
@@ -111,6 +110,8 @@ class CondProbEstimation : private ParameterEstimation {
         friend class boost::serialization::access;
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
+        	BOOST_SERIALIZATION_ASSUME_ABSTRACT(ParameterEstimation)
+        	ar & boost::serialization::base_object<ParameterEstimation>(*this);
         	ar &_target_dim;
         	ar &_stats;
         	ar &_initial_stats;
@@ -205,6 +206,7 @@ class SharedParameters {
         }
 
     public:
+        SharedParameters(){};
         /// Constructor
         /** \param varorders  all the factor orientations for this parameter
          *  \param estimation a pointer to the parameter estimation method
@@ -321,7 +323,7 @@ class MaximizationStep {
  *  \author Charles Vaske
  */
 class EMAlg {
-    private:
+	public:
         /// All the data samples used during learning
         const Evidence &_evidence;
 
@@ -336,7 +338,7 @@ class EMAlg {
 
         /// History of likelihoods
         std::vector<Real> _lastLogZ;
-
+    private:
         /// Maximum number of iterations
         size_t _max_iters;
 
@@ -344,6 +346,8 @@ class EMAlg {
         Real _log_z_tol;
 
     public:
+
+
         /// Key for setting maximum iterations
         static const std::string MAX_ITERS_KEY;
         /// Default maximum iterations

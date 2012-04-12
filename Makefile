@@ -4,6 +4,8 @@
 #
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
+run: all
+	cd stochastic_pipes; make run
 
 # Load the platform independent build configuration file
 include Makefile.ALL
@@ -30,8 +32,8 @@ else
   CCFLAGS:=$(CCFLAGS) $(CCNODEBUGFLAGS)
 endif
 
-# Define build targets; tests disabled
-TARGETS:=lib utils examples
+# Define build targets; tests, utils, examples disabled
+TARGETS:=lib
 ifdef WITH_MATLAB
   TARGETS:=$(TARGETS) matlabs
 endif

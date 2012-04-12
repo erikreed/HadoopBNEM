@@ -15,6 +15,7 @@
 
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
 
 using namespace std;
 using namespace dai;
@@ -211,87 +212,8 @@ inline double KLcompareFG(FactorGraph* fg1, FactorGraph* fg2) {
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	string fixedIn = emIn;
 
-#ifdef OLD_FIXING
-
-	string::size_type pos = 0;
-	pos = fixedIn.find(".em", pos);
-	if (pos != string::npos)
-		fixedIn.replace(pos, fixedIn.size(), ".fixed");
-
-	ifstream ifile(fixedIn.c_str());
-	vector<int> fixedVars;
-
-	if (ifile) {
-		// The file exists, and is open for input
-		cout << "Using fixed values from: " << fixedIn << endl;
-		ifstream fin(fixedIn.c_str());
-		int var;
-		cout << "Fixed params: ";
-		while (fin >> var) {
-			cout << var << " ";
-			fixedVars.push_back(var);
-		}
-		cout << endl;
-		fin.close();
-	}
-#endif
-
 	FactorGraph fg;
 	fg.ReadFromFile(fgIn);
-
-	FactorGraph* fg_orig = fg.clone();
-
-	srand((unsigned) time(NULL));
-	rnd_seed((unsigned) time(NULL));
-
-	string outname;
-	string outname_l;
-
-#ifdef OLD_FIXING
-	if (fixedVars.size() > 0) {
-		for (size_t i =0; i<fixedVars.size(); i++)
-			fg.backupFactor(fixedVars[i]);
-	}
-#endif
-
-	if (init == 1) {
-		// random
-		cout << "Using random initialization" << endl;
-		randomize_fg(&fg);
-		outname = "out/random";
-	} else if (init == 2) {
-		// uniform
-		cout << "Using uniform initialization" << endl;
-		uniformize_fg(&fg);
-		outname = "out/uniform";
-	} else if (init == 3) {
-		// noise
-		cout << "Using noisy initialization. Noise value: +/- "
-				<< NOISE_AMOUNT * 100 << "%" << endl;
-		noise_fg(&fg);
-		outname = "out/noise";
-	} else {
-		cout << "Using given .fg for initialization" << endl;
-		outname = "out/default";
-	}
-
-#ifdef OLD_FIXING
-	if (fixedVars.size() > 0) {
-		for (size_t i =0; i<fixedVars.size(); i++) {
-			size_t index = fixedVars[i];
-			fg.restoreFactor(index);
-			//			Factor f = fg.factor(index);
-			//			vector<Factor> vec;
-			//			vec.push_back(f);
-			//fg.clamp(index,index,false);
-			//fg.clampFactor(index,vec, false);
-		}
-	}
-#endif
-	outname_l = outname;
-	outname_l = outname_l.append(".lhood");
-	cout << "Writing results to: " << outname.c_str() << endl;
-	cout << "Writing likelihoods to: " << outname_l.c_str() << endl;
 
 	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops;
@@ -313,72 +235,19 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	// Read EM specification
 	ifstream emstream(emIn);
 	EMAlg em(e, *inf, emstream);
-	//compareFG(&fg, inf->fg().clone());
-	cout.precision(16);
-	stringstream s_out_l;
-	stringstream s_out;
-	//s_out << "[\n";
-	s_out.precision(16);
-	s_out_l.precision(16);
-	s_out_l << "Iteration\tLikelihood\tError_L1\tLikelihood/n\tKL_error"
-			<< endl;
-	for (size_t i = 0; i < fg.nrFactors(); i++) {
-		s_out << fg.factor(i).nrStates();
-		if (i != fg.nrFactors() - 1)
-			s_out << ", ";
-	}
-	s_out << endl;
-	// initial values
-	printEMIntermediates(&s_out, inf);
-	s_out << endl;
-	//size_t its = 0;
+
 	// Iterate EM until convergence
 	while (!em.hasSatisfiedTermConditions()) {
-#ifdef OLD_FIXING
-		if (fixedVars.size() > 0) {
-			for (size_t i =0; i<fixedVars.size(); i++)
-				inf->backupFactor(fixedVars[i]);
-		}
-#endif
-		double l = em.iterate();
-		FactorGraph* current_fg = inf->fg().clone();
-		// TODO: verify exp is correct. assuming log likelihood.
-		cout << "Iteration " << em.Iterations() << " likelihood: " << l
-				<< endl;
-#ifdef OLD_FIXING
-		if (fixedVars.size() > 0) {
-			for (size_t i =0; i<fixedVars.size(); i++)
-				inf->restoreFactor(fixedVars[i]);
-		}
-#endif
-		double fg_diff = compareFG(current_fg, fg_orig);
-		s_out_l << em.Iterations() << "\t" << l << "\t" << fg_diff << "\t"
-				<< l / e.nrSamples() << "\t" << KLcompareFG(current_fg,
-						fg_orig) << endl;
-
-		printEMIntermediates(&s_out, inf);
-		s_out << endl;
-		s_out.flush();
-		s_out_l.flush();
+		em.iterate();
 	}
+
+	stringstream ss;
+	ss << inf->fg() << endl;
 
 	// Clean up
 	delete inf;
-	cout << "Intermediate values: an array of tab delimited K*N "
-			<< "where N=numFactors and K=iterations." << endl;
-	cout << "Includes initial values (i.e. iteration 0)" << endl;
+//	return ss.str();
 
-	ofstream f_outl;
-	f_outl.open(outname_l.c_str());
-	f_outl << s_out_l.str() << endl;
-	f_outl.close();
-	cout << s_out_l.str() << endl;
-#ifdef INTERMEDIATE_VALUES
-	ofstream myfile;
-	myfile.open(outname.c_str());
-	myfile << s_out.str() << endl;
-	myfile.close();
-#endif
 }
 
 void printUsage() {
@@ -621,175 +490,117 @@ bool str_replace(std::string& str, const std::string& from,
 	return true;
 }
 
-void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
-#ifdef OLD_FIXING
-	string fixedIn = emIn;
-	string::size_type pos = 0;
-	pos = fixedIn.find(".em", pos);
-	if (pos != string::npos)
-		fixedIn.replace(pos, fixedIn.size(), ".fixed");
 
-	ifstream ifile(fixedIn.c_str());
-	vector<int> fixedVars;
+Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
+    Real logZ = 0;
+    Real likelihood = 0;
 
-	if (ifile) {
-		// The file exists, and is open for input
-		cout << "Using fixed values from: " << fixedIn << endl;
-		ifstream fin(fixedIn.c_str());
-		int var;
-		cout << "Fixed params: ";
-		while (fin >> var) {
-			cout << var << " ";
-			fixedVars.push_back(var);
-		}
-		cout << endl;
-		fin.close();
-	}
-#endif
+    inf.run();
+    logZ = inf.logZ();
+
+    // Expectation calculation
+    for( Evidence::const_iterator e = evidence.begin(); e != evidence.end(); ++e ) {
+        InfAlg* clamped = inf.clone();
+        // Apply evidence
+        for( Evidence::Observation::const_iterator i = e->begin(); i != e->end(); ++i )
+            clamped->clamp( clamped->fg().findVar(i->first), i->second );
+        clamped->init();
+        clamped->run();
+
+        likelihood += clamped->logZ() - logZ;
+
+        mstep.addExpectations( *clamped );
+
+        delete clamped;
+    }
+
+    // Maximization of parameters
+//    mstep.maximize( _estep.fg() );
+
+    return likelihood;
+}
+
+//TODO: sum likelihood when evidence is split up
+ Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e, InfAlg &inf) {
+    Real likelihood = 0;
+    for( size_t i = 0; i < msteps.size(); ++i )
+        likelihood = EM_estep( msteps[i] ,e,inf);
+//    _lastLogZ.push_back( likelihood );
+//    ++_iters;
+    return likelihood;
+}
+
+
+string testEM(char* fgIn, char* tabIn, char* emIn, bool serial) {
+
 	FactorGraph fg;
 	fg.ReadFromFile(fgIn);
 
-	FactorGraph fg_orig = *fg.clone();
-	string emFile = readFile(emIn);
+	// Prepare junction-tree object for doing exact inference for E-step
+	PropertySet infprops;
+	infprops.set("verbose", (size_t) 1);
+	infprops.set("updates", string("HUGIN"));
+	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
+	infprops.set("LOG_Z_TOL_KEY", LIB_EM_TOLERANCE);
+	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
 
-	srand((unsigned) time(NULL));
-	rnd_seed((unsigned) time(NULL));
-	string outname;
+	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
+	inf->init();
 
-#ifdef OLD_FIXING
-	if (fixedVars.size() > 0) {
-		for (size_t i =0; i<fixedVars.size(); i++)
-			fg.backupFactor(fixedVars[i]);
-	}
-#endif
-	if (init == 1) {
-		// random
-		cout << "Using random initialization" << endl;
-		randomize_fg(&fg);
-		outname = "out/random.many_samples";
-	} else if (init == 2) {
-		// uniform
-		cout << "Using uniform initialization" << endl;
-		uniformize_fg(&fg);
-		outname = "out/uniform.many_samples";
-	} else if (init == 3) {
-		// noise
-		cout << "Using noisy initialization. Noise value: +/- "
-				<< NOISE_AMOUNT * 100 << "%" << endl;
-		noise_fg(&fg);
-		outname = "out/noise.many_samples";
-	} else {
-		cout << "Using given .fg for initialization" << endl;
-		outname = "out/default.many_samples";
-	}
-#ifdef OLD_FIXING
-	if (fixedVars.size() > 0) {
-		for (size_t i =0; i<fixedVars.size(); i++)
-			fg.restoreFactor(fixedVars[i]);
-	}
-#endif
-	cout << "Initial samples: " << EM_INIT_SAMPLES << endl;
-	cout << "Max samples: " << EM_MAX_SAMPLES << ". Increase by "
-			<< EM_SAMPLES_DELTA << endl;
-	cout << "Writing results to: " << outname.c_str() << endl;
+	// Read sample from file
+	Evidence e;
+	ifstream estream(tabIn);
+	e.addEvidenceTabFile(estream, fg);
+	cout << "Number of samples: " << e.nrSamples() << endl;
 
-	ofstream fout;
-	fout.open(outname.c_str());
-	fout.precision(12);
-	fout << "numSamples\tlikelihood\titerations\terror" << endl;
+	// Read EM specification
+	ifstream emstream(emIn);
+	EMAlg em(e, *inf, emstream);
 
-	// TODO: fixed params not local in this loop
-	for (size_t i = EM_INIT_SAMPLES; i <= EM_MAX_SAMPLES; i
-	+= EM_SAMPLES_DELTA) {
-		FactorGraph local_fg = *fg.clone();
-		if (init == 1)
-			randomize_fg(&local_fg);
-		else if (init == 3) {
-			noise_fg(&local_fg);
+	// Iterate EM until convergence
+	while (!em.hasSatisfiedTermConditions()) {
+		Real likelihood = hadoop_iterate(em._msteps,em._evidence, em._estep);
+		em._iters++;
+		em._lastLogZ.push_back(likelihood);
+
+		if (serial) {
+			ostringstream s;
+			vector<MaximizationStep> m = em._msteps;
+
+			boost::archive::text_oarchive oa(s);
+			oa << m;
+
+			istringstream s2(s.str());
+
+			boost::archive::text_iarchive ia(s2);
+			// read class state from archive
+			vector<MaximizationStep> m2;
+			ia >> m2;
+			em._msteps = m2;
 		}
-
-		PropertySet infprops;
-		infprops.set("verbose", (size_t) 1);
-		infprops.set("updates", string("HUGIN"));
-		infprops.set("maxiter", EM_MAX_ITER); // Maximum number of iterations
-		infprops.set("tol", LIB_EM_TOLERANCE);
-
-		InfAlg* inf1 = newInfAlg(INF_TYPE, local_fg, infprops);
-		inf1->init();
-
-		string tabIn;
-		stringstream newTabName;
-		stringstream hiddenTabName;
-		if (py_cmd != "NULL") {
-			string py_cmd_str = py_cmd;
-			newTabName << fgIn << i;
-			hiddenTabName << fgIn << i << ".hidden";
-			generateTab(fgIn, i, newTabName.str().c_str());
-
-			if (!str_replace(py_cmd_str, "TAB_PATH", newTabName.str())) {
-				cerr << "TAB_PATH not found in PY_CMD" << endl;
-				throw "TAB_PATH not found in PY_CMD";
-			}
-			if (!str_replace(py_cmd_str, "HIDDEN_PATH", hiddenTabName.str())) {
-				cerr << "HIDDEN_PATH not found in PY_CMD" << endl;
-				throw "HIDDEN_PATH not found in PY_CMD";
-			}
-			tabIn = hiddenTabName.str();
-
-			cout << "Executing command: " << py_cmd_str << endl;
-			system(py_cmd_str.c_str());
-		} else
-			tabIn = generateTab(fgIn, i, NULL);
-		Evidence e;
-
-		ifstream estream(tabIn.c_str());
-
-		e.addEvidenceTabFile(estream, fg);
-		estream.close();
-		if (py_cmd != "NULL") {
-			//delete samples created
-			if (remove(hiddenTabName.str().c_str()) != 0)
-				cerr << "error deleting " << hiddenTabName << endl;
-			if (remove(newTabName.str().c_str()) != 0)
-				cerr << "error deleting " << newTabName << endl;
-		}
-
-		// Read EM specification
-
-		stringstream emstream(emFile);
-		EMAlg em(e, *inf1, emstream);
-		em.setTermConditions(infprops);
-		Real l1;
-		// Iterate EM until convergence
-		while (!em.hasSatisfiedTermConditions()) {
-#ifdef OLD_FIXING
-			if (fixedVars.size() > 0) {
-				for (size_t i =0; i<fixedVars.size(); i++)
-					inf1->backupFactor(fixedVars[i]);
-			}
-#endif
-			l1 = em.iterate();
-
-			//			cout << "em1: Iteration " << em1.Iterations() << " likelihood: " << l1
-			//					<< endl;
-#ifdef OLD_FIXING
-			if (fixedVars.size() > 0) {
-				for (size_t i =0; i<fixedVars.size(); i++)
-					inf1->restoreFactor(fixedVars[i]);
-			}
-#endif
-		}
-		double fg_diff = compareFG(&inf1->fg(), &fg_orig);
-		{
-			fout << e.nrSamples() << "\t" << l1 << "\t" << em.Iterations()
-														<< "\t" << fg_diff << endl;
-		}
-		delete inf1;
+		for( size_t i = 0; i < em._msteps.size(); i++ )
+			em._msteps[i].maximize( em._estep.fg() );
 	}
-	fout.close();
+
+	stringstream ss;
+	ss << inf->fg() << endl;
+
+	// Clean up
+	delete inf;
+	return ss.str();
+
 }
 
-std::vector<std::string> &str_split(const std::string &s, char delim, std::vector<std::string> &elems) {
+//Real EMAlg::iterate() {
+//    Real likelihood;
+//    for( size_t i = 0; i < _msteps.size(); ++i )
+//        likelihood = iterate( _msteps[i] );
+//    _lastLogZ.push_back( likelihood );
+//    ++_iters;
+//    return likelihood;
+//}
+
+vector<std::string> &str_split(const std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss(s);
     std::string item;
     while(std::getline(ss, item, delim))
@@ -802,53 +613,6 @@ std::vector<std::string> str_split(const std::string &s, char delim) {
     std::vector<std::string> elems;
     return str_split(s, delim, elems);
 }
-
-//Real EMAlg::hadoop_expectation( MaximizationStep &mstep ) {
-//    Real logZ = 0;
-//    Real likelihood = 0;
-//
-//    _estep.run();
-//    logZ = _estep.logZ();
-//
-//    // Expectation calculation
-//    for( Evidence::const_iterator e = _evidence.begin(); e != _evidence.end(); ++e ) {
-//        InfAlg* clamped = _estep.clone();
-//        // Apply evidence
-//        for( Evidence::Observation::const_iterator i = e->begin(); i != e->end(); ++i )
-//            clamped->clamp( clamped->fg().findVar(i->first), i->second );
-//        clamped->init();
-//        clamped->run();
-//
-//        likelihood += clamped->logZ() - logZ;
-//
-//        mstep.addExpectations( *clamped );
-//
-//        delete clamped;
-//    }
-//
-//    // Maximization of parameters
-////    mstep.maximize( _estep.fg() );
-//
-//    return likelihood;
-//}
-
-//Real EMAlg::hadoop_maximization(Real likelihood, MaximizationStep &mstep ) {
-//
-//    // Maximization of parameters
-//    mstep.maximize( _estep.fg() );
-//
-//    return likelihood;
-//}
-//
-//
-// Real EMAlg::hadoop_iterate() {
-//    Real likelihood;
-//    for( size_t i = 0; i < _msteps.size(); ++i )
-//        likelihood = iterate( _msteps[i] );
-//    _lastLogZ.push_back( likelihood );
-//    ++_iters;
-//    return likelihood;
-//}
 
 void mapper(const string& in,vector<string>& key,vector<string>& val) {
 
@@ -872,7 +636,6 @@ string reduce(vector<string>& key, vector<string>& val) {
 	return NULL;
 }
 
-
 int main(int argc, char* argv[]) {
 
 	size_t numMappers = 5;
@@ -880,6 +643,11 @@ int main(int argc, char* argv[]) {
 	string emFile= readFile("dat/em");
 	string fgFile= readFile("dat/fg");
 	string tabFile= readFile("dat/tab");
+
+	string s1 = testEM("dat/fg","dat/tab","dat/em",false);
+	string s2 = testEM("dat/fg","dat/tab","dat/em",true);
+	if (s1!=s2)
+		throw;
 
 	vector<string> tabLines = str_split(tabFile, '\n');
 //	numMappers = tabLines.size()/numMappers > numMappers ? numMappers : tabLines.size()/numMappers;
