@@ -4,10 +4,10 @@
 # newerouput (i.e. 2 hidden) 15 | testbed_setup
 
 DEST=new_bnet_results
-MIN_SHARED=1
+MIN_SHARED=10
 #BNETS="adapt_mini1 adapt_subset2_large adapt10_v7e \
 	#		diabetes link mildew pigs water"
-BNETS="adapt_mini1 adapt_subset2_large alarm pigs"  #pigs water link adapt10_v7e mildew diabetes"
+BNETS="ADAPT_PHM10_P1"  #pigs water link adapt10_v7e mildew diabetes"
 BNET_DIR=bnets
 
 export NUM_SAMPLES=5000

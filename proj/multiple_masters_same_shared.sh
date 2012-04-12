@@ -2,11 +2,11 @@
 
 # this script generates data for the CPT figure and only that
 
-DEST=same_num_shared_results
+DEST=same_num_shared_results_fewer_samples
 MIN_SHARED=5
 #BNETS="adapt_mini1 adapt_subset2_large adapt10_v7e \
 	#		diabetes link mildew pigs water"
-BNETS="ADAPT_PHM09_T1.net"  #pigs water link adapt10_v7e mildew diabetes"
+BNETS="ADAPT_PHM09_T1"  #pigs water link adapt10_v7e mildew diabetes"
 BNET_DIR=bnets
 
 export NUM_SAMPLES=5000
@@ -28,7 +28,8 @@ do
 	do
 		if (( MIN_SHARED <= s )); then
 			sharedvars=`python net_to_fg/read_net_erik.py $BNET_DIR/$net.net $s`
-			sharedvars=`echo $sharedvars | head -$MIN_SHARED`
+			# split and select only $MIN_SHARED
+			sharedvars=`echo $sharedvars |  tr " " "\n" | head -$MIN_SHARED`
 			echo trying hidden/shared nodes: $sharedvars
 
 			export HIDDEN_NODES=$sharedvars
