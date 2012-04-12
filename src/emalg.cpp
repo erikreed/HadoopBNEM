@@ -85,19 +85,19 @@ Permute SharedParameters::calculatePermutation( const std::vector<Var> &varOrder
 void SharedParameters::setPermsAndVarSetsFromVarOrders() {
     if( _varorders.size() == 0 )
         return;
-    DAI_ASSERT( _estimation != NULL );
+//    DAI_ASSERT( _estimation != NULL );
 
     // Construct the permutation objects and the varsets
     for( FactorOrientations::const_iterator foi = _varorders.begin(); foi != _varorders.end(); ++foi ) {
         VarSet vs;
         _perms[foi->first] = calculatePermutation( foi->second, vs );
         _varsets[foi->first] = vs;
-        DAI_ASSERT( _estimation->probSize() == vs.nrStates() );
+        DAI_ASSERT( _estimation.probSize() == vs.nrStates() );
     }
 }
 
 
-SharedParameters::SharedParameters( const FactorOrientations &varorders, ParameterEstimation *estimation, bool ownPE )
+SharedParameters::SharedParameters( const FactorOrientations &varorders, CondProbEstimation &estimation, bool ownPE )
   : _varsets(), _perms(), _varorders(varorders), _estimation(estimation), _ownEstimation(ownPE)
 {
     // Calculate the necessary permutations and varsets
@@ -106,7 +106,7 @@ SharedParameters::SharedParameters( const FactorOrientations &varorders, Paramet
 
 
 SharedParameters::SharedParameters( std::istream &is, const FactorGraph &fg )
-  : _varsets(), _perms(), _varorders(), _estimation(NULL), _ownEstimation(true)
+  : _varsets(), _perms(), _varorders(), _estimation(), _ownEstimation(true)
 {
     // Read the desired parameter estimation method from the stream
     std::string est_method;
@@ -114,8 +114,10 @@ SharedParameters::SharedParameters( std::istream &is, const FactorGraph &fg )
     is >> est_method;
     is >> props;
 
+    CondProbEstimation* tmp = dynamic_cast<CondProbEstimation *>(ParameterEstimation::construct( est_method, props ));
     // Construct a corresponding object
-    _estimation = ParameterEstimation::construct( est_method, props );
+    _estimation = *tmp;
+    delete tmp;
 
     // Read in the factors that are to be estimated
     size_t num_factors;
@@ -171,13 +173,13 @@ void SharedParameters::collectSufficientStatistics( InfAlg &alg ) {
         Prob p( b.nrStates(), 0.0 );
         for( size_t entry = 0; entry < b.nrStates(); ++entry )
             p.set( entry, b[perm.convertLinearIndex(entry)] ); // apply inverse permutation
-        _estimation->addSufficientStatistics( p );
+        _estimation.addSufficientStatistics( p );
     }
 }
 
 
 void SharedParameters::setParameters( FactorGraph &fg ) {
-    Prob p = _estimation->estimate();
+    Prob p = _estimation.estimate();
     for( std::map<FactorIndex, Permute>::iterator i = _perms.begin(); i != _perms.end(); ++i ) {
         Permute &perm = i->second;
         VarSet &vs = _varsets[i->first];

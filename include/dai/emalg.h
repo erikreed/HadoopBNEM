@@ -113,18 +113,18 @@ class ParameterEstimation {
 
 class CondProbEstimation : public ParameterEstimation {
     private:
-//        friend class boost::serialization::access;
-//        template<class Archive>
-//        void serialize(Archive & ar, const unsigned int version) {
-//        	ar & boost::serialization::base_object<ParameterEstimation>(*this);
-////        	boost::serialization::void_cast_register<CondProbEstimation, CondProbEstimation>(
-////        			static_cast<CondProbEstimation *>(NULL),
-////        			static_cast<CondProbEstimation *>(NULL)
-////        	);
-//        	ar &_target_dim;
-//        	ar &_stats;
-//        	ar &_initial_stats;
-//        }
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {
+        	ar & boost::serialization::base_object<ParameterEstimation>(*this);
+//        	boost::serialization::void_cast_register<CondProbEstimation, CondProbEstimation>(
+//        			static_cast<CondProbEstimation *>(NULL),
+//        			static_cast<CondProbEstimation *>(NULL)
+//        	);
+        	ar &_target_dim;
+        	ar &_stats;
+        	ar &_initial_stats;
+        }
     public:
         /// Number of states of the variable of interest
         size_t _target_dim;
@@ -134,7 +134,7 @@ class CondProbEstimation : public ParameterEstimation {
         Prob _initial_stats;
 
         CondProbEstimation() {};
-        CondProbEstimation(size_t td, Prob stats, Prob init) :
+        CondProbEstimation(size_t td, Prob &stats, Prob &init) :
 			_target_dim(td), _stats(stats), _initial_stats(init) {}
         /// Constructor
         /** For a conditional probability \f$ P( X | Y ) \f$,
@@ -219,13 +219,13 @@ class SharedParameters {
         friend class boost::serialization::access;
         template<class Archive>
         void serialize(Archive & ar, const unsigned int version) {
-        	ar &_varsets;
-        	ar &_varorders;
-        	ar &_perms;
+        	ar & _varsets;
+        	ar & _varorders;
+        	ar & _perms;
 //        	ar.template register_type<CondProbEstimation>();
 //        	ar.register_type(static_cast<CondProbEstimation *>(NULL));
-        	ar &_estimation;
-        	ar &_ownEstimation;
+        	ar & _estimation;
+        	ar & _ownEstimation;
         }
 
     public:
@@ -239,7 +239,7 @@ class SharedParameters {
          *  \param estimation a pointer to the parameter estimation method
          *  \param ownPE whether the constructed object gets ownership of \a estimation
          */
-        SharedParameters( const FactorOrientations &varorders, ParameterEstimation *estimation, bool ownPE=false );
+        SharedParameters( const FactorOrientations &varorders, CondProbEstimation &estimation, bool ownPE=false );
 
         /// Construct a SharedParameters object from an input stream \a is and a factor graph \a fg
         /** \see \ref fileformats-emalg-sharedparameters
@@ -250,16 +250,10 @@ class SharedParameters {
         /// Copy constructor
         SharedParameters( const SharedParameters &sp ) : _varsets(sp._varsets), _perms(sp._perms),
         		_varorders(sp._varorders), _estimation(sp._estimation), _ownEstimation(sp._ownEstimation){
-            // If sp owns its _estimation object, we should clone it instead of copying the pointer
-            if( _ownEstimation )
-                _estimation = _estimation->clone();
         }
 
         /// Destructor
         ~SharedParameters() {
-            // If we own the _estimation object, we should delete it now
-            if( _ownEstimation )
-                delete _estimation;
         }
 
         /// Collect the sufficient statistics from expected values (beliefs) according to \a alg
