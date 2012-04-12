@@ -9,7 +9,6 @@
 #include <dai/util.h>
 #include <dai/emalg.h>
 
-
 namespace dai {
 
 
@@ -306,6 +305,5 @@ void EMAlg::run() {
     while( !hasSatisfiedTermConditions() )
         iterate();
 }
-
 
 } // end of namespace dai
