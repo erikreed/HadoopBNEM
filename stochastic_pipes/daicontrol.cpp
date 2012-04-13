@@ -209,27 +209,25 @@ Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 	return likelihood;
 }
 
-//bool EMAlg::hasSatisfiedTermConditions() const {
-//    if( _iters >= _max_iters )
-//        return true;
-//    else if( _lastLogZ.size() < 3 )
-//        // need at least 2 to calculate ratio
-//        // Also, throw away first iteration, as the parameters may not
-//        // have been normalized according to the estimation method
-//        return false;
-//    else {
-//        Real current = _lastLogZ[_lastLogZ.size() - 1];
-//        Real previous = _lastLogZ[_lastLogZ.size() - 2];
-//        if( previous == 0 )
-//            return false;
-//        Real diff = current - previous;
-//        if( diff < 0 ) {
-//            std::cerr << "Error: in EM log-likehood decreased from " << previous << " to " << current << std::endl;
-//            return true;
-//        }
-//        return (diff / fabs(previous)) <= _log_z_tol;
-//    }
-//}
+bool emHasSatisfiedTermConditions(size_t iter, Real previous, Real current) {
+    if( iter >= EM_MAX_ITER )
+        return true;
+    else if( iter < 3 )
+        // need at least 2 to calculate ratio
+        // Also, throw away first iteration, as the parameters may not
+        // have been normalized according to the estimation method
+        return false;
+    else {
+        if( previous == 0 )
+            return false;
+        Real diff = current - previous;
+        if( diff < 0 ) {
+            std::cerr << "Error: in EM log-likehood decreased from " << previous << " to " << current << std::endl;
+            return true;
+        }
+        return (diff / fabs(previous)) <= LIB_EM_TOLERANCE;
+    }
+}
 
 //TODO: sum likelihood when evidence is split up
 Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
@@ -292,6 +290,7 @@ string testEM(char* fgIn, char* tabIn, char* emIn, bool serial) {
 		}
 		for (size_t i = 0; i < em._msteps.size(); i++)
 			em._msteps[i].maximize(em._estep.fg());
+		cout << em._iters << '\t' << likelihood << endl;
 	}
 
 	stringstream ss;
@@ -347,18 +346,18 @@ string mapper(const string& in) {
 
 // TODO: key val will be BN_ID:E1,E2,E3 where E_N corresponds to evidence set N
 string reduce(vector<string>& in) {
+	// using first EMdata to store e-step counts and create fg
 	EMdata dat = stringToEM(in[0]);
 	FactorGraph fg;
 	istringstream fgStream(dat.fgFile);
 	fgStream >> fg;
 
-	// using first EMdata to collect e-step counts
-	EMdata dat1 = stringToEM(in[0]);
-
+	// collect stats for each set of evidence
 	for (size_t i=1; i<in.size(); i++) {
 		EMdata next = stringToEM(in[i]);
-		for (size_t j = 0; j < dat1.msteps.size(); j++) {
-			dat1.msteps[j].addExpectations(next.msteps[j]);
+		for (size_t j = 0; j < dat.msteps.size(); j++) {
+			dat.msteps[j].addExpectations(next.msteps[j]);
+			dat.likelihood += next.likelihood;
 		}
 	}
 
@@ -379,19 +378,12 @@ string reduce(vector<string>& in) {
 
 int main(int argc, char* argv[]) {
 
-	bool tests = false;
+	bool tests = true;
 	size_t numMappers = 5;
 
 	string emFile = readFile("dat/em");
 	string fgFile = readFile("dat/fg");
 	string tabFile = readFile("dat/tab");
-
-	if (tests) {
-		string s1 = testEM("dat/fg", "dat/tab", "dat/em", false);
-		string s2 = testEM("dat/fg", "dat/tab", "dat/em", true);
-		if (s1 != s2)
-			throw;
-	}
 
 	vector<string> tabLines = str_split(tabFile, '\n');
 
@@ -401,16 +393,18 @@ int main(int argc, char* argv[]) {
 	}
 
 	size_t samplesPerMapper = (tabLines.size() - 2)  / numMappers;
+	vector<string> evidencePerMapper;
 
-	vector<string> datForReducer;
 
 	size_t t = 3;
+	EMdata datForMapper;
+	datForMapper.iter = 0;
+	datForMapper.likelihood = 0;
+	datForMapper.emFile = emFile;
+	datForMapper.fgFile = fgFile;
+
+	// read evidence
 	for (size_t i = 0; i < numMappers; i++) {
-		EMdata datForMapper;
-		datForMapper.iter = 0;
-		datForMapper.likelihood = 0;
-		datForMapper.emFile = emFile;
-		datForMapper.fgFile = fgFile;
 
 		ostringstream evidence;
 		// 2 header lines: labels followed by blank line
@@ -418,14 +412,40 @@ int main(int argc, char* argv[]) {
 		for (size_t j = 0; j < samplesPerMapper && t < tabLines.size(); j++) {
 			evidence << tabLines[t++] << '\n';
 		}
-		datForMapper.tabFile = evidence.str();
+		evidencePerMapper.push_back(evidence.str());
 
-		string mapperIn = emToString(datForMapper);
-		string mapperOut = mapper(mapperIn);
-
-		datForReducer.push_back(mapperOut);
 	}
 
+	Real lastLikelihood = 0;
+	Real likelihood = 0;
+	while (!emHasSatisfiedTermConditions(datForMapper.iter,lastLikelihood,likelihood)) {
+		lastLikelihood = datForMapper.likelihood;
+		// map-phase
+		vector<string> datForReducer;
+		for (size_t i = 0; i < numMappers; i++) {
+			datForMapper.tabFile = evidencePerMapper[i];
+			string mapperIn = emToString(datForMapper);
+			string mapperOut = mapper(mapperIn);
+			datForReducer.push_back(mapperOut);
+		}
+		// reduce-phase
+		string reducerOut = reduce(datForReducer);
+		datForMapper = stringToEM(reducerOut);
+		likelihood = datForMapper.likelihood;
+		cout << datForMapper.iter << '\t' << likelihood << endl;
+
+	}
+
+	if (tests) {
+		string s1 = testEM("dat/fg", "dat/tab", "dat/em", false);
+//		string s2 = testEM("dat/fg", "dat/tab", "dat/em", true);
+//		if (s1 != s2)
+//			throw;
+//		if (s1 !=datForMapper.fgFile)
+//			throw;
+//		cout << s1 << endl;
+	}
+//	cout << "--------------------" << endl;
 	return 0;
 }
 
