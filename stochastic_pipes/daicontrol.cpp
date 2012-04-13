@@ -21,19 +21,10 @@
 using namespace std;
 using namespace dai;
 
-//#define DO_RANDOM_EM // does the many iterations of random EM
-#define INTERMEDIATE_VALUES
-#define NOISE_AMOUNT .05 // corresponding to 5%
 #define INF_TYPE "JTREE"
 
-// constants for compareEM(...)
-const size_t EM_MAX_SAMPLES = 5000;
-const size_t EM_SAMPLES_DELTA = 50;
-const size_t EM_INIT_SAMPLES = 50;
-const Real LIB_EM_TOLERANCE = 1e-9; // doesn't have an effect...
+const Real LIB_EM_TOLERANCE = 1e-9;
 const size_t EM_MAX_ITER = 100;
-//#define OLD_FIXING
-
 
 struct EMdata {
 	string emFile;
@@ -57,12 +48,9 @@ struct EMdata {
 	}
 };
 
-
-
-
-
 inline string emToString(const EMdata &em) {
 	ostringstream s;
+	s << std::scientific;
 	boost::archive::text_oarchive oa(s);
 	oa << em;
 	return s.str();
@@ -355,6 +343,8 @@ string reduce(vector<string>& in) {
 	// collect stats for each set of evidence
 	for (size_t i=1; i<in.size(); i++) {
 		EMdata next = stringToEM(in[i]);
+		DAI_ASSERT(dat.msteps.size() == next.msteps.size());
+
 		for (size_t j = 0; j < dat.msteps.size(); j++) {
 			dat.msteps[j].addExpectations(next.msteps[j]);
 			dat.likelihood += next.likelihood;
@@ -433,7 +423,6 @@ int main(int argc, char* argv[]) {
 		datForMapper = stringToEM(reducerOut);
 		likelihood = datForMapper.likelihood;
 		cout << datForMapper.iter << '\t' << likelihood << endl;
-
 	}
 
 	if (tests) {
@@ -446,6 +435,7 @@ int main(int argc, char* argv[]) {
 //		cout << s1 << endl;
 	}
 //	cout << "--------------------" << endl;
+//	cout << datForMapper.fgFile << endl;
 	return 0;
 }
 

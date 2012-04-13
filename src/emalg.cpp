@@ -178,10 +178,11 @@ void SharedParameters::collectSufficientStatistics( InfAlg &alg ) {
 }
 
 void SharedParameters::collectSufficientStatistics( SharedParameters &s ) {
-	_estimation._stats += s._estimation._stats;
+	_estimation._stats += s._estimation._stats - s._estimation._initial_stats;
 }
 
 void MaximizationStep::addExpectations( MaximizationStep &m) {
+	DAI_ASSERT(m._params.size() == _params.size());
     for( size_t i = 0; i < _params.size(); ++i )
         _params[i].collectSufficientStatistics( m._params[i] );
 }
