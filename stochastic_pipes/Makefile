@@ -20,6 +20,6 @@ run: all
 	./daicontrol
 
 daicontrol: daicontrol.cpp ../lib/libdai.a
-	g++ -Wall -g -I../include -I. -g $(DAI_FLAGS) -odaicontrol \
+	g++ -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS) -odaicontrol \
 		daicontrol.cpp ../lib/libdai.a $(LIBS) 
 

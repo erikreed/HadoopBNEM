@@ -200,8 +200,11 @@ class SharedParameters {
         std::map<FactorIndex, Permute> _perms;
         /// Maps factor indices to the corresponding desired variable orderings
         FactorOrientations _varorders;
+
         /// Parameter estimation method to be used
+    public:
         CondProbEstimation _estimation;
+    private:
         /// Indicates whether \c *this gets ownership of _estimation
         bool _ownEstimation;
 
@@ -229,6 +232,7 @@ class SharedParameters {
         }
 
     public:
+
         SharedParameters(){}
 //        SharedParameters(std::map<FactorIndex, VarSet> &vs, std::map<FactorIndex, Permute> &perms,
 //        		FactorOrientations &vars, ParameterEstimation* est, bool own) :
@@ -264,6 +268,7 @@ class SharedParameters {
          *  this vector of expected values of the parameters as input.
          */
         void collectSufficientStatistics( InfAlg &alg );
+        void collectSufficientStatistics( SharedParameters &s );
 
         /// Estimate and set the shared parameters
         /** Based on the sufficient statistics collected so far, the shared parameters are estimated
@@ -279,8 +284,6 @@ class SharedParameters {
  */
 class MaximizationStep {
     private:
-        /// Vector of parameter estimation tasks of which this maximization step consists
-        std::vector<SharedParameters> _params;
 
         friend class boost::serialization::access;
 		template<class Archive>
@@ -289,6 +292,10 @@ class MaximizationStep {
 		}
 
     public:
+
+		/// Vector of parameter estimation tasks of which this maximization step consists
+		std::vector<SharedParameters> _params;
+
         /// Default constructor
         MaximizationStep() : _params() {}
 
@@ -302,6 +309,7 @@ class MaximizationStep {
 
         /// Collect the beliefs from this InfAlg as expectations for the next Maximization step
         void addExpectations( InfAlg &alg );
+        void addExpectations( MaximizationStep &m);
 
         /// Using all of the currently added expectations, make new factors with maximized parameters and set them in the FactorGraph.
         void maximize( FactorGraph &fg );

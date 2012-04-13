@@ -177,6 +177,14 @@ void SharedParameters::collectSufficientStatistics( InfAlg &alg ) {
     }
 }
 
+void SharedParameters::collectSufficientStatistics( SharedParameters &s ) {
+	_estimation._stats += s._estimation._stats;
+}
+
+void MaximizationStep::addExpectations( MaximizationStep &m) {
+    for( size_t i = 0; i < _params.size(); ++i )
+        _params[i].collectSufficientStatistics( m._params[i] );
+}
 
 void SharedParameters::setParameters( FactorGraph &fg ) {
     Prob p = _estimation.estimate();
