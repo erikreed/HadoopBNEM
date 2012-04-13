@@ -9,9 +9,8 @@
 #include <fstream>
 #include <math.h>
 #include <stdio.h>
-//#include "hadoop/Pipes.hh"
-//#include "hadoop/TemplateFactory.hh"
-//#include "hadoop/StringUtils.hh"
+#include "include/hadoop/Pipes.hh"
+#include "include/hadoop/TemplateFactory.hh"
 
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -20,6 +19,7 @@
 
 using namespace std;
 using namespace dai;
+using namespace HadoopPipes;
 
 #define INF_TYPE "JTREE"
 
@@ -368,7 +368,7 @@ string reduce(vector<string>& in) {
 
 int main(int argc, char* argv[]) {
 
-	bool tests = true;
+	bool tests = false;
 	size_t numMappers = 5;
 
 	string emFile = readFile("dat/em");
@@ -406,36 +406,31 @@ int main(int argc, char* argv[]) {
 
 	}
 
-	Real lastLikelihood = 0;
-	Real likelihood = 0;
-	while (!emHasSatisfiedTermConditions(datForMapper.iter,lastLikelihood,likelihood)) {
-		lastLikelihood = datForMapper.likelihood;
-		// map-phase
-		vector<string> datForReducer;
-		for (size_t i = 0; i < numMappers; i++) {
-			datForMapper.tabFile = evidencePerMapper[i];
-			string mapperIn = emToString(datForMapper);
-			string mapperOut = mapper(mapperIn);
-			datForReducer.push_back(mapperOut);
+	if (tests) {
+		Real lastLikelihood = 0;
+		Real likelihood = 0;
+		while (!emHasSatisfiedTermConditions(datForMapper.iter,lastLikelihood,likelihood)) {
+			lastLikelihood = datForMapper.likelihood;
+			// map-phase
+			vector<string> datForReducer;
+			for (size_t i = 0; i < numMappers; i++) {
+				datForMapper.tabFile = evidencePerMapper[i];
+				string mapperIn = emToString(datForMapper);
+				string mapperOut = mapper(mapperIn);
+				datForReducer.push_back(mapperOut);
+			}
+			// reduce-phase
+			string reducerOut = reduce(datForReducer);
+			datForMapper = stringToEM(reducerOut);
+			likelihood = datForMapper.likelihood;
+			cout << datForMapper.iter << '\t' << likelihood << endl;
 		}
-		// reduce-phase
-		string reducerOut = reduce(datForReducer);
-		datForMapper = stringToEM(reducerOut);
-		likelihood = datForMapper.likelihood;
-		cout << datForMapper.iter << '\t' << likelihood << endl;
+		string s1 = testEM("dat/fg", "dat/tab", "dat/em", false);
+		string s2 = testEM("dat/fg", "dat/tab", "dat/em", true);
+		if (s1 != s2)
+			throw;
 	}
 
-	if (tests) {
-		string s1 = testEM("dat/fg", "dat/tab", "dat/em", false);
-//		string s2 = testEM("dat/fg", "dat/tab", "dat/em", true);
-//		if (s1 != s2)
-//			throw;
-//		if (s1 !=datForMapper.fgFile)
-//			throw;
-//		cout << s1 << endl;
-	}
-//	cout << "--------------------" << endl;
-//	cout << datForMapper.fgFile << endl;
 	return 0;
 }
 
