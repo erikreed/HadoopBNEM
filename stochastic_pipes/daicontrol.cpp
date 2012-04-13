@@ -16,6 +16,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
+#include <boost/serialization/string.hpp>
 
 using namespace std;
 using namespace dai;
@@ -60,14 +61,14 @@ struct EMdata {
 
 
 
-inline string emToString(EMdata &em) {
+inline string emToString(const EMdata &em) {
 	ostringstream s;
 	boost::archive::text_oarchive oa(s);
 	oa << em;
 	return s.str();
 }
 
-inline EMdata stringToEM(string &s) {
+inline EMdata stringToEM(const string &s) {
 	istringstream ss(s);
 	boost::archive::text_iarchive ia(ss);
 	EMdata em;
@@ -208,6 +209,28 @@ Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 	return likelihood;
 }
 
+//bool EMAlg::hasSatisfiedTermConditions() const {
+//    if( _iters >= _max_iters )
+//        return true;
+//    else if( _lastLogZ.size() < 3 )
+//        // need at least 2 to calculate ratio
+//        // Also, throw away first iteration, as the parameters may not
+//        // have been normalized according to the estimation method
+//        return false;
+//    else {
+//        Real current = _lastLogZ[_lastLogZ.size() - 1];
+//        Real previous = _lastLogZ[_lastLogZ.size() - 2];
+//        if( previous == 0 )
+//            return false;
+//        Real diff = current - previous;
+//        if( diff < 0 ) {
+//            std::cerr << "Error: in EM log-likehood decreased from " << previous << " to " << current << std::endl;
+//            return true;
+//        }
+//        return (diff / fabs(previous)) <= _log_z_tol;
+//    }
+//}
+
 //TODO: sum likelihood when evidence is split up
 Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
 		InfAlg &inf) {
@@ -286,7 +309,7 @@ string mapper(const string& in) {
 
 	FactorGraph fg;
 
-	istringstream fgStream(fgIn);
+	istringstream fgStream(dat.fgFile);
 	fgStream >> fg;
 
 	// Prepare junction-tree object for doing exact inference for E-step
@@ -302,18 +325,17 @@ string mapper(const string& in) {
 
 	// Read sample from file
 	Evidence e;
-	istringstream estream(tabIn);
+	istringstream estream(dat.tabFile);
 	e.addEvidenceTabFile(estream, fg);
 	cout << "Number of samples: " << e.nrSamples() << endl;
 
 	// Read EM specification
-	istringstream emstream(emIn);
+	istringstream emstream(dat.emFile);
 	EMAlg em(e, *inf, emstream);
 
 	// perform 1 iteration e-step
 	Real likelihood = hadoop_iterate(em._msteps, em._evidence, em._estep);
 
-	dat.iter++;
 	dat.likelihood = likelihood;
 	dat.msteps = em._msteps;
 
@@ -323,12 +345,36 @@ string mapper(const string& in) {
 	return emToString(dat);
 }
 
-// key val will be BN_ID:E1,E2,E3 where E_N corresponds to evidence set N
-string reduce(vector<string>& key) {
-//
-//	for (size_t i = 0; i < em._msteps.size(); i++)
-//			em._msteps[i].maximize(em._estep.fg());
-	return NULL;
+// TODO: key val will be BN_ID:E1,E2,E3 where E_N corresponds to evidence set N
+string reduce(vector<string>& in) {
+	EMdata dat = stringToEM(in[0]);
+	FactorGraph fg;
+	istringstream fgStream(dat.fgFile);
+	fgStream >> fg;
+
+	// using first EMdata to collect e-step counts
+	EMdata dat1 = stringToEM(in[0]);
+
+	for (size_t i=1; i<in.size(); i++) {
+		EMdata next = stringToEM(in[i]);
+		for (size_t j = 0; j < dat1.msteps.size(); j++) {
+			dat1.msteps[j].addExpectations(next.msteps[j]);
+		}
+	}
+
+	// m-step
+	for (size_t i=0; i<dat.msteps.size(); i++)
+		dat.msteps[i].maximize(fg);
+
+	ostringstream newFg;
+	newFg << fg;
+
+	// save new fg, clear counts, increment iter
+	dat.fgFile = newFg.str();
+	dat.msteps.clear();
+	dat.iter++;
+
+	return emToString(dat);
 }
 
 int main(int argc, char* argv[]) {
@@ -348,12 +394,17 @@ int main(int argc, char* argv[]) {
 	}
 
 	vector<string> tabLines = str_split(tabFile, '\n');
-	//	numMappers = tabLines.size()/numMappers > numMappers ? numMappers : tabLines.size()/numMappers;
 
-	size_t samplesPerMapper = tabLines.size() / numMappers;
+	if (numMappers > tabLines.size() - 2) {
+		cerr << "more mappers than evidence samples..." << endl;
+		throw;
+	}
 
+	size_t samplesPerMapper = (tabLines.size() - 2)  / numMappers;
 
-	size_t t = 0;
+	vector<string> datForReducer;
+
+	size_t t = 3;
 	for (size_t i = 0; i < numMappers; i++) {
 		EMdata datForMapper;
 		datForMapper.iter = 0;
@@ -362,12 +413,17 @@ int main(int argc, char* argv[]) {
 		datForMapper.fgFile = fgFile;
 
 		ostringstream evidence;
+		// 2 header lines: labels followed by blank line
+		evidence << tabLines[0] << "\n\n";
 		for (size_t j = 0; j < samplesPerMapper && t < tabLines.size(); j++) {
 			evidence << tabLines[t++] << '\n';
 		}
-		datForMapper.emFile = evidence.str();
+		datForMapper.tabFile = evidence.str();
 
-		mapper(emToString(datForMapper));
+		string mapperIn = emToString(datForMapper);
+		string mapperOut = mapper(mapperIn);
+
+		datForReducer.push_back(mapperOut);
 	}
 
 	return 0;
