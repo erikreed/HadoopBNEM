@@ -3,8 +3,12 @@
 
 DAI_FLAGS=-DDAI_WITH_BP -DDAI_WITH_FBP -DDAI_WITH_TRWBP -DDAI_WITH_MF -DDAI_WITH_HAK -DDAI_WITH_LC -DDAI_WITH_TREEEP -DDAI_WITH_JTREE -DDAI_WITH_MR -DDAI_WITH_GIBBS -DDAI_WITH_CBP -DDAI_WITH_DECMAP
 
-HADOOP=-L${HADOOP_HOME}/c++/Linux-amd64-64/lib -lhadooppipes \
-	-I${HADOOP_HOME}/c++/Linux-amd64-64
+
+PLATFORM=Linux-amd64-64
+HADOOP_INSTALL=/home/erik/hadoop/hadoop-1.0.0
+
+HADOOP=-L${HADOOP_HOME}/c++/Linux-amd64-64/lib -lhadooppipes -lhadooputils  \
+	-lcrypto -lssl -I${HADOOP_HOME}/c++/Linux-amd64-64
 LIBS=-lgmpxx -lgmp -lboost_serialization $(HADOOP)
 
 all: daicontrol

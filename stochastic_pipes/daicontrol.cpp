@@ -12,6 +12,7 @@
 #include "include/hadoop/Pipes.hh"
 #include "include/hadoop/TemplateFactory.hh"
 
+
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
@@ -367,29 +368,27 @@ string reduce(vector<string>& in) {
 }
 
 
-class WordCountMap: public HadoopPipes::Mapper {
+class DaiEM_Map: public HadoopPipes::Mapper {
 public:
-	WordCountMap(HadoopPipes::TaskContext& context){}
+	DaiEM_Map(HadoopPipes::TaskContext& context){
+
+	}
 
 	void map(HadoopPipes::MapContext& context) {
-		std::vector<std::string> words =
-				HadoopUtils::splitString(context.getInputValue(), " ");
-		for(unsigned int i=0; i < words.size(); ++i) {
-			context.emit(words[i], "1");
-		}
+
+
 	}
 };
 
-class WordCountReduce: public HadoopPipes::Reducer {
+class DaiEM_Reduce: public HadoopPipes::Reducer {
 public:
-	WordCountReduce(HadoopPipes::TaskContext& context){}
+	DaiEM_Reduce(HadoopPipes::TaskContext& context){}
 	void reduce(HadoopPipes::ReduceContext& context) {
-		int sum = 0;
+
 		while (context.nextValue()) {
-			sum += HadoopUtils::toInt(context.getInputValue());
+			context.getInputValue();
 		}
-		context.emit(context.getInputKey(),
-				HadoopUtils::toString(sum));
+
 	}
 };
 
@@ -460,9 +459,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	return HadoopPipes::runTask(
-			HadoopPipes::TemplateFactory<WordCountMap,
-			WordCountReduce, void,
-			WordCountReduce>());
+			HadoopPipes::TemplateFactory<DaiEM_Map,DaiEM_Reduce>());
 
 //	return 0;
 }
