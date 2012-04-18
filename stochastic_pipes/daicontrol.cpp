@@ -388,11 +388,12 @@ public:
 		current = 0;
 		const HadoopPipes::JobConf* job = context.getJobConf();
 		num_mappers = job->getInt("mapred.map.tasks");
+		cout << "num mappers: " << num_mappers << endl;
 
-		emFile = readFile("dat/em");
-		fgFile = readFile("dat/fg");
-		tabFile = readFile("dat/tab_content");
-		tabHeader = readFile("dat/tab_header");
+		emFile = readFile("in/em");
+		fgFile = readFile("in/fg");
+		tabFile = readFile("in/tab_content");
+		tabHeader = readFile("in/tab_header");
 
 		tabLines = str_split(tabFile, '\n');
 		if (num_mappers > tabLines.size()) {
@@ -410,7 +411,7 @@ public:
 		datForMapper.fgFile = fgFile;
 
 		// read evidence
-		for (size_t i = 0; i < num_mappers; i++) {
+		for (int i = 0; i < num_mappers; i++) {
 			ostringstream evidence;
 			// 2 header lines: labels followed by blank line
 			evidence << tabHeader << '\n';
@@ -430,10 +431,6 @@ public:
 		return (++current <= num_mappers);
 	}
 
-	/**
-	 * The progress of the record reader through the split as a value between
-	 * 0.0 and 1.0.
-	 */
 	float getProgress() {
 		return ((float) current) / num_mappers;
 	}
@@ -441,9 +438,7 @@ public:
 
 class DaiEM_Map: public HadoopPipes::Mapper {
 public:
-	DaiEM_Map(HadoopPipes::TaskContext& context){
-
-	}
+	DaiEM_Map(HadoopPipes::TaskContext& context){}
 
 	void map(HadoopPipes::MapContext& context) {
 
@@ -471,69 +466,74 @@ public:
 
 int main(int argc, char* argv[]) {
 
+	bool hadoop = true;
 	bool tests = false;
-	size_t numMappers = 5;
 
-	string emFile = readFile("dat/em");
-	string fgFile = readFile("dat/fg");
-	string tabFile = readFile("dat/tab");
+	if (!hadoop) {
 
-	vector<string> tabLines = str_split(tabFile, '\n');
+		size_t numMappers = 5;
 
-	if (numMappers > tabLines.size() - 2) {
-		cerr << "more mappers than evidence samples..." << endl;
-		throw;
-	}
+		string emFile = readFile("dat/em");
+		string fgFile = readFile("dat/fg");
+		string tabFile = readFile("dat/tab");
 
-	size_t samplesPerMapper = (tabLines.size() - 2)  / numMappers;
-	vector<string> evidencePerMapper;
+		vector<string> tabLines = str_split(tabFile, '\n');
 
-
-	size_t t = 3;
-	EMdata datForMapper;
-	datForMapper.iter = 0;
-	datForMapper.likelihood = 0;
-	datForMapper.emFile = emFile;
-	datForMapper.fgFile = fgFile;
-
-	// read evidence
-	for (size_t i = 0; i < numMappers; i++) {
-
-		ostringstream evidence;
-		// 2 header lines: labels followed by blank line
-		evidence << tabLines[0] << "\n\n";
-		for (size_t j = 0; j < samplesPerMapper && t < tabLines.size(); j++) {
-			evidence << tabLines[t++] << '\n';
-		}
-		evidencePerMapper.push_back(evidence.str());
-	}
-
-	if (tests) {
-		Real lastLikelihood = 0;
-		Real likelihood = 0;
-		while (!emHasSatisfiedTermConditions(datForMapper.iter,lastLikelihood,likelihood)) {
-			lastLikelihood = datForMapper.likelihood;
-			// map-phase
-			vector<string> datForReducer;
-			for (size_t i = 0; i < numMappers; i++) {
-				datForMapper.tabFile = evidencePerMapper[i];
-				string mapperIn = emToString(datForMapper);
-				string mapperOut = mapper(mapperIn);
-				datForReducer.push_back(mapperOut);
-			}
-			// reduce-phase
-			string reducerOut = em_reduce(datForReducer);
-			datForMapper = stringToEM(reducerOut);
-			likelihood = datForMapper.likelihood;
-			cout << datForMapper.iter << '\t' << likelihood << endl;
-		}
-		string s1 = testEM("dat/fg", "dat/tab", "dat/em", false);
-		string s2 = testEM("dat/fg", "dat/tab", "dat/em", true);
-		if (s1 != s2)
+		if (numMappers > tabLines.size() - 2) {
+			cerr << "more mappers than evidence samples..." << endl;
 			throw;
-	}
+		}
 
-	return HadoopPipes::runTask(
+		size_t samplesPerMapper = (tabLines.size() - 2)  / numMappers;
+		vector<string> evidencePerMapper;
+
+
+		size_t t = 3;
+		EMdata datForMapper;
+		datForMapper.iter = 0;
+		datForMapper.likelihood = 0;
+		datForMapper.emFile = emFile;
+		datForMapper.fgFile = fgFile;
+
+		// read evidence
+		for (size_t i = 0; i < numMappers; i++) {
+
+			ostringstream evidence;
+			// 2 header lines: labels followed by blank line
+			evidence << tabLines[0] << "\n\n";
+			for (size_t j = 0; j < samplesPerMapper && t < tabLines.size(); j++) {
+				evidence << tabLines[t++] << '\n';
+			}
+			evidencePerMapper.push_back(evidence.str());
+		}
+
+		if (tests) {
+			Real lastLikelihood = 0;
+			Real likelihood = 0;
+			while (!emHasSatisfiedTermConditions(datForMapper.iter,lastLikelihood,likelihood)) {
+				lastLikelihood = datForMapper.likelihood;
+				// map-phase
+				vector<string> datForReducer;
+				for (size_t i = 0; i < numMappers; i++) {
+					datForMapper.tabFile = evidencePerMapper[i];
+					string mapperIn = emToString(datForMapper);
+					string mapperOut = mapper(mapperIn);
+					datForReducer.push_back(mapperOut);
+				}
+				// reduce-phase
+				string reducerOut = em_reduce(datForReducer);
+				datForMapper = stringToEM(reducerOut);
+				likelihood = datForMapper.likelihood;
+				cout << datForMapper.iter << '\t' << likelihood << endl;
+			}
+			string s1 = testEM("dat/fg", "dat/tab", "dat/em", false);
+			string s2 = testEM("dat/fg", "dat/tab", "dat/em", true);
+			if (s1 != s2)
+				throw;
+		}
+	}
+	else
+		return HadoopPipes::runTask(
 			HadoopPipes::TemplateFactory<DaiEM_Map,DaiEM_Reduce,void,void,DaiEM_RecordReader>());
 
 //	return 0;
