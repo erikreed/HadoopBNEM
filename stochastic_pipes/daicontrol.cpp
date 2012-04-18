@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include "include/hadoop/Pipes.hh"
 #include "include/hadoop/TemplateFactory.hh"
-
+#include "include/hadoop/StringUtils.hh"
 
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -334,7 +334,7 @@ string mapper(const string& in) {
 }
 
 // TODO: key val will be BN_ID:E1,E2,E3 where E_N corresponds to evidence set N
-string reduce(vector<string>& in) {
+string em_reduce(vector<string>& in) {
 	// using first EMdata to store e-step counts and create fg
 	EMdata dat = stringToEM(in[0]);
 	FactorGraph fg;
@@ -367,6 +367,77 @@ string reduce(vector<string>& in) {
 	return emToString(dat);
 }
 
+class DaiEM_RecordReader: public HadoopPipes::RecordReader {
+public:
+
+	int num_mappers;
+	int current;
+
+	string emFile;
+	string fgFile;
+	string tabFile;
+	string tabHeader;
+	vector<string> tabLines;
+	size_t samplesPerMapper;
+	vector<string> evidencePerMapper;
+
+	size_t t;
+	EMdata datForMapper;
+
+	DaiEM_RecordReader(HadoopPipes::TaskContext& context) {
+		current = 0;
+		const HadoopPipes::JobConf* job = context.getJobConf();
+		num_mappers = job->getInt("mapred.map.tasks");
+
+		emFile = readFile("dat/em");
+		fgFile = readFile("dat/fg");
+		tabFile = readFile("dat/tab_content");
+		tabHeader = readFile("dat/tab_header");
+
+		tabLines = str_split(tabFile, '\n');
+		if (num_mappers > tabLines.size()) {
+			cerr << "more mappers than evidence samples..." << endl;
+			throw;
+		}
+		evidencePerMapper.reserve(num_mappers);
+		samplesPerMapper = (tabLines.size())  / num_mappers;
+
+		t = 0;
+
+		datForMapper.iter = 0;
+		datForMapper.likelihood = 0;
+		datForMapper.emFile = emFile;
+		datForMapper.fgFile = fgFile;
+
+		// read evidence
+		for (size_t i = 0; i < num_mappers; i++) {
+			ostringstream evidence;
+			// 2 header lines: labels followed by blank line
+			evidence << tabHeader << '\n';
+			for (size_t j = 0; j < samplesPerMapper && t < tabLines.size(); j++) {
+				evidence << tabLines[t++] << '\n';
+			}
+			evidencePerMapper.push_back(evidence.str());
+		}
+
+	}
+
+	bool next(std::string& key, std::string& value) {
+		datForMapper.tabFile = evidencePerMapper[current];
+		datForMapper.bnID = current;
+		key = HadoopUtils::toString(current);
+		value = emToString(datForMapper);
+		return (++current <= num_mappers);
+	}
+
+	/**
+	 * The progress of the record reader through the split as a value between
+	 * 0.0 and 1.0.
+	 */
+	float getProgress() {
+		return ((float) current) / num_mappers;
+	}
+};
 
 class DaiEM_Map: public HadoopPipes::Mapper {
 public:
@@ -376,7 +447,10 @@ public:
 
 	void map(HadoopPipes::MapContext& context) {
 
-
+		string in = context.getInputKey();
+		string out = mapper(in);
+		//todo: make key BN_id
+		context.emit(string("1"),out);
 	}
 };
 
@@ -385,10 +459,12 @@ public:
 	DaiEM_Reduce(HadoopPipes::TaskContext& context){}
 	void reduce(HadoopPipes::ReduceContext& context) {
 
-		while (context.nextValue()) {
-			context.getInputValue();
-		}
+		vector<string> in;
+		while (context.nextValue())
+			in.push_back(context.getInputValue());
 
+		string out = em_reduce(in);
+		context.emit("1",stringToEM(out).fgFile);
 	}
 };
 
@@ -430,7 +506,6 @@ int main(int argc, char* argv[]) {
 			evidence << tabLines[t++] << '\n';
 		}
 		evidencePerMapper.push_back(evidence.str());
-
 	}
 
 	if (tests) {
@@ -447,7 +522,7 @@ int main(int argc, char* argv[]) {
 				datForReducer.push_back(mapperOut);
 			}
 			// reduce-phase
-			string reducerOut = reduce(datForReducer);
+			string reducerOut = em_reduce(datForReducer);
 			datForMapper = stringToEM(reducerOut);
 			likelihood = datForMapper.likelihood;
 			cout << datForMapper.iter << '\t' << likelihood << endl;
@@ -459,7 +534,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	return HadoopPipes::runTask(
-			HadoopPipes::TemplateFactory<DaiEM_Map,DaiEM_Reduce>());
+			HadoopPipes::TemplateFactory<DaiEM_Map,DaiEM_Reduce,void,void,DaiEM_RecordReader>());
 
 //	return 0;
 }
