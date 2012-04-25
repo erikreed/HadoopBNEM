@@ -13,7 +13,7 @@ LIBS=-lhadooppipes -lhadooputils -lgmpxx -lm -lc -lgmp \
 	-lssl -lcrypto -lboost_serialization \
 	-lpthread -lz -ldl
 
-all: daicontrol
+all: daicontrol dai_map dai_reduce
 cleanout: 
 	hadoop fs -rmr out in daicontrol
 	
@@ -36,7 +36,14 @@ clean:
 	rm -rf DaiReduce2dai_temp tmp /tmp/hadoop-erik*
 
 run: all
-	./daicontrol
+	cat in/tab_content | ./dai_map | ./dai_reduce
+dai_map: dai_map.cpp ../lib/libdai.a
+	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE) \
+    -odai_map dai_map.cpp ../lib/libdai.a $(LIBS)
+
+dai_reduce: dai_reduce.cpp ../lib/libdai.a
+	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE) \
+    -odai_reduce dai_reduce.cpp ../lib/libdai.a $(LIBS)
 
 daicontrol: daicontrol.cpp ../lib/libdai.a
 	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE) \
