@@ -334,7 +334,7 @@ string mapper(const string& in) {
 }
 
 // TODO: key val will be BN_ID:E1,E2,E3 where E_N corresponds to evidence set N
-string em_reduce(vector<string>& in) {
+EMdata em_reduce(vector<string>& in) {
 	// using first EMdata to store e-step counts and create fg
 	EMdata dat = stringToEM(in[0]);
 	FactorGraph fg;
@@ -364,43 +364,14 @@ string em_reduce(vector<string>& in) {
 	dat.msteps.clear();
 	dat.iter++;
 
-	return emToString(dat);
+	return dat;
 }
-
-class DaiEM_Map: public HadoopPipes::Mapper {
-public:
-	DaiEM_Map(HadoopPipes::TaskContext& context){}
-
-	void map(HadoopPipes::MapContext& context) {
-
-		string in = context.getInputKey();
-		string out = mapper(in);
-		//todo: make key BN_id
-		context.emit(string("1"),out);
-	}
-};
-
-class DaiEM_Reduce: public HadoopPipes::Reducer {
-public:
-	DaiEM_Reduce(HadoopPipes::TaskContext& context){}
-	void reduce(HadoopPipes::ReduceContext& context) {
-
-		vector<string> in;
-		while (context.nextValue())
-			in.push_back(context.getInputValue());
-
-		string out = em_reduce(in);
-		context.emit("1",stringToEM(out).fgFile);
-	}
-};
 
 
 int main(int argc, char* argv[]) {
 
 	//read data from mappers
 	ostringstream ss;
-
-	ss << readFile("in/tab_header");
 
 	// get evidence
 	string s;
@@ -411,8 +382,22 @@ int main(int argc, char* argv[]) {
 
 	cout << input << endl;
 
-	vector<string> datsForReducer = str_split(input, '*');
-	em_reduce(datsForReducer);
+//	vector<string> datsForReducer = str_split(input, '*');
+//	EMdata dat = em_reduce(datsForReducer);
+
+//	ofstream fout;
+//	fout.open ("out/lhood");
+//	fout << dat.likelihood << endl;
+//	fout.close();
+//	fout.open ("out/fg");
+//	fout << dat.fgFile << endl;
+//	fout.close();
+//	fout.open ("out/iters");
+//	fout << dat.iter << endl;
+//	fout.close();
+
+
+//	cout << emToString(dat) << endl;
 
 	return 0;
 }

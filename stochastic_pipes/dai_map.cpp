@@ -396,6 +396,10 @@ int main(int argc, char* argv[]) {
 	datForMapper.bnID = 0; //TODO
 
 	string out = mapper(datForMapper);
+
+	// print BN_ID
+	cout << '1' << '*';
+	// print data for reducer
 	cout << out << endl;
 
 	return 0;
