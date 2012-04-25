@@ -12,120 +12,13 @@
 #include "include/hadoop/Pipes.hh"
 #include "include/hadoop/TemplateFactory.hh"
 #include "include/hadoop/StringUtils.hh"
+#include "dai_mapreduce.h"
 
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
 
-using namespace std;
-using namespace dai;
-using namespace HadoopPipes;
-
-#define INF_TYPE "JTREE"
-
-const Real LIB_EM_TOLERANCE = 1e-9;
-const size_t EM_MAX_ITER = 100;
-
-struct EMdata {
-	string emFile;
-	string fgFile;
-	string tabFile;
-	size_t iter;
-	Real likelihood;
-	vector<MaximizationStep> msteps;
-	int bnID;
-
-	friend class boost::serialization::access;
-	template<class Archive>
-	void serialize(Archive & ar, const unsigned int version) {
-		ar & emFile;
-		ar & fgFile;
-		ar & tabFile;
-		ar & iter;
-		ar & likelihood;
-		ar & msteps;
-		ar & bnID;
-	}
-};
-
-inline string emToString(const EMdata &em) {
-	ostringstream s;
-	s << std::scientific;
-	boost::archive::text_oarchive oa(s);
-	oa << em;
-	return s.str();
-}
-
-inline EMdata stringToEM(const string &s) {
-	istringstream ss(s);
-	boost::archive::text_iarchive ia(ss);
-	EMdata em;
-	ia >> em;
-	return em;
-}
-
-string convertInt(int number) {
-	stringstream ss;//create a stringstream
-	ss << number;//add number to the stream
-	return ss.str();//return a string with the contents of the stream
-}
-
-string readFile(const char* path) {
-
-	int length;
-	char * buffer;
-
-	ifstream is;
-	is.open(path, ios::binary);
-
-	// get length of file:
-	is.seekg(0, ios::end);
-	length = is.tellg();
-	is.seekg(0, ios::beg);
-	// allocate memory:
-	buffer = new char[length];
-
-	// read data as a block:
-	is.read(buffer, length);
-	is.close();
-	string out = buffer;
-	delete[] buffer;
-	return out;
-}
-
-bool str_replace(std::string& str, const std::string& from,
-		const std::string& to) {
-	size_t start_pos = str.find(from);
-	if (start_pos == std::string::npos)
-		return false;
-	str.replace(start_pos, from.length(), to);
-	return true;
-}
-
-void randomize_fg(FactorGraph* fg) {
-	vector<Factor> factors = fg->factors();
-	size_t size = factors.size();
-	for (size_t i = 0; i < size; i++) {
-		Factor f = fg->factor(i);
-		f.randomize();
-		fg->setFactor(i, f, false);
-	}
-}
-
-vector<std::string> &str_split(const std::string &s, char delim, std::vector<
-		std::string> &elems) {
-	std::stringstream ss(s);
-	std::string item;
-	while (std::getline(ss, item, delim))
-		elems.push_back(item);
-	return elems;
-}
-
-std::vector<std::string> str_split(const std::string &s, char delim) {
-	std::vector<std::string> elems;
-	return str_split(s, delim, elems);
-}
 
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	string fixedIn = emIn;
@@ -367,6 +260,39 @@ EMdata em_reduce(vector<string>& in) {
 	return dat;
 }
 
+EMdata em_reduce(vector<EMdata>& in) {
+	// using first EMdata to store e-step counts and create fg
+	EMdata dat = in[0];
+	FactorGraph fg;
+	istringstream fgStream(dat.fgFile);
+	fgStream >> fg;
+
+	// collect stats for each set of evidence
+	for (size_t i=1; i<in.size(); i++) {
+		EMdata next = in[i];
+		DAI_ASSERT(dat.msteps.size() == next.msteps.size());
+
+		for (size_t j = 0; j < dat.msteps.size(); j++) {
+			dat.msteps[j].addExpectations(next.msteps[j]);
+			dat.likelihood += next.likelihood;
+		}
+	}
+
+	// m-step
+	for (size_t i=0; i<dat.msteps.size(); i++)
+		dat.msteps[i].maximize(fg);
+
+	ostringstream newFg;
+	newFg << fg;
+
+	// save new fg, clear counts, increment iter
+	dat.fgFile = newFg.str();
+	dat.msteps.clear();
+	dat.iter++;
+
+	return dat;
+}
+
 
 int main(int argc, char* argv[]) {
 
@@ -378,12 +304,35 @@ int main(int argc, char* argv[]) {
 	while (std::getline(std::cin, s))
 		ss << s << '\n';
 
-	const string input = ss.str();
+	string input = ss.str();
 
-	cout << input << endl;
 
-//	vector<string> datsForReducer = str_split(input, '*');
-//	EMdata dat = em_reduce(datsForReducer);
+
+//	cout << input << endl;
+
+
+
+	vector<string> data = str_split(input, '\n');
+
+
+
+
+	vector<EMdata> datsForReducer;
+
+	for (size_t i=0; i<data.size(); i++) {
+		string line = data[i];
+		str_char_replace(line,'^','\n');
+		vector<string> parts = str_split(line, '*');
+		assert(parts.size() == 2);
+
+		EMdata dat = stringToEM(parts[1]); // value
+		dat.bnID = parts[0]; // key
+		datsForReducer.push_back(dat);
+	}
+
+//	cout << datsForReducer[0].fgFile << endl;
+
+	EMdata out = em_reduce(datsForReducer);
 
 //	ofstream fout;
 //	fout.open ("out/lhood");
@@ -397,7 +346,9 @@ int main(int argc, char* argv[]) {
 //	fout.close();
 
 
-//	cout << emToString(dat) << endl;
+//	cout << emToString(out) << endl;
+
+	cout << out.likelihood << endl;
 
 	return 0;
 }

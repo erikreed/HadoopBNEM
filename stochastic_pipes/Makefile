@@ -15,7 +15,7 @@ LIBS=-lhadooppipes -lhadooputils -lgmpxx -lm -lc -lgmp \
 
 all: daicontrol dai_map dai_reduce
 cleanout: 
-	hadoop fs -rmr out in daicontrol
+	hadoop fs -rmr out 
 	
 pipes: daicontrol
 	hadoop pipes \
@@ -37,15 +37,15 @@ clean:
 
 run: all
 	cat in/tab_content | ./dai_map | ./dai_reduce
-dai_map: dai_map.cpp ../lib/libdai.a
+dai_map: dai_map.cpp ../lib/libdai.a dai_mapreduce.h
 	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE) \
     -odai_map dai_map.cpp ../lib/libdai.a $(LIBS)
 
-dai_reduce: dai_reduce.cpp ../lib/libdai.a
+dai_reduce: dai_reduce.cpp ../lib/libdai.a dai_mapreduce.h
 	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE) \
     -odai_reduce dai_reduce.cpp ../lib/libdai.a $(LIBS)
 
-daicontrol: daicontrol.cpp ../lib/libdai.a
+daicontrol: daicontrol.cpp ../lib/libdai.a dai_mapreduce.h
 	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE) \
 	-odaicontrol daicontrol.cpp ../lib/libdai.a $(LIBS)
 
