@@ -8,9 +8,21 @@
 #ifndef DAI_MAPREDUCE_H_
 #define DAI_MAPREDUCE_H_
 
+#include <dai/alldai.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <fstream>
+#include <math.h>
+#include <stdio.h>
+#include <algorithm>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/string.hpp>
+
 using namespace std;
 using namespace dai;
-using namespace HadoopPipes;
 
 #define INF_TYPE "JTREE"
 
@@ -24,8 +36,10 @@ struct EMdata {
 	size_t iter;
 	Real likelihood;
 	vector<MaximizationStep> msteps;
-	string bnID;
+	int bnID;
 
+
+	// TODO: optimize serialization
 	friend class boost::serialization::access;
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int version) {

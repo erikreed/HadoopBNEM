@@ -1,23 +1,7 @@
 // erik reed
 // erikreed@cmu.edu
 
-#include <dai/alldai.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <fstream>
-#include <math.h>
-#include <stdio.h>
-#include <algorithm>
-#include "include/hadoop/Pipes.hh"
-#include "include/hadoop/TemplateFactory.hh"
-#include "include/hadoop/StringUtils.hh"
 #include "dai_mapreduce.h"
-
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/string.hpp>
 
 
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
@@ -122,68 +106,6 @@ Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
 	return likelihood;
 }
 
-string testEM(char* fgIn, char* tabIn, char* emIn, bool serial) {
-
-	FactorGraph fg;
-	fg.ReadFromFile(fgIn);
-
-	// Prepare junction-tree object for doing exact inference for E-step
-	PropertySet infprops;
-	infprops.set("verbose", (size_t) 0);
-	infprops.set("updates", string("HUGIN"));
-	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
-	infprops.set("LOG_Z_TOL_KEY", LIB_EM_TOLERANCE);
-	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
-
-	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
-	inf->init();
-
-	// Read sample from file
-	Evidence e;
-	ifstream estream(tabIn);
-	e.addEvidenceTabFile(estream, fg);
-//	cout << "Number of samples: " << e.nrSamples() << endl;
-
-	// Read EM specification
-	ifstream emstream(emIn);
-	EMAlg em(e, *inf, emstream);
-
-	// Iterate EM until convergence
-	while (!em.hasSatisfiedTermConditions()) {
-		Real likelihood = hadoop_iterate(em._msteps, em._evidence, em._estep);
-		em._iters++;
-		em._lastLogZ.push_back(likelihood);
-
-		if (serial) {
-			ostringstream s;
-			vector<MaximizationStep> m = em._msteps;
-
-			boost::archive::text_oarchive oa(s);
-			oa << m;
-
-			istringstream s2(s.str());
-
-			boost::archive::text_iarchive ia(s2);
-			// read class state from archive
-			vector<MaximizationStep> m2;
-			ia >> m2;
-			em._msteps = m2;
-
-		}
-		for (size_t i = 0; i < em._msteps.size(); i++)
-			em._msteps[i].maximize(em._estep.fg());
-		cout << em._iters << '\t' << likelihood << endl;
-	}
-
-	stringstream ss;
-	ss << inf->fg() << endl;
-
-	// Clean up
-	delete inf;
-	return ss.str();
-
-}
-
 string mapper(EMdata &dat) {
 	FactorGraph fg;
 	istringstream fgStream(dat.fgFile);
@@ -228,41 +150,6 @@ string mapper(string &in) {
 	return mapper(dat);
 }
 
-// TODO: key val will be BN_ID:E1,E2,E3 where E_N corresponds to evidence set N
-string em_reduce(vector<string>& in) {
-	// using first EMdata to store e-step counts and create fg
-	EMdata dat = stringToEM(in[0]);
-	FactorGraph fg;
-	istringstream fgStream(dat.fgFile);
-	fgStream >> fg;
-
-	// collect stats for each set of evidence
-	for (size_t i=1; i<in.size(); i++) {
-		EMdata next = stringToEM(in[i]);
-		DAI_ASSERT(dat.msteps.size() == next.msteps.size());
-
-		for (size_t j = 0; j < dat.msteps.size(); j++) {
-			dat.msteps[j].addExpectations(next.msteps[j]);
-			dat.likelihood += next.likelihood;
-		}
-	}
-
-	// m-step
-	for (size_t i=0; i<dat.msteps.size(); i++)
-		dat.msteps[i].maximize(fg);
-
-	ostringstream newFg;
-	newFg << fg;
-
-	// save new fg, clear counts, increment iter
-	dat.fgFile = newFg.str();
-	dat.msteps.clear();
-	dat.iter++;
-
-	return emToString(dat);
-}
-
-
 int main(int argc, char* argv[]) {
 
 	//read evidence header
@@ -277,29 +164,41 @@ int main(int argc, char* argv[]) {
 
 
 	string emFile = readFile("in/em");
-	string fgFile = readFile("in/fg");
+
 	string tabFile = ss.str();
 
-	EMdata datForMapper;
-	datForMapper.iter = 0;
-	datForMapper.likelihood = 0;
-	datForMapper.emFile = emFile;
-	datForMapper.fgFile = fgFile;
-	datForMapper.tabFile = tabFile;
-	datForMapper.bnID = '1'; //TODO
+	ifstream fin("in/pop");
+	int pop_size;
+	fin >> pop_size;
+	fin.close();
 
-	string out = mapper(datForMapper);
+	for (int id=0; id< pop_size; id++) {
+		// read fg corresponding to current BN ID
+		ostringstream fgName;
+		fgName << "in/fg." << id;
+		string fgFile = readFile(fgName.str().c_str());
 
-	//
-	// * is delimiter for K-V; e.g. key*value
-	// ^ is replacement for \n
+		EMdata datForMapper;
+		datForMapper.iter = 0;
+		datForMapper.likelihood = 0;
+		datForMapper.emFile = emFile;
+		datForMapper.fgFile = fgFile;
+		datForMapper.tabFile = tabFile;
+		datForMapper.bnID = id;
 
-	str_char_replace(out,'\n','^');
+		string out = mapper(datForMapper);
 
-	// print BN_ID
-	cout << '1' << '*';
-	// print data for reducer
-	cout << out << endl;
+		//
+		// * is delimiter for K-V; e.g. key*value
+		// ^ is replacement for \n
+
+		str_char_replace(out,'\n','^');
+
+		// print BN_ID
+		cout << id << '*';
+		// print data for reducer
+		cout << out << endl;
+	}
 
 	return 0;
 }

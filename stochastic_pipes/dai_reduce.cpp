@@ -1,24 +1,7 @@
 // erik reed
 // erikreed@cmu.edu
 
-#include <dai/alldai.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <time.h>
-#include <fstream>
-#include <math.h>
-#include <stdio.h>
-#include "include/hadoop/Pipes.hh"
-#include "include/hadoop/TemplateFactory.hh"
-#include "include/hadoop/StringUtils.hh"
 #include "dai_mapreduce.h"
-
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/serialization/vector.hpp>
-#include <boost/serialization/string.hpp>
-
 
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	string fixedIn = emIn;
@@ -122,110 +105,6 @@ Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
 	return likelihood;
 }
 
-string testEM(char* fgIn, char* tabIn, char* emIn, bool serial) {
-
-	FactorGraph fg;
-	fg.ReadFromFile(fgIn);
-
-	// Prepare junction-tree object for doing exact inference for E-step
-	PropertySet infprops;
-	infprops.set("verbose", (size_t) 0);
-	infprops.set("updates", string("HUGIN"));
-	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
-	infprops.set("LOG_Z_TOL_KEY", LIB_EM_TOLERANCE);
-	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
-
-	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
-	inf->init();
-
-	// Read sample from file
-	Evidence e;
-	ifstream estream(tabIn);
-	e.addEvidenceTabFile(estream, fg);
-//	cout << "Number of samples: " << e.nrSamples() << endl;
-
-	// Read EM specification
-	ifstream emstream(emIn);
-	EMAlg em(e, *inf, emstream);
-
-	// Iterate EM until convergence
-	while (!em.hasSatisfiedTermConditions()) {
-		Real likelihood = hadoop_iterate(em._msteps, em._evidence, em._estep);
-		em._iters++;
-		em._lastLogZ.push_back(likelihood);
-
-		if (serial) {
-			ostringstream s;
-			vector<MaximizationStep> m = em._msteps;
-
-			boost::archive::text_oarchive oa(s);
-			oa << m;
-
-			istringstream s2(s.str());
-
-			boost::archive::text_iarchive ia(s2);
-			// read class state from archive
-			vector<MaximizationStep> m2;
-			ia >> m2;
-			em._msteps = m2;
-
-		}
-		for (size_t i = 0; i < em._msteps.size(); i++)
-			em._msteps[i].maximize(em._estep.fg());
-		cout << em._iters << '\t' << likelihood << endl;
-	}
-
-	stringstream ss;
-	ss << inf->fg() << endl;
-
-	// Clean up
-	delete inf;
-	return ss.str();
-
-}
-
-string mapper(const string& in) {
-
-	EMdata dat = stringToEM(in);
-
-	FactorGraph fg;
-
-	istringstream fgStream(dat.fgFile);
-	fgStream >> fg;
-
-	// Prepare junction-tree object for doing exact inference for E-step
-	PropertySet infprops;
-	infprops.set("verbose", (size_t) 1);
-	infprops.set("updates", string("HUGIN"));
-	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
-	infprops.set("LOG_Z_TOL_KEY", LIB_EM_TOLERANCE);
-	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
-
-	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
-	inf->init();
-
-	// Read sample from file
-	Evidence e;
-	istringstream estream(dat.tabFile);
-	e.addEvidenceTabFile(estream, fg);
-//	cout << "Number of samples: " << e.nrSamples() << endl;
-
-	// Read EM specification
-	istringstream emstream(dat.emFile);
-	EMAlg em(e, *inf, emstream);
-
-	// perform 1 iteration e-step
-	Real likelihood = hadoop_iterate(em._msteps, em._evidence, em._estep);
-
-	dat.likelihood = likelihood;
-	dat.msteps = em._msteps;
-
-	// Clean up
-	delete inf;
-
-	return emToString(dat);
-}
-
 // TODO: key val will be BN_ID:E1,E2,E3 where E_N corresponds to evidence set N
 EMdata em_reduce(vector<string>& in) {
 	// using first EMdata to store e-step counts and create fg
@@ -271,6 +150,7 @@ EMdata em_reduce(vector<EMdata>& in) {
 	for (size_t i=1; i<in.size(); i++) {
 		EMdata next = in[i];
 		DAI_ASSERT(dat.msteps.size() == next.msteps.size());
+		DAI_ASSERT(dat.bnID == next.bnID);
 
 		for (size_t j = 0; j < dat.msteps.size(); j++) {
 			dat.msteps[j].addExpectations(next.msteps[j]);
@@ -306,18 +186,18 @@ int main(int argc, char* argv[]) {
 
 	string input = ss.str();
 
-
-
 //	cout << input << endl;
-
-
-
+//	return 0;
 	vector<string> data = str_split(input, '\n');
 
 
+	ifstream fin("in/pop");
+	int pop_size;
+	fin >> pop_size;
+	fin.close();
 
+	vector<EMdata>* datsForReducer = new vector<EMdata>[pop_size];
 
-	vector<EMdata> datsForReducer;
 
 	for (size_t i=0; i<data.size(); i++) {
 		string line = data[i];
@@ -326,13 +206,17 @@ int main(int argc, char* argv[]) {
 		assert(parts.size() == 2);
 
 		EMdata dat = stringToEM(parts[1]); // value
-		dat.bnID = parts[0]; // key
-		datsForReducer.push_back(dat);
+		int id = atoi(parts[0].c_str()); // key
+		assert(id == dat.bnID && id >= 0 && id < pop_size);
+		datsForReducer[dat.bnID].push_back(dat);
 	}
 
-//	cout << datsForReducer[0].fgFile << endl;
+	for (int id=0; id < pop_size; id++) {
+		EMdata out = em_reduce(datsForReducer[id]);
+		cout << id << '*' << out.likelihood << endl;
+	}
 
-	EMdata out = em_reduce(datsForReducer);
+	delete[] datsForReducer;
 
 //	ofstream fout;
 //	fout.open ("out/lhood");
@@ -348,7 +232,7 @@ int main(int argc, char* argv[]) {
 
 //	cout << emToString(out) << endl;
 
-	cout << out.likelihood << endl;
+
 
 	return 0;
 }
