@@ -14,10 +14,11 @@ do
 done
 ./utils in/fg $names
 
+# ASD used because * delimeter is removed; need to tweak reducer
 $HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming-1.0.0.jar \
 	-files "./dai_map,./dai_reduce,./in" \
-	-D 'stream.map.output.field.separator=*' \
-	-D 'stream.reduce.output.field.separator=*' \
+	-D 'stream.map.output.field.separator=ASD' \
+	-D 'stream.reduce.output.field.separator=ASD' \
 	-D mapred.tasktracker.tasks.maximum=$MAPPERS \
 	-D mapred.map.tasks=$MAPPERS \
 	-D dfs.block.size=256KB \

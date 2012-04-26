@@ -1,37 +1,38 @@
 // erik reed
 // erikreed@cmu.edu
-
-#include <dai/alldai.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <time.h>
-#include <fstream>
-#include <math.h>
-#include <stdio.h>
-
-using namespace std;
-using namespace dai;
-
-
-
-
-void randomize_fg(FactorGraph* fg) {
-	vector<Factor> factors = fg->factors();
-	size_t size = factors.size();
-	for (size_t i = 0; i < size; i++) {
-		Factor f = fg->factor(i);
-		f.randomize();
-		fg->setFactor(i, f, false);
-	}
-}
-
-
+#include "dai_mapreduce.h"
 
 int main(int argc, char* argv[]) {
+	if (argc == 1)
+		return -1;
+	if (argc == 2) {
+		string flag = argv[1];
+		if (flag != "-u")
+			return -1;
+		// get post mapreduce data
+		string s;
+		while (std::getline(std::cin, s)) {
+			str_char_replace(s,'^','\n');
+			EMdata dat = stringToEM(s);
 
-	if (argc < 3)
-		throw;
+			ostringstream outname;
+			outname << "out/" << dat.bnID << ".dat";
+			ofstream fout;
+			fout.open (outname.str().c_str());
+			fout << s << endl;
+			fout.close();
+
+			outname.clear();
+			outname << "in/fg." << dat.bnID;
+			fout.open (outname.str().c_str());
+			fout << dat.fgFile << endl;
+			fout.close();
+
+			cout << "iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
+		}
+		return 0;
+	}
+
 	rnd_seed(time(NULL));
 	FactorGraph fg;
 	fg.ReadFromFile(argv[1]);

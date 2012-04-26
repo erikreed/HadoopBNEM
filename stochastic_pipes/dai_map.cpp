@@ -1,8 +1,6 @@
 // erik reed
 // erikreed@cmu.edu
-
 #include "dai_mapreduce.h"
-
 
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	string fixedIn = emIn;

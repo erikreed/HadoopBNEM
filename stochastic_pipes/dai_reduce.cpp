@@ -203,6 +203,7 @@ int main(int argc, char* argv[]) {
 		string line = data[i];
 		str_char_replace(line,'^','\n');
 		vector<string> parts = str_split(line, '*');
+//		cerr << parts[0] << endl;
 		assert(parts.size() == 2);
 
 		EMdata dat = stringToEM(parts[1]); // value
@@ -213,7 +214,9 @@ int main(int argc, char* argv[]) {
 
 	for (int id=0; id < pop_size; id++) {
 		EMdata out = em_reduce(datsForReducer[id]);
-		cout << id << '*' << out.likelihood << endl;
+		string outstring = emToString(out);
+		str_char_replace(outstring,'\n','^');
+		cout << outstring << endl;
 	}
 
 	delete[] datsForReducer;
