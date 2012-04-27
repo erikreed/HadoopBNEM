@@ -2,9 +2,51 @@
 // erikreed@cmu.edu
 #include "dai_mapreduce.h"
 
+void doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters) {
+	string fixedIn = emIn;
+
+	FactorGraph fg;
+	fg.ReadFromFile(fgIn);
+
+	// Prepare junction-tree object for doing exact inference for E-step
+	PropertySet infprops;
+	infprops.set("verbose", (size_t) 1);
+	infprops.set("updates", string("HUGIN"));
+	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
+	infprops.set("LOG_Z_TOL_KEY", LIB_EM_TOLERANCE);
+	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
+
+	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
+	inf->init();
+
+	// Read sample from file
+	Evidence e;
+	ifstream estream(tabIn);
+	e.addEvidenceTabFile(estream, fg);
+	cout << "Number of samples: " << e.nrSamples() << endl;
+
+	// Read EM specification
+	ifstream emstream(emIn);
+	EMAlg em(e, *inf, emstream);
+
+	// Iterate EM until convergence
+	for (int i=0; i<numIters; i++)
+		em.iterate();
+
+
+	// Clean up
+	delete inf;
+	//	return ss.str();
+
+}
+
 int main(int argc, char* argv[]) {
-	if (argc == 1)
-		return -1;
+	if (argc == 1) {
+		cout << "usage:" << endl;
+		cout << "-u when piping serialized EMdata in" << endl;
+		cout << "-b num_iters fg_file tab_file em_file for benchmarking w/o MR" << endl;
+		cout << "no flags and list of files to initialize random serialized EMdatas" << endl;
+	}
 	if (argc == 2) {
 		string flag = argv[1];
 		if (flag == "-u"){
@@ -31,10 +73,15 @@ int main(int argc, char* argv[]) {
 			}
 		}
 		// create initial serialized files with iter=0
-		if (flag == "-c") {
 
+		return 0;
+	}
 
-		}
+	// for benchmarking EM -- non mapreduce
+	if (argv[1] == "-b") {
+		// expecting num iters, fg, tab, em
+		int numIters = atoi(argv[2]);
+		doEmIters(argv[3],argv[4],argv[5],numIters);
 		return 0;
 	}
 
@@ -44,7 +91,7 @@ int main(int argc, char* argv[]) {
 
 	string emFile = readFile("in/em");
 
-	for (size_t i=2; i<argc; i++) {
+	for (int i=2; i<argc; i++) {
 		randomize_fg(&fg);
 
 		EMdata datForMapper;

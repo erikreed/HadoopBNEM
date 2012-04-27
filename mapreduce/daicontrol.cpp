@@ -466,8 +466,8 @@ public:
 
 int main(int argc, char* argv[]) {
 
-	bool hadoop = true;
-	bool tests = false;
+	bool hadoop = false;
+	bool tests = true;
 
 	if (!hadoop) {
 
@@ -528,6 +528,7 @@ int main(int argc, char* argv[]) {
 			}
 			string s1 = testEM("dat/fg", "dat/tab", "dat/em", false);
 			string s2 = testEM("dat/fg", "dat/tab", "dat/em", true);
+			cout << likelihood << endl;
 			if (s1 != s2)
 				throw;
 		}
