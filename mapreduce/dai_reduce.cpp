@@ -1,5 +1,6 @@
 // erik reed
 // erikreed@cmu.edu
+
 #include "dai_mapreduce.h"
 
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
@@ -93,7 +94,6 @@ bool emHasSatisfiedTermConditions(size_t iter, Real previous, Real current) {
     }
 }
 
-//TODO: sum likelihood when evidence is split up
 Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
 		InfAlg &inf) {
 	Real likelihood = 0;
@@ -104,99 +104,89 @@ Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
 	return likelihood;
 }
 
-string mapper(EMdata &dat) {
+EMdata em_reduce(vector<EMdata>& in) {
+	// using first EMdata to store e-step counts and create fg
+	EMdata dat = in[0];
 	FactorGraph fg;
 	istringstream fgStream(dat.fgFile);
 	fgStream >> fg;
 
+	// collect stats for each set of evidence
+	for (size_t i=1; i<in.size(); i++) {
+		EMdata next = in[i];
+		DAI_ASSERT(dat.msteps.size() == next.msteps.size());
+		DAI_ASSERT(dat.bnID == next.bnID);
 
-	// Prepare junction-tree object for doing exact inference for E-step
-	PropertySet infprops;
-	infprops.set("verbose", (size_t) 0);
-	infprops.set("updates", string("HUGIN"));
-	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
-	infprops.set("LOG_Z_TOL_KEY", LIB_EM_TOLERANCE);
-	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
+		for (size_t j = 0; j < dat.msteps.size(); j++) {
+			dat.msteps[j].addExpectations(next.msteps[j]);
+			dat.likelihood += next.likelihood;
+		}
+	}
 
-	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
-	inf->init();
+	// m-step
+	for (size_t i=0; i<dat.msteps.size(); i++)
+		dat.msteps[i].maximize(fg);
 
-	// Read sample from file
-	Evidence e;
-	istringstream estream(dat.tabFile);
-	e.addEvidenceTabFile(estream, fg);
-//	cout << "Number of samples: " << e.nrSamples() << endl;
+	ostringstream newFg;
+	newFg << fg;
 
-	// Read EM specification
-	istringstream emstream(dat.emFile);
-	EMAlg em(e, *inf, emstream);
+	// save new fg, clear counts, increment iter
+	dat.fgFile = newFg.str();
+	dat.msteps.clear();
+	dat.iter++;
 
-	// perform 1 iteration e-step
-	Real likelihood = hadoop_iterate(em._msteps, em._evidence, em._estep);
-
-	dat.likelihood = likelihood;
-	dat.msteps = em._msteps;
-
-	// Clean up
-	delete inf;
-
-	return emToString(dat);
+	return dat;
 }
 
-string mapper(string &in) {
-	EMdata dat = stringToEM(in);
-	return mapper(dat);
-}
 
 int main(int argc, char* argv[]) {
 
-	//read evidence header
+	//read data from mappers
 	ostringstream ss;
-
-	ss << readFile("in/tab_header");
 
 	// get evidence
 	string s;
 	while (std::getline(std::cin, s))
 		ss << s << '\n';
 
+	string input = ss.str();
 
-	string emFile = readFile("in/em");
+//	cout << input << endl;
+//	return 0;
+	vector<string> data = str_split(input, '\n');
 
-	string tabFile = ss.str();
 
 	ifstream fin("in/pop");
 	int pop_size;
 	fin >> pop_size;
 	fin.close();
 
-	for (int id=0; id< pop_size; id++) {
-		// read fg corresponding to current BN ID
-		ostringstream fgName;
-		fgName << "in/fg." << id;
-		string fgFile = readFile(fgName.str().c_str());
+	vector<EMdata>* datsForReducer = new vector<EMdata>[pop_size];
 
-		EMdata datForMapper;
-		datForMapper.iter = 0;
-		datForMapper.likelihood = 0;
-		datForMapper.emFile = emFile;
-		datForMapper.fgFile = fgFile;
-		datForMapper.tabFile = tabFile;
-		datForMapper.bnID = id;
 
-		string out = mapper(datForMapper);
+	for (size_t i=0; i<data.size(); i++) {
+		string line = data[i];
+		str_char_replace(line,'^','\n');
+		vector<string> parts = str_split(line, '*');
+//		cerr << parts[0] << endl;
+		assert(parts.size() == 2);
 
-		//
-		// * is delimiter for K-V; e.g. key*value
-		// ^ is replacement for \n
-
-		str_char_replace(out,'\n','^');
-
-		// print BN_ID
-		cout << id << '*';
-		// print data for reducer
-		cout << out << endl;
+		EMdata dat = stringToEM(parts[1]); // value
+		int id = atoi(parts[0].c_str()); // key
+		assert(id == dat.bnID && id >= 0 && id < pop_size);
+		datsForReducer[dat.bnID].push_back(dat);
 	}
+
+	for (int id=0; id < pop_size; id++) {
+		EMdata out = em_reduce(datsForReducer[id]);
+		out.emFile = ""; // reduce amount of serialization
+		out.tabFile = "";
+		string outstring = emToString(out);
+		str_char_replace(outstring,'\n','^');
+		cout << outstring << endl;
+	}
+
+	delete[] datsForReducer;
 
 	return 0;
 }

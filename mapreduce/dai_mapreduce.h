@@ -35,6 +35,7 @@ struct EMdata {
 	string tabFile;
 	size_t iter;
 	Real likelihood;
+	Real lastLikelihood;
 	vector<MaximizationStep> msteps;
 	int bnID;
 
@@ -48,6 +49,7 @@ struct EMdata {
 		ar & tabFile;
 		ar & iter;
 		ar & likelihood;
+		ar & lastLikelihood;
 		ar & msteps;
 		ar & bnID;
 	}

@@ -1,6 +1,5 @@
 // erik reed
 // erikreed@cmu.edu
-
 #include "dai_mapreduce.h"
 
 void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
@@ -105,137 +104,98 @@ Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
 	return likelihood;
 }
 
-// TODO: key val will be BN_ID:E1,E2,E3 where E_N corresponds to evidence set N
-EMdata em_reduce(vector<string>& in) {
-	// using first EMdata to store e-step counts and create fg
-	EMdata dat = stringToEM(in[0]);
+string mapper(EMdata &dat) {
 	FactorGraph fg;
 	istringstream fgStream(dat.fgFile);
 	fgStream >> fg;
 
-	// collect stats for each set of evidence
-	for (size_t i=1; i<in.size(); i++) {
-		EMdata next = stringToEM(in[i]);
-		DAI_ASSERT(dat.msteps.size() == next.msteps.size());
 
-		for (size_t j = 0; j < dat.msteps.size(); j++) {
-			dat.msteps[j].addExpectations(next.msteps[j]);
-			dat.likelihood += next.likelihood;
-		}
-	}
+	// Prepare junction-tree object for doing exact inference for E-step
+	PropertySet infprops;
+	infprops.set("verbose", (size_t) 0);
+	infprops.set("updates", string("HUGIN"));
+	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
+	infprops.set("LOG_Z_TOL_KEY", LIB_EM_TOLERANCE);
+	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
 
-	// m-step
-	for (size_t i=0; i<dat.msteps.size(); i++)
-		dat.msteps[i].maximize(fg);
+	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
+	inf->init();
 
-	ostringstream newFg;
-	newFg << fg;
+	// Read sample from file
+	Evidence e;
+	istringstream estream(dat.tabFile);
+	e.addEvidenceTabFile(estream, fg);
+//	cout << "Number of samples: " << e.nrSamples() << endl;
 
-	// save new fg, clear counts, increment iter
-	dat.fgFile = newFg.str();
-	dat.msteps.clear();
-	dat.iter++;
+	// Read EM specification
+	istringstream emstream(dat.emFile);
+	EMAlg em(e, *inf, emstream);
 
-	return dat;
+	// perform 1 iteration e-step
+	Real likelihood = hadoop_iterate(em._msteps, em._evidence, em._estep);
+
+	dat.likelihood = likelihood;
+	dat.msteps = em._msteps;
+
+	// Clean up
+	delete inf;
+
+	return emToString(dat);
 }
 
-EMdata em_reduce(vector<EMdata>& in) {
-	// using first EMdata to store e-step counts and create fg
-	EMdata dat = in[0];
-	FactorGraph fg;
-	istringstream fgStream(dat.fgFile);
-	fgStream >> fg;
-
-	// collect stats for each set of evidence
-	for (size_t i=1; i<in.size(); i++) {
-		EMdata next = in[i];
-		DAI_ASSERT(dat.msteps.size() == next.msteps.size());
-		DAI_ASSERT(dat.bnID == next.bnID);
-
-		for (size_t j = 0; j < dat.msteps.size(); j++) {
-			dat.msteps[j].addExpectations(next.msteps[j]);
-			dat.likelihood += next.likelihood;
-		}
-	}
-
-	// m-step
-	for (size_t i=0; i<dat.msteps.size(); i++)
-		dat.msteps[i].maximize(fg);
-
-	ostringstream newFg;
-	newFg << fg;
-
-	// save new fg, clear counts, increment iter
-	dat.fgFile = newFg.str();
-	dat.msteps.clear();
-	dat.iter++;
-
-	return dat;
+string mapper(string &in) {
+	EMdata dat = stringToEM(in);
+	return mapper(dat);
 }
-
 
 int main(int argc, char* argv[]) {
 
-	//read data from mappers
+	//read evidence header
 	ostringstream ss;
+
+	ss << readFile("in/tab_header");
 
 	// get evidence
 	string s;
 	while (std::getline(std::cin, s))
 		ss << s << '\n';
 
-	string input = ss.str();
 
-//	cout << input << endl;
-//	return 0;
-	vector<string> data = str_split(input, '\n');
+	string emFile = readFile("in/em");
 
+	string tabFile = ss.str();
 
 	ifstream fin("in/pop");
 	int pop_size;
 	fin >> pop_size;
 	fin.close();
 
-	vector<EMdata>* datsForReducer = new vector<EMdata>[pop_size];
+	for (int id=0; id< pop_size; id++) {
+		// read fg corresponding to current BN ID
+		ostringstream datName;
+		datName << "in/dat." << id;
+		string datFile = readFile(datName.str().c_str());
 
+		EMdata datForMapper = stringToEM(datFile);
+		datForMapper.lastLikelihood = datForMapper.likelihood;
+		datForMapper.likelihood = 0;
+		datForMapper.emFile = emFile;
+		datForMapper.tabFile = tabFile;
+		datForMapper.bnID = id;
 
-	for (size_t i=0; i<data.size(); i++) {
-		string line = data[i];
-		str_char_replace(line,'^','\n');
-		vector<string> parts = str_split(line, '*');
-//		cerr << parts[0] << endl;
-		assert(parts.size() == 2);
+		string out = mapper(datForMapper);
 
-		EMdata dat = stringToEM(parts[1]); // value
-		int id = atoi(parts[0].c_str()); // key
-		assert(id == dat.bnID && id >= 0 && id < pop_size);
-		datsForReducer[dat.bnID].push_back(dat);
+		//
+		// * is delimiter for K-V; e.g. key*value
+		// ^ is replacement for \n
+
+		str_char_replace(out,'\n','^');
+
+		// print BN_ID
+		cout << id << '*';
+		// print data for reducer
+		cout << out << endl;
 	}
-
-	for (int id=0; id < pop_size; id++) {
-		EMdata out = em_reduce(datsForReducer[id]);
-		string outstring = emToString(out);
-		str_char_replace(outstring,'\n','^');
-		cout << outstring << endl;
-	}
-
-	delete[] datsForReducer;
-
-//	ofstream fout;
-//	fout.open ("out/lhood");
-//	fout << dat.likelihood << endl;
-//	fout.close();
-//	fout.open ("out/fg");
-//	fout << dat.fgFile << endl;
-//	fout.close();
-//	fout.open ("out/iters");
-//	fout << dat.iter << endl;
-//	fout.close();
-
-
-//	cout << emToString(out) << endl;
-
-
 
 	return 0;
 }

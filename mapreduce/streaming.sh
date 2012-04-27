@@ -1,5 +1,8 @@
-hadoop fs -rmr out
+./make_input.sh
+hadoop fs -rmr out in
+hadoop fs -put in in
 
+ITERS=5
 MAPPERS=4
 REDUCERS=1 # bug when REDUCERS > 1
 POP=5
@@ -10,9 +13,11 @@ echo $POP > in/pop
 names=
 for id in $(seq 0 1 $(($POP - 1)))
 do
-	names+="in/fg.$id "
+	names+="in/dat.$id "
 done
 ./utils in/fg $names
+
+i=1
 
 # ASD used because * delimeter is removed; need to tweak reducer
 $HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming-1.0.0.jar \
@@ -28,3 +33,4 @@ $HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming-1.0.
 	-reducer ./dai_reduce \
 	-numReduceTasks $REDUCERS
 
+hadoop fs -get out/part-00000 out/iter.$i
