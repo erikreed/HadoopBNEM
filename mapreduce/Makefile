@@ -20,8 +20,6 @@ LIBS2=-lgmpxx -lm -lc -lgmp \
     -lboost_serialization -lpthread
 
 all: daicontrol dai_map dai_reduce utils
-cleanout: 
-	hadoop fs -rmr out 
 	
 pipes: daicontrol
 	hadoop pipes \
@@ -35,12 +33,15 @@ mvdat: daicontrol
 	hadoop fs -put in . && \
 	hadoop fs -put daicontrol .
 
-.PHONY: run clean hadoop mvjar mvdat cleanout
+.PHONY: run clean hadoop mvjar mvdat cleanout clobber
+clobber:
+	rm -rf tmp /tmp/hadoop-erik* in out
+
+cleanout: 
+	hadoop fs -rmr out 
 
 clean:
 	rm daicontrol dai_map dai_reduce utils
-	#rm -f *.log *.o *.so *.a *.jar daicontrol *.class DaiControl.h && \
-	#rm -rf DaiReduce2dai_temp tmp /tmp/hadoop-erik*
 
 run: all
 	cat in/tab_content | ./dai_map | ./dai_reduce

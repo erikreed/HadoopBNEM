@@ -1,4 +1,6 @@
-./make_input.sh
+# erik reed
+# run EM algorithm on hadoop streaming
+./scripts/make_input.sh
 rm -rf out
 mkdir out
 hadoop fs -rmr out in
