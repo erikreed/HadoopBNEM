@@ -4,10 +4,10 @@ mkdir out
 hadoop fs -rmr out in
 hadoop fs -put in in
 
-ITERS=2
-MAPPERS=4
+ITERS=1
 REDUCERS=1 # bug when REDUCERS > 1
-POP=5
+POP=20
+MAPPERS=$POP
 
 echo $POP > in/pop
 

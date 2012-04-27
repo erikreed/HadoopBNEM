@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
 		cout << "-u when piping serialized EMdata in" << endl;
 		cout << "-b num_iters fg_file tab_file em_file for benchmarking w/o MR" << endl;
 		cout << "no flags and list of files to initialize random serialized EMdatas" << endl;
+		return 0;
 	}
 	if (argc == 2) {
 		string flag = argv[1];
@@ -78,10 +79,12 @@ int main(int argc, char* argv[]) {
 	}
 
 	// for benchmarking EM -- non mapreduce
-	if (argv[1] == "-b") {
-		// expecting num iters, fg, tab, em
+	if (string(argv[1]) == "-b") {
+		// expecting num iters
 		int numIters = atoi(argv[2]);
-		doEmIters(argv[3],argv[4],argv[5],numIters);
+		int numTrials = atoi(argv[3]);
+		for (int i=0; i<numTrials; i++)
+			doEmIters("dat/fg","dat/tab","dat/em",numIters);
 		return 0;
 	}
 
@@ -110,4 +113,5 @@ int main(int argc, char* argv[]) {
 		fout.close();
 	}
 
+	return 0;
 }

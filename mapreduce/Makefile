@@ -1,7 +1,7 @@
 #erikreed@cmu.edu
 # change lib64 to lib on ubuntu
 
-OPT_FLAGS=-O3 -flto -fwhole-program
+OPT_FLAGS=-O3 -fwhole-program
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_DEBUG -DDAI_WITH_BP -DDAI_WITH_FBP -DDAI_WITH_TRWBP -DDAI_WITH_MF -DDAI_WITH_HAK -DDAI_WITH_LC -DDAI_WITH_TREEEP -DDAI_WITH_JTREE -DDAI_WITH_MR -DDAI_WITH_GIBBS -DDAI_WITH_CBP -DDAI_WITH_DECMAP
 
@@ -44,19 +44,19 @@ clean:
 
 run: all
 	cat in/tab_content | ./dai_map | ./dai_reduce
-dai_map: dai_map.cpp ../lib/libdai.a dai_mapreduce.h
+dai_map: src/dai_map.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
-    -odai_map dai_map.cpp ../lib/libdai.a $(LIBS2)
+    -odai_map src/dai_map.cpp ../lib/libdai.a $(LIBS2)
 
-dai_reduce: dai_reduce.cpp ../lib/libdai.a dai_mapreduce.h
+dai_reduce: src/dai_reduce.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
-    -odai_reduce dai_reduce.cpp ../lib/libdai.a $(LIBS2)
+    -odai_reduce src/dai_reduce.cpp ../lib/libdai.a $(LIBS2)
 
-daicontrol: daicontrol.cpp ../lib/libdai.a dai_mapreduce.h
+daicontrol: src/daicontrol.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE)  \
-	-odaicontrol daicontrol.cpp ../lib/libdai.a $(LIBS)
+	-odaicontrol src/daicontrol.cpp ../lib/libdai.a $(LIBS)
 
-utils : utils.cpp ../lib/libdai.a
+utils : src/utils.cpp ../lib/libdai.a
 	g++ -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
-    -outils utils.cpp ../lib/libdai.a $(LIBS2)
+    -outils src/utils.cpp ../lib/libdai.a $(LIBS2)
 
