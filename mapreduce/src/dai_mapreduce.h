@@ -25,10 +25,16 @@
 using namespace std;
 using namespace dai;
 
-#define INF_TYPE "JTREE"
-
+const string INF_TYPE = "JTREE";
 const Real LIB_EM_TOLERANCE = 1e-9;
 const size_t EM_MAX_ITER = 1000;
+
+// ALEM (Saluja et al) parameters
+const size_t pop_size = 10; // i.e. EMruns, denoted N
+const size_t numLayers = 6;
+const double agegap = 5; // denoted a
+const bool verbose = true;
+// end ALEM parameters
 
 struct EMdata {
 	string emFile;

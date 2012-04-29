@@ -2,6 +2,7 @@
 // erikreed@cmu.edu
 #include "dai_mapreduce.h"
 
+// run vanilla EM
 void doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters) {
 	string fixedIn = emIn;
 
@@ -63,16 +64,9 @@ int main(int argc, char* argv[]) {
 				fout << s << endl;
 				fout.close();
 
-//				outname.clear();
-//				outname << "in/fg." << dat.bnID;
-//				fout.open (outname.str().c_str());
-//				fout << dat.fgFile << endl;
-//				fout.close();
-
 				cout << "iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
 			}
 		}
-		// create initial serialized files with iter=0
 
 		return 0;
 	}

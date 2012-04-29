@@ -2,19 +2,12 @@
 // erikreed@cmu.edu
 
 #include "dai_mapreduce.h"
-#include <boost/foreach.hpp>
 
-//#include <boost/shared_ptr.hpp>
-//typedef boost::shared_ptr<InfAlg> InfAlgPtr;
-
-const size_t pop_size = 10; // i.e. EMruns, denoted N
-const size_t numLayers = 6;
-const double agegap = 5; // denoted a
-const bool verbose = true;
-
-FactorGraph fg; // todo: refactor in
+// todo: refactor these
+FactorGraph fg;
 PropertySet infprops;
 
+// tons of memory leaks in here
 EMAlg *initEMAlg(FactorGraph fg, PropertySet &infprops) {
     Evidence* e = new Evidence();
     randomize_fg(&fg);

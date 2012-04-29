@@ -1,0 +1,519 @@
+1
+
+172
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+0 0 140 95
+CondProbEstimation [target_dim=2,total_dim=6,pseudo_count=1]
+1
+1 1 164
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+2 2
+CondProbEstimation [target_dim=5,total_dim=5,pseudo_count=1]
+1
+3 3
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+4 4 137
+CondProbEstimation [target_dim=4,total_dim=48,pseudo_count=1]
+1
+5 5 7 145
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+6 6
+CondProbEstimation [target_dim=4,total_dim=32,pseudo_count=1]
+1
+7 7 114 85
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+8 8 101 22
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+9 9 102 139
+CondProbEstimation [target_dim=3,total_dim=21,pseudo_count=1]
+1
+10 10 157
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+11 11 46 68
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+12 12
+CondProbEstimation [target_dim=8,total_dim=8,pseudo_count=1]
+1
+13 13
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+14 14 36 148
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+15 15 33
+CondProbEstimation [target_dim=7,total_dim=7,pseudo_count=1]
+1
+16 16
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+17 17
+CondProbEstimation [target_dim=3,total_dim=21,pseudo_count=1]
+1
+18 18 151
+CondProbEstimation [target_dim=2,total_dim=4,pseudo_count=1]
+1
+19 19 100
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+20 20 24 32
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+21 21 168
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+22 22 2 61
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+23 23 157
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+24 24 85 84
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+25 25 165 159
+CondProbEstimation [target_dim=3,total_dim=21,pseudo_count=1]
+1
+26 26 33
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+27 27 122 53
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+28 28 12 115
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+29 29 12 119
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+30 30 6 134
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+31 31 46 81
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+32 32 75 121
+CondProbEstimation [target_dim=7,total_dim=7,pseudo_count=1]
+1
+33 33
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+34 34 151
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+35 35 47 6
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+36 36 161 20
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+37 37 97 116
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+38 38 152 88
+CondProbEstimation [target_dim=4,total_dim=128,pseudo_count=1]
+1
+39 39 5 13
+CondProbEstimation [target_dim=4,total_dim=16,pseudo_count=1]
+1
+40 40 79
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+41 41
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+42 42 22 17
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+43 43 158 106
+CondProbEstimation [target_dim=7,total_dim=7,pseudo_count=1]
+1
+44 44
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+45 45
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+46 46 150 91
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+47 47
+CondProbEstimation [target_dim=3,total_dim=45,pseudo_count=1]
+1
+48 48 124 3
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+49 49 137
+CondProbEstimation [target_dim=2,total_dim=16,pseudo_count=1]
+1
+50 50 13
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+51 51
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+52 52
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+53 53 1 29
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+54 54 168
+CondProbEstimation [target_dim=3,total_dim=21,pseudo_count=1]
+1
+55 55 125
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+56 56
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+57 57 16
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+58 58 44
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+59 59 118 72
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+60 60
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+61 61
+CondProbEstimation [target_dim=3,total_dim=63,pseudo_count=1]
+1
+62 62 44 159
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+63 63 19 35
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+64 64 69 28
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+65 65
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+66 66 56 164
+CondProbEstimation [target_dim=3,total_dim=42,pseudo_count=1]
+1
+67 67 146 157
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+68 68 77 9
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+69 69 52 41
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+70 70 25 171
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+71 71 102 142
+CondProbEstimation [target_dim=3,total_dim=81,pseudo_count=1]
+1
+72 72 83 48 113
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+73 73 104 0
+CondProbEstimation [target_dim=2,total_dim=200,pseudo_count=1]
+1
+74 74 127 153 3
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+75 75 110
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+76 76 33
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+77 77
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+78 78
+CondProbEstimation [target_dim=4,total_dim=32,pseudo_count=1]
+1
+79 79 129 75
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+80 80 149 11
+CondProbEstimation [target_dim=2,total_dim=4,pseudo_count=1]
+1
+81 81 149
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+82 82 84 148
+CondProbEstimation [target_dim=3,total_dim=21,pseudo_count=1]
+1
+83 83 168
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+84 84 78 45
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+85 85 141
+CondProbEstimation [target_dim=10,total_dim=160,pseudo_count=1]
+1
+86 86 107 40
+CondProbEstimation [target_dim=3,total_dim=42,pseudo_count=1]
+1
+87 87 43 137
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+88 88
+CondProbEstimation [target_dim=4,total_dim=140,pseudo_count=1]
+1
+89 89 127 157
+CondProbEstimation [target_dim=2,total_dim=56,pseudo_count=1]
+1
+90 90 138 137 74
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+91 91
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+92 92 125
+CondProbEstimation [target_dim=2,total_dim=10,pseudo_count=1]
+1
+93 93 127
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+94 94 122 139
+CondProbEstimation [target_dim=3,total_dim=45,pseudo_count=1]
+1
+95 95 91 127
+CondProbEstimation [target_dim=2,total_dim=10,pseudo_count=1]
+1
+96 96 127
+CondProbEstimation [target_dim=3,total_dim=147,pseudo_count=1]
+1
+97 97 33 137
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+98 98 125
+CondProbEstimation [target_dim=2,total_dim=10,pseudo_count=1]
+1
+99 99 3
+CondProbEstimation [target_dim=2,total_dim=4,pseudo_count=1]
+1
+100 100 138
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+101 101 70 88
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+102 102 65 166
+CondProbEstimation [target_dim=3,total_dim=24,pseudo_count=1]
+1
+103 103 13
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+104 104 62 144
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+105 105 16
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+106 106 60 63
+CondProbEstimation [target_dim=4,total_dim=16,pseudo_count=1]
+1
+107 107 7
+CondProbEstimation [target_dim=3,total_dim=63,pseudo_count=1]
+1
+108 108 151 41
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+109 109 130 30
+CondProbEstimation [target_dim=4,total_dim=20,pseudo_count=1]
+1
+110 110 3
+CondProbEstimation [target_dim=2,total_dim=18,pseudo_count=1]
+1
+111 111 59 128
+CondProbEstimation [target_dim=3,total_dim=21,pseudo_count=1]
+1
+112 112 168
+CondProbEstimation [target_dim=3,total_dim=96,pseudo_count=1]
+1
+113 113 153 13
+CondProbEstimation [target_dim=4,total_dim=32,pseudo_count=1]
+1
+114 114 82 141
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+115 115 1 94
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+116 116 61 17
+CondProbEstimation [target_dim=3,total_dim=42,pseudo_count=1]
+1
+117 117 68 16
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+118 118 66 108
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+119 119 69 36
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+120 120 44
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+121 121 147 124
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+122 122 51 56
+CondProbEstimation [target_dim=2,total_dim=12,pseudo_count=1]
+1
+123 123 35 134
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+124 124
+CondProbEstimation [target_dim=7,total_dim=7,pseudo_count=1]
+1
+125 125
+CondProbEstimation [target_dim=2,total_dim=10,pseudo_count=1]
+1
+126 126 3
+CondProbEstimation [target_dim=5,total_dim=5,pseudo_count=1]
+1
+127 127
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+128 128 143 73
+CondProbEstimation [target_dim=4,total_dim=32,pseudo_count=1]
+1
+129 129 110 133
+CondProbEstimation [target_dim=3,total_dim=42,pseudo_count=1]
+1
+130 130 138 125
+CondProbEstimation [target_dim=3,total_dim=21,pseudo_count=1]
+1
+131 131 16
+CondProbEstimation [target_dim=3,total_dim=42,pseudo_count=1]
+1
+132 132 28 151
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+133 133 148 121
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+134 134
+CondProbEstimation [target_dim=3,total_dim=21,pseudo_count=1]
+1
+135 135 44
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+136 136 157
+CondProbEstimation [target_dim=7,total_dim=7,pseudo_count=1]
+1
+137 137
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+138 138
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+139 139 38 25
+CondProbEstimation [target_dim=3,total_dim=147,pseudo_count=1]
+1
+140 140 157 16
+CondProbEstimation [target_dim=4,total_dim=16,pseudo_count=1]
+1
+141 141 153
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+142 142 31 77
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+143 143 109 37
+CondProbEstimation [target_dim=3,total_dim=27,pseudo_count=1]
+1
+144 144 166 45
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+145 145
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+146 146 142 68
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+147 147
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+148 148 161 64
+CondProbEstimation [target_dim=2,total_dim=10,pseudo_count=1]
+1
+149 149 127
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+150 150
+CondProbEstimation [target_dim=7,total_dim=7,pseudo_count=1]
+1
+151 151
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+152 152 22 106
+CondProbEstimation [target_dim=4,total_dim=4,pseudo_count=1]
+1
+153 153
+CondProbEstimation [target_dim=3,total_dim=21,pseudo_count=1]
+1
+154 154 137
+CondProbEstimation [target_dim=2,total_dim=14,pseudo_count=1]
+1
+155 155 151
+CondProbEstimation [target_dim=3,total_dim=42,pseudo_count=1]
+1
+156 156 106 33
+CondProbEstimation [target_dim=7,total_dim=7,pseudo_count=1]
+1
+157 157
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+158 158 60 8
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+159 159
+CondProbEstimation [target_dim=3,total_dim=42,pseudo_count=1]
+1
+160 160 14 168
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+161 161
+CondProbEstimation [target_dim=2,total_dim=16,pseudo_count=1]
+1
+162 162 13
+CondProbEstimation [target_dim=3,total_dim=42,pseudo_count=1]
+1
+163 163 38 44
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+164 164
+CondProbEstimation [target_dim=2,total_dim=2,pseudo_count=1]
+1
+165 165
+CondProbEstimation [target_dim=3,total_dim=3,pseudo_count=1]
+1
+166 166
+CondProbEstimation [target_dim=10,total_dim=700,pseudo_count=1]
+1
+167 167 86 168
+CondProbEstimation [target_dim=7,total_dim=7,pseudo_count=1]
+1
+168 168
+CondProbEstimation [target_dim=3,total_dim=42,pseudo_count=1]
+1
+169 169 100 125
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+170 170 80 81
+CondProbEstimation [target_dim=2,total_dim=8,pseudo_count=1]
+1
+171 171 27 71
