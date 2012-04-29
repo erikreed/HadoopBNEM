@@ -14,8 +14,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	infprops.set("verbose", (size_t) 0);
 	infprops.set("updates", string("HUGIN"));
 	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
-	infprops.set("LOG_Z_TOL_KEY", LIB_EM_TOLERANCE);
-	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
+	infprops.set("MAX_ITERS", EM_MAX_ITER);
 
 	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
 	inf->init();

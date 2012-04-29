@@ -20,6 +20,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
+#include <boost/format.hpp>
 
 using namespace std;
 using namespace dai;
@@ -27,7 +28,7 @@ using namespace dai;
 #define INF_TYPE "JTREE"
 
 const Real LIB_EM_TOLERANCE = 1e-9;
-const size_t EM_MAX_ITER = 100;
+const size_t EM_MAX_ITER = 1000;
 
 struct EMdata {
 	string emFile;

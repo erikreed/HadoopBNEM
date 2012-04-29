@@ -19,7 +19,7 @@ LIBS=-lhadooppipes -lhadooputils -lgmpxx -lm -lc -lgmp \
 LIBS2=-lgmpxx -lm -lc -lgmp \
     -lboost_serialization -lpthread
 
-all: daicontrol dai_map dai_reduce utils alem
+all: dai_map dai_reduce utils alem
 	
 pipes: daicontrol
 	hadoop pipes \
