@@ -355,6 +355,7 @@ class MaximizationStep {
  */
 class EMAlg {
 	public:
+
         /// All the data samples used during learning
         const Evidence &_evidence;
 
@@ -395,7 +396,8 @@ class EMAlg {
          *  \param termconditions Termination conditions @see setTermConditions()
          */
         EMAlg( const Evidence &evidence, InfAlg &estep, std::vector<MaximizationStep> &msteps, const PropertySet &termconditions )
-          : _evidence(evidence), _estep(estep), _msteps(msteps), _iters(0), _lastLogZ(), _max_iters(MAX_ITERS_DEFAULT), _log_z_tol(LOG_Z_TOL_DEFAULT)
+          : _evidence(evidence), _estep(estep), _msteps(msteps), _iters(0), _lastLogZ(),
+            _max_iters(MAX_ITERS_DEFAULT), _log_z_tol(LOG_Z_TOL_DEFAULT)
         {
               setTermConditions( termconditions );
         }
