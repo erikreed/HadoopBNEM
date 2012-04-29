@@ -1,7 +1,7 @@
 #erikreed@cmu.edu
 # change lib64 to lib on ubuntu
 
-OPT_FLAGS=-O3 -fwhole-program
+OPT_FLAGS= -g -Wall #-O3 -fwhole-program
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_DEBUG -DDAI_WITH_BP -DDAI_WITH_FBP -DDAI_WITH_TRWBP -DDAI_WITH_MF -DDAI_WITH_HAK -DDAI_WITH_LC -DDAI_WITH_TREEEP -DDAI_WITH_JTREE -DDAI_WITH_MR -DDAI_WITH_GIBBS -DDAI_WITH_CBP -DDAI_WITH_DECMAP
 
@@ -19,7 +19,7 @@ LIBS=-lhadooppipes -lhadooputils -lgmpxx -lm -lc -lgmp \
 LIBS2=-lgmpxx -lm -lc -lgmp \
     -lboost_serialization -lpthread
 
-all: daicontrol dai_map dai_reduce utils
+all: daicontrol dai_map dai_reduce utils alem
 	
 pipes: daicontrol
 	hadoop pipes \
@@ -44,7 +44,8 @@ clean:
 	rm daicontrol dai_map dai_reduce utils
 
 run: all
-	cat in/tab_content | ./dai_map | ./dai_reduce
+	./streaming.sh
+
 dai_map: src/dai_map.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -odai_map src/dai_map.cpp ../lib/libdai.a $(LIBS2)
@@ -60,4 +61,8 @@ daicontrol: src/daicontrol.cpp ../lib/libdai.a src/dai_mapreduce.h
 utils : src/utils.cpp ../lib/libdai.a
 	g++ -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -outils src/utils.cpp ../lib/libdai.a $(LIBS2)
+
+alem: src/alem.cpp ../lib/libdai.a
+	g++ -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
+    -oalem src/alem.cpp ../lib/libdai.a $(LIBS2)
 
