@@ -3,18 +3,19 @@
 #include "dai_mapreduce.h"
 
 // run vanilla EM
-void doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters) {
+Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numItersRet) {
 	string fixedIn = emIn;
 
 	FactorGraph fg;
 	fg.ReadFromFile(fgIn);
 
+	randomize_fg(&fg);
 	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops;
-	infprops.set("verbose", (size_t) 1);
+	infprops.set("verbose", (size_t) 0);
 	infprops.set("updates", string("HUGIN"));
-	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
-	infprops.set("MAX_ITERS", EM_MAX_ITER);
+	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
+	infprops.set(EMAlg::MAX_ITERS_KEY, EM_MAX_ITER);
 
 	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
 	inf->init();
@@ -23,21 +24,30 @@ void doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters) {
 	Evidence e;
 	ifstream estream(tabIn);
 	e.addEvidenceTabFile(estream, fg);
-	cout << "Number of samples: " << e.nrSamples() << endl;
+//	cout << "Number of samples: " << e.nrSamples() << endl;
 
 	// Read EM specification
 	ifstream emstream(emIn);
 	EMAlg em(e, *inf, emstream);
 
-	// Iterate EM until convergence
-	for (int i=0; i<numIters; i++)
-		em.iterate();
+	Real likelihood;
 
+	// Iterate EM until convergence
+	if (numIters > 0) {
+		for (int i=0; i<numIters; i++)
+			likelihood = em.iterate();
+	}
+	else {
+		while (!em.hasSatisfiedTermConditions())
+			likelihood= em.iterate();
+	}
+
+	*numItersRet = em.Iterations();
 
 	// Clean up
 	delete inf;
 	//	return ss.str();
-
+	return likelihood;
 }
 
 int main(int argc, char* argv[]) {
@@ -45,6 +55,7 @@ int main(int argc, char* argv[]) {
 		cout << "usage:" << endl;
 		cout << "-u when piping serialized EMdata in" << endl;
 		cout << "-b num_iters num_trials for benchmarking w/o MR" << endl;
+		cout << "\t num_iters < 0 results in iterating to convergence" << endl;
 		cout << "no flags and list of files to initialize random serialized EMdatas" << endl;
 		return 0;
 	}
@@ -76,8 +87,21 @@ int main(int argc, char* argv[]) {
 		// expecting num iters
 		int numIters = atoi(argv[2]);
 		int numTrials = atoi(argv[3]);
-		for (int i=0; i<numTrials; i++)
-			doEmIters("dat_large/fg","dat_large/tab","dat_large/em",numIters);
+
+		Real bestLikelihood = -1e100;
+
+		#pragma omp parallel for
+		for (int i=0; i<numTrials; i++) {
+			size_t numItersRet;
+			Real l = doEmIters("dat_medium/fg","dat_medium/tab","dat_medium/em",numIters,&numItersRet);
+			cout << "likelihood: " << l << " iters: " << numItersRet << endl;
+
+			#pragma omp critical
+			{
+				bestLikelihood = max(bestLikelihood,l);
+			}
+		}
+		cout << "best likelihood: " << bestLikelihood << endl;
 		return 0;
 	}
 

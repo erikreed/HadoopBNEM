@@ -32,8 +32,8 @@ const size_t EM_MAX_ITER = 1000;
 // ALEM (Saluja et al) parameters
 const size_t pop_size = 10; // i.e. EMruns, denoted N
 const size_t numLayers = 6;
-const double agegap = 5; // denoted a
-const bool verbose = true;
+const double agegap = 2; // denoted a
+const bool verbose = false;
 // end ALEM parameters
 
 struct EMdata {

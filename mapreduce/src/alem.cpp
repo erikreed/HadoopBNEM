@@ -15,10 +15,10 @@ EMAlg *initEMAlg(FactorGraph fg, PropertySet &infprops) {
 //    inf.get()->init();
     InfAlg* inf = newInfAlg(INF_TYPE, *fg.clone(), infprops);
 
-    ifstream estream("dat/tab");
+    ifstream estream("dat_medium/tab");
     e->addEvidenceTabFile(estream, *fg.clone());
     // Read EM specification
-    ifstream emstream("dat/em");
+    ifstream emstream("dat_medium/em");
     EMAlg *newEMalg = new EMAlg(*e, *inf, emstream);
     return newEMalg;
 }
@@ -43,11 +43,12 @@ void checkRuns(vector<vector<EMAlg*> > &emAlgs, size_t*  min_runs, size_t layer,
 				EMAlg* discarded = emAlgs[layer+1][j];
 				emAlgs[layer+1].erase(emAlgs[layer+1].begin() + j);
 				delete discarded;
-				cout << "Deleted run from layer " << layer +1 << endl;
+				if (verbose)
+					cout << "Discarded run from layer " << layer +1 << endl;
 				// insert em
 				emAlgs[layer+1].push_back(em);
 				if (verbose)
-					cout << "Moved run from layer " << layer << " to " << layer + 1 << endl;
+					cout << "Moved (better) run from layer " << layer << " to " << layer + 1 << endl;
 				break;
 			}
 		}
@@ -79,28 +80,31 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 				// todo: verify that all of layer 0 is iterated
 			}
 
+			#pragma omp parallel for
 			for (int j=emAlgs[i].size()-1; j>=0; j--){
 				EMAlg* em = emAlgs[i][j];
-				assert(em != NULL);
-
 				if (!em->hasSatisfiedTermConditions()) {
-
+					em->ALEM_active = true;
 					em->iterate();
 					if (verbose)
 						cout << "iteration: layer " << i << ", run " << j <<
 						" iterated to likelihood " << em->logZ() << " and iters=" <<
 						em->Iterations() << endl;
 				}
-
+			}
+			for (int j=emAlgs[i].size()-1; j>=0; j--){
+				EMAlg* em = emAlgs[i][j];
 				// em trial has terminated
-				if (em->hasSatisfiedTermConditions()) {
+				if (em->hasSatisfiedTermConditions() && em->ALEM_active) {
+					em->ALEM_active = false;
 					runsTerminated++;
-					cout << "layer " << i << ", run " << j <<
+					if (verbose)
+						cout << "layer " << i << ", run " << j <<
 							" converged. runsTerminated=" << runsTerminated << endl;
-					// move run to comleted EMs layer emAlgs[numLayers]
+					// move run to completed EMs layer emAlgs[numLayers-1]
 					EMAlg* converged = emAlgs[i][j];
 					emAlgs[i].erase(emAlgs[i].begin() + j);
-					emAlgs[numLayers].push_back(converged);
+					emAlgs[numLayers-1].push_back(converged);
 				}
 				else if (em->Iterations() >= ageLimit[i]) {
 					if (verbose)
@@ -113,18 +117,16 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 	}
 }
 
-
-
 int main(int argc, char* argv[]) {
-
-	fg.ReadFromFile("dat/fg");
+	rnd_seed(time(NULL));
+	fg.ReadFromFile("dat_medium/fg");
 	infprops.set("verbose", (size_t) 0);
 	infprops.set("updates", string("HUGIN"));
-	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
-	infprops.set("MAX_ITERS", EM_MAX_ITER);
+	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
+	infprops.set(EMAlg::MAX_ITERS_KEY, EM_MAX_ITER);
 
 	vector<vector<EMAlg*> > emAlgs;
-	for (size_t i = 0; i < numLayers + 1; i++)
+	for (size_t i = 0; i < numLayers ; i++)
 		emAlgs.push_back(vector<EMAlg*> ());
 
 	// beta_i (age limit of layer i)
@@ -135,7 +137,7 @@ int main(int argc, char* argv[]) {
 
 	// M_i (min number of runs of layer i)
 	size_t* min_runs = new size_t[numLayers];
-	min_runs[0] = 5;
+	min_runs[0] = 4;
 	for (size_t i = 1; i < numLayers - 1; i++)
 		min_runs[i] = 2;
 	min_runs[numLayers - 1] = pop_size; // todo: verify
@@ -159,15 +161,17 @@ int main(int argc, char* argv[]) {
 
 	// collect best likelihood
 	Real bestLikelihood = -1e100;
-	if (verbose)
-		cout << "ALEM complete. Finding best likelihood..." << endl;
-	for (size_t i = 0; i < numLayers + 1; i++) { //  last layer = converged runs
+	cout << "ALEM complete. Finding best likelihood..." << endl;
+	for (size_t i = 0; i < numLayers; i++) { //  last layer = converged runs
 		for (size_t j = 0; j < emAlgs[i].size(); j++) {
-			if (verbose)
+			EMAlg* em = emAlgs[i][j];
+			// only print out the inactive/converged EMs
+			if (!em->ALEM_active)
 				cout << "iteration: layer " << i << ", run " << j <<
-				" likelihood: " << emAlgs[i][j]->logZ() << endl;
-			bestLikelihood = max(bestLikelihood, emAlgs[i][j]->logZ());
-			delete emAlgs[i][j];
+				" likelihood: " << em->logZ() << " iters: " <<
+				em->Iterations() << endl;
+			bestLikelihood = max(bestLikelihood, em->logZ());
+			delete em;
 		}
 	}
 

@@ -41,7 +41,7 @@ cleanout:
 	hadoop fs -rmr out 
 
 clean:
-	rm daicontrol dai_map dai_reduce utils
+	rm -f daicontrol dai_map dai_reduce utils alem
 
 run: all
 	./streaming.sh
@@ -58,11 +58,11 @@ daicontrol: src/daicontrol.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE)  \
 	-odaicontrol src/daicontrol.cpp ../lib/libdai.a $(LIBS)
 
-utils : src/utils.cpp ../lib/libdai.a
-	g++ -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
+utils : src/utils.cpp ../lib/libdai.a src/dai_mapreduce.h
+	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -outils src/utils.cpp ../lib/libdai.a $(LIBS2)
 
-alem: src/alem.cpp ../lib/libdai.a
-	g++ -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
+alem: src/alem.cpp ../lib/libdai.a src/dai_mapreduce.h
+	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -oalem src/alem.cpp ../lib/libdai.a $(LIBS2)
 
