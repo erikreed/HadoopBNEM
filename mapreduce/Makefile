@@ -1,7 +1,7 @@
 #erikreed@cmu.edu
 # change lib64 to lib on ubuntu
 
-OPT_FLAGS= -Wall -g #-O3 -fwhole-program
+OPT_FLAGS= -Wall -g -O3 -fwhole-program
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_DEBUG -DDAI_WITH_BP -DDAI_WITH_FBP -DDAI_WITH_TRWBP -DDAI_WITH_MF -DDAI_WITH_HAK -DDAI_WITH_LC -DDAI_WITH_TREEEP -DDAI_WITH_JTREE -DDAI_WITH_MR -DDAI_WITH_GIBBS -DDAI_WITH_CBP -DDAI_WITH_DECMAP
 
@@ -47,22 +47,22 @@ run: all
 	./streaming.sh
 
 dai_map: src/dai_map.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
+	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -odai_map src/dai_map.cpp ../lib/libdai.a $(LIBS2)
 
 dai_reduce: src/dai_reduce.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
+	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -odai_reduce src/dai_reduce.cpp ../lib/libdai.a $(LIBS2)
 
 daicontrol: src/daicontrol.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE)  \
+	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE)  \
 	-odaicontrol src/daicontrol.cpp ../lib/libdai.a $(LIBS)
 
 utils : src/utils.cpp ../lib/libdai.a
-	g++ -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
+	g++ -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -outils src/utils.cpp ../lib/libdai.a $(LIBS2)
 
 alem: src/alem.cpp ../lib/libdai.a
-	g++ -Wall -g -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
+	g++ -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -oalem src/alem.cpp ../lib/libdai.a $(LIBS2)
 

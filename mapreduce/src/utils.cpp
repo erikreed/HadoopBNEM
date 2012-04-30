@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
 	if (argc == 1) {
 		cout << "usage:" << endl;
 		cout << "-u when piping serialized EMdata in" << endl;
-		cout << "-b num_iters fg_file tab_file em_file for benchmarking w/o MR" << endl;
+		cout << "-b num_iters num_trials for benchmarking w/o MR" << endl;
 		cout << "no flags and list of files to initialize random serialized EMdatas" << endl;
 		return 0;
 	}
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
 		int numIters = atoi(argv[2]);
 		int numTrials = atoi(argv[3]);
 		for (int i=0; i<numTrials; i++)
-			doEmIters("dat/fg","dat/tab","dat/em",numIters);
+			doEmIters("dat_large/fg","dat_large/tab","dat_large/em",numIters);
 		return 0;
 	}
 

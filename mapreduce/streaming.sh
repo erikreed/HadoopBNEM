@@ -1,15 +1,24 @@
 # erik reed
 # run EM algorithm on hadoop streaming
-./scripts/make_input.sh
+
+DAT_DIR=dat_large
+ITERS=1
+REDUCERS=1 # bug when REDUCERS > 1
+POP=1
+MAPPERS=4
+
+echo Using parameters:
+echo Number of iterations: $ITERS
+echo Reducers: $REDUCERS
+echo Mappers: $MAPPERS
+echo Population size: $POP
+#echo BNs per mapper: $(($POP / $MAPPERS))
+
+./scripts/make_input.sh $DAT_DIR
 rm -rf out
 mkdir out
 hadoop fs -rmr out in
 hadoop fs -put in in
-
-ITERS=1
-REDUCERS=1 # bug when REDUCERS > 1
-POP=20
-MAPPERS=$POP
 
 echo $POP > in/pop
 
