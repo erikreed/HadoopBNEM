@@ -389,6 +389,8 @@ class EMAlg {
         /// Default likelihood tolerance
         static const Real LOG_Z_TOL_DEFAULT;
 
+        bool ALEM_active;
+
         /// Construct an EMAlg from several objects
         /** \param evidence Specifies the observed evidence
          *  \param estep Inference algorithm to be used for the E-step

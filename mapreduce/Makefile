@@ -19,7 +19,7 @@ LIBS=-lhadooppipes -lhadooputils -lgmpxx -lm -lc -lgmp \
 LIBS2=-lgmpxx -lm -lc -lgmp \
     -lboost_serialization -lpthread
 
-all: dai_map dai_reduce utils alem
+all: dai_map dai_reduce utils alem alem_reduce
 	
 pipes: daicontrol
 	hadoop pipes \
@@ -53,6 +53,10 @@ dai_map: src/dai_map.cpp ../lib/libdai.a src/dai_mapreduce.h
 dai_reduce: src/dai_reduce.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -odai_reduce src/dai_reduce.cpp ../lib/libdai.a $(LIBS2)
+
+alem_reduce: src/alem_reduce.cpp ../lib/libdai.a src/dai_mapreduce.h
+	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
+    -oalem_reduce src/alem_reduce.cpp ../lib/libdai.a $(LIBS2)
 
 daicontrol: src/daicontrol.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE)  \

@@ -74,6 +74,8 @@ string mapper(EMdata &dat) {
 
 string mapper(string &in) {
 	EMdata dat = stringToEM(in);
+	if (dat.isConverged())
+		return in;
 	return mapper(dat);
 }
 

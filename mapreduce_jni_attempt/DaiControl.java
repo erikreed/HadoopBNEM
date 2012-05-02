@@ -6,10 +6,6 @@ import java.util.Arrays;
  */
 class DaiControl {
 
-	//TODO: implement age layered for single core
-	//private native void readInFactorgraph(String path);
-	//private native void readInEvidence(String path);
-	//private native void readInEMfile(String path);
 	private static native long createDai(String fg, String ev, String em);
 	private static native void prepEM(long data);
 	private static native double runEM(long data, int numIterations);
@@ -19,7 +15,6 @@ class DaiControl {
 
 	static {
 		System.loadLibrary("daicontrol");
-		//System.load("/data01/Projects/David_and_Erik/bullshit/ml/libdai/stochastic/DaiControl.so");
 	}
 
 	public static final int POPULATION = 10;

@@ -64,6 +64,7 @@ EMdata em_reduce(vector<EMdata>& in) {
 		EMdata next = in[i];
 		DAI_ASSERT(dat.msteps.size() == next.msteps.size());
 		DAI_ASSERT(dat.bnID == next.bnID);
+		DAI_ASSERT(dat.ALEM_layer == next.ALEM_layer);
 
 		for (size_t j = 0; j < dat.msteps.size(); j++) {
 			dat.msteps[j].addExpectations(next.msteps[j]);
@@ -115,7 +116,25 @@ int main(int argc, char* argv[]) {
 		idToDat[id].push_back(dat);
 	}
 
+
+	// create ALEM layer structure
+	vector<vector<EMdata> > emAlgs;
+	for (size_t i = 0; i <= numLayers ; i++)
+		emAlgs.push_back(vector<EMdata> ());
+	// last layer is for converged EMs
+
 	for (map<int, std::vector<EMdata> >::iterator iter =idToDat.begin(); iter!= idToDat.end(); iter++) {
+		// reduce EMs
+		EMdata out = em_reduce(iter->second);
+		iter->second.clear(); // clean up
+		int layer = out.ALEM_layer;
+		assert(layer >= 0 && layer <= numLayers);
+		// add EM to ALEM structure
+		emAlgs[layer].push_back(out);
+	}
+
+
+	for (map<int, vector<EMdata> >::iterator iter =idToDat.begin(); iter!= idToDat.end(); iter++) {
 		EMdata out = em_reduce(iter->second);
 		out.emFile = ""; // reduce amount of serialization
 		out.tabFile = "";
