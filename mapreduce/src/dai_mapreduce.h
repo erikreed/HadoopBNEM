@@ -33,7 +33,7 @@ const size_t EM_MAX_ITER = 1000;
 const size_t pop_size = 10; // i.e. EMruns, denoted N
 const size_t numLayers = 4;
 const double agegap = 2; // denoted a
-const bool verbose = true;
+const bool verbose = false;
 // end ALEM parameters
 
 struct EMdata {
@@ -59,6 +59,26 @@ struct EMdata {
 		ar & lastLikelihood;
 		ar & msteps;
 		ar & bnID;
+	}
+
+	bool isConverged() {
+	    if( iter >= EM_MAX_ITER )
+	        return true;
+	    else if( iter < 3 )
+	        // need at least 2 to calculate ratio
+	        // Also, throw away first iteration, as the parameters may not
+	        // have been normalized according to the estimation method
+	        return false;
+	    else {
+	        if( lastLikelihood == 0 )
+	            return false;
+	        Real diff = likelihood - lastLikelihood;
+	        if( diff < 0 ) {
+	            cerr << "Error: in EM log-likehood decreased from " << lastLikelihood << " to " << likelihood << endl;
+	            return true;
+	        }
+	        return (diff / fabs(lastLikelihood)) <= LIB_EM_TOLERANCE;
+	    }
 	}
 };
 

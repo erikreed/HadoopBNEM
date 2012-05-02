@@ -1,14 +1,15 @@
 # erik reed
 # run EM algorithm on hadoop streaming
 
-DAT_DIR=dat_large
-ITERS=1
+DAT_DIR=dat_small
+MAX_ITERS=100  # max iters
 REDUCERS=1 # bug when REDUCERS > 1
 POP=1
-MAPPERS=4
+MAPPERS=2
 
 echo Using parameters:
-echo Number of iterations: $ITERS
+echo Using directory: $DAT_DIR
+echo Max number of MapReduce iterations: $MAX_ITERS
 echo Reducers: $REDUCERS
 echo Mappers: $MAPPERS
 echo Population size: $POP
@@ -34,7 +35,8 @@ done
 mkdir -p out/iter.0
 cp in/dat.* out/iter.0
 
-for i in $(seq 1 1 $ITERS); do
+
+for i in $(seq 1 1 $MAX_ITERS); do
 	echo starting iteration number: $i
 	# ASD used because * delimeter is removed; need to tweak reducer
 	$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming-1.0.0.jar \
@@ -57,5 +59,11 @@ for i in $(seq 1 1 $ITERS); do
 	mkdir -p out/iter.$i
 	cp out/dat.* in # overwrite previous iteration
 	mv out/dat.* out/iter.$i
+
+	converged=`cat out/converged`
+	if [ "$converged" = 1 ]; then
+		echo EM complete!
+		break
+	fi
 done
 

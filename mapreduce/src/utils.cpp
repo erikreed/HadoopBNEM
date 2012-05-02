@@ -63,6 +63,7 @@ int main(int argc, char* argv[]) {
 		string flag = argv[1];
 		if (flag == "-u"){
 			// get post mapreduce data -- update
+			bool terminated = true;
 			string s;
 			while (std::getline(std::cin, s)) {
 				str_char_replace(s,'^','\n');
@@ -75,8 +76,18 @@ int main(int argc, char* argv[]) {
 				fout << s << endl;
 				fout.close();
 
+				// check if all BNs have converged
+				if (terminated)
+					terminated = dat.isConverged();
+
 				cout << "iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
 			}
+			ofstream fout("out/converged");
+			if (terminated)
+				fout << 1 << endl;
+			else
+				fout << 0 << endl;
+			fout.close();
 		}
 
 		return 0;
