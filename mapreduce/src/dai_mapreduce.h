@@ -31,9 +31,9 @@ const size_t EM_MAX_ITER = 1000;
 
 // ALEM (Saluja et al) parameters
 const size_t pop_size = 10; // i.e. EMruns, denoted N
-const size_t numLayers = 6;
+const size_t numLayers = 4;
 const double agegap = 2; // denoted a
-const bool verbose = false;
+const bool verbose = true;
 // end ALEM parameters
 
 struct EMdata {
@@ -62,15 +62,15 @@ struct EMdata {
 	}
 };
 
-inline string emToString(const EMdata &em) {
+string emToString(const EMdata &em) {
 	ostringstream s;
-	s << std::scientific;
+	s << scientific;
 	boost::archive::text_oarchive oa(s);
 	oa << em;
 	return s.str();
 }
 
-inline EMdata stringToEM(const string &s) {
+EMdata stringToEM(const string &s) {
 	istringstream ss(s);
 	boost::archive::text_iarchive ia(ss);
 	EMdata em;
@@ -111,10 +111,10 @@ void str_char_replace(string &s, char from, char to) {
 	replace( s.begin(), s.end(), from, to);
 }
 
-bool str_replace(std::string& str, const std::string& from,
-		const std::string& to) {
+bool str_replace(string& str, const string& from,
+		const string& to) {
 	size_t start_pos = str.find(from);
-	if (start_pos == std::string::npos)
+	if (start_pos == string::npos)
 		return false;
 	str.replace(start_pos, from.length(), to);
 	return true;
@@ -130,17 +130,17 @@ void randomize_fg(FactorGraph* fg) {
 	}
 }
 
-vector<std::string> &str_split(const std::string &s, char delim, std::vector<
-		std::string> &elems) {
-	std::stringstream ss(s);
-	std::string item;
-	while (std::getline(ss, item, delim))
+vector<string> &str_split(const string &s, char delim,
+		vector<string> &elems) {
+	stringstream ss(s);
+	string item;
+	while (getline(ss, item, delim))
 		elems.push_back(item);
 	return elems;
 }
 
-std::vector<std::string> str_split(const std::string &s, char delim) {
-	std::vector<std::string> elems;
+vector<string> str_split(const string &s, char delim) {
+	vector<string> elems;
 	return str_split(s, delim, elems);
 }
 

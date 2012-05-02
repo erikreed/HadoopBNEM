@@ -52,7 +52,7 @@ Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numIte
 
 int main(int argc, char* argv[]) {
 	if (argc == 1) {
-		cout << "usage:" << endl;
+		cout << "usage:" << argv[0] << endl;
 		cout << "-u when piping serialized EMdata in" << endl;
 		cout << "-b num_iters num_trials for benchmarking w/o MR" << endl;
 		cout << "\t num_iters < 0 results in iterating to convergence" << endl;
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 		#pragma omp parallel for
 		for (int i=0; i<numTrials; i++) {
 			size_t numItersRet;
-			Real l = doEmIters("dat_medium/fg","dat_medium/tab","dat_medium/em",numIters,&numItersRet);
+			Real l = doEmIters("dat/fg","dat/tab","dat/em",numIters,&numItersRet);
 			cout << "likelihood: " << l << " iters: " << numItersRet << endl;
 
 			#pragma omp critical

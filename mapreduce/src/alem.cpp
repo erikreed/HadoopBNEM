@@ -2,10 +2,19 @@
 // erikreed@cmu.edu
 
 #include "dai_mapreduce.h"
+#include "boost/foreach.hpp"
 
 // todo: refactor these
 FactorGraph fg;
 PropertySet infprops;
+
+int getNumRuns(vector<vector<EMAlg*> > &emAlgs) {
+	int sum = 0;
+	foreach(vector<EMAlg*> v, emAlgs) {
+		sum += v.size();
+	}
+	return sum;
+}
 
 // tons of memory leaks in here
 EMAlg *initEMAlg(FactorGraph fg, PropertySet &infprops) {
@@ -15,10 +24,10 @@ EMAlg *initEMAlg(FactorGraph fg, PropertySet &infprops) {
 //    inf.get()->init();
     InfAlg* inf = newInfAlg(INF_TYPE, *fg.clone(), infprops);
 
-    ifstream estream("dat_medium/tab");
+    ifstream estream("dat/tab");
     e->addEvidenceTabFile(estream, *fg.clone());
     // Read EM specification
-    ifstream emstream("dat_medium/em");
+    ifstream emstream("dat/em");
     EMAlg *newEMalg = new EMAlg(*e, *inf, emstream);
     return newEMalg;
 }
@@ -71,6 +80,7 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 			if (i == 0 &&  emAlgs[i].size() < min_runs[0]) {
 				// insert k new EM runs
 				int k = min_runs[i] - emAlgs[i].size();
+//				int k = min_runs[i] - getNumRuns(emAlgs);
 				for (int j=0; j<k; j++) {
 					emAlgs[i].push_back(initEMAlg(fg,infprops));
 					if (verbose)
@@ -106,7 +116,7 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 					emAlgs[i].erase(emAlgs[i].begin() + j);
 					emAlgs[numLayers-1].push_back(converged);
 				}
-				else if (em->Iterations() >= ageLimit[i]) {
+				else if (i < numLayers && em->Iterations() >= ageLimit[i]) {
 					if (verbose)
 						cout << "layer " << i << ", run " << j <<
 						" hit age limit of " << ageLimit[i] << endl;
@@ -119,7 +129,7 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 
 int main(int argc, char* argv[]) {
 	rnd_seed(time(NULL));
-	fg.ReadFromFile("dat_medium/fg");
+	fg.ReadFromFile("dat/fg");
 	infprops.set("verbose", (size_t) 0);
 	infprops.set("updates", string("HUGIN"));
 	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
@@ -139,8 +149,8 @@ int main(int argc, char* argv[]) {
 	size_t* min_runs = new size_t[numLayers];
 	min_runs[0] = 4;
 	for (size_t i = 1; i < numLayers - 1; i++)
-		min_runs[i] = 2;
-	min_runs[numLayers - 1] = pop_size; // todo: verify
+		min_runs[i] = 3;
+	min_runs[numLayers - 1] = pop_size;
 
 
 	// initialize first layer
@@ -161,6 +171,7 @@ int main(int argc, char* argv[]) {
 
 	// collect best likelihood
 	Real bestLikelihood = -1e100;
+	size_t bestIters = -1;
 	cout << "ALEM complete. Finding best likelihood..." << endl;
 	for (size_t i = 0; i < numLayers; i++) { //  last layer = converged runs
 		for (size_t j = 0; j < emAlgs[i].size(); j++) {
@@ -170,12 +181,16 @@ int main(int argc, char* argv[]) {
 				cout << "iteration: layer " << i << ", run " << j <<
 				" likelihood: " << em->logZ() << " iters: " <<
 				em->Iterations() << endl;
-			bestLikelihood = max(bestLikelihood, em->logZ());
+			if (em->logZ() > bestLikelihood) {
+				bestLikelihood = em->logZ();
+				bestIters = em->Iterations();
+			}
+
 			delete em;
 		}
 	}
 
-	cout << "Best: " << bestLikelihood << endl;
+	cout << "Best: " << bestLikelihood << " iters: " << bestIters << endl;
 
 	delete[] ageLimit;
 	delete[] min_runs;

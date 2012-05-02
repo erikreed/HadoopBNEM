@@ -63,6 +63,6 @@ utils : src/utils.cpp ../lib/libdai.a src/dai_mapreduce.h
     -outils src/utils.cpp ../lib/libdai.a $(LIBS2)
 
 alem: src/alem.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
+	g++ -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -oalem src/alem.cpp ../lib/libdai.a $(LIBS2)
 
