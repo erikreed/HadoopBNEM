@@ -33,7 +33,7 @@ const size_t EM_MAX_ITER = 1000;
 const size_t pop_size = 10; // i.e. EMruns, denoted N
 const size_t numLayers = 4;
 const double agegap = 2; // denoted a
-const bool verbose = false;
+const bool verbose = true;
 // end ALEM parameters
 
 struct EMdata {
@@ -45,6 +45,7 @@ struct EMdata {
 	Real lastLikelihood;
 	vector<MaximizationStep> msteps;
 	int bnID;
+	int ALEM_layer;
 
 
 	// TODO: optimize serialization
@@ -59,6 +60,7 @@ struct EMdata {
 		ar & lastLikelihood;
 		ar & msteps;
 		ar & bnID;
+		ar & ALEM_layer;
 	}
 
 	bool isConverged() {
@@ -162,6 +164,14 @@ vector<string> &str_split(const string &s, char delim,
 vector<string> str_split(const string &s, char delim) {
 	vector<string> elems;
 	return str_split(s, delim, elems);
+}
+PropertySet getProps() {
+	PropertySet infprops;
+	infprops.set("verbose", (size_t) 0);
+	infprops.set("updates", string("HUGIN"));
+	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
+	infprops.set("MAX_ITERS", EM_MAX_ITER);
+	return infprops;
 }
 
 #endif /* DAI_MAPREDUCE_H_ */

@@ -130,10 +130,7 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 int main(int argc, char* argv[]) {
 	rnd_seed(time(NULL));
 	fg.ReadFromFile("dat/fg");
-	infprops.set("verbose", (size_t) 0);
-	infprops.set("updates", string("HUGIN"));
-	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
-	infprops.set(EMAlg::MAX_ITERS_KEY, EM_MAX_ITER);
+	infprops = getProps();
 
 	vector<vector<EMAlg*> > emAlgs;
 	for (size_t i = 0; i < numLayers ; i++)

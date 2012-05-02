@@ -11,11 +11,7 @@ Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numIte
 
 	randomize_fg(&fg);
 	// Prepare junction-tree object for doing exact inference for E-step
-	PropertySet infprops;
-	infprops.set("verbose", (size_t) 0);
-	infprops.set("updates", string("HUGIN"));
-	infprops.set(EMAlg::LOG_Z_TOL_KEY, LIB_EM_TOLERANCE);
-	infprops.set(EMAlg::MAX_ITERS_KEY, EM_MAX_ITER);
+	PropertySet infprops = getProps();
 
 	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
 	inf->init();

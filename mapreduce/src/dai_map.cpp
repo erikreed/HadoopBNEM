@@ -26,9 +26,6 @@ Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 		delete clamped;
 	}
 
-	// Maximization of parameters
-	//    mstep.maximize( _estep.fg() );
-
 	return likelihood;
 }
 
@@ -50,11 +47,7 @@ string mapper(EMdata &dat) {
 
 
 	// Prepare junction-tree object for doing exact inference for E-step
-	PropertySet infprops;
-	infprops.set("verbose", (size_t) 0);
-	infprops.set("updates", string("HUGIN"));
-	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
-	infprops.set("MAX_ITERS", EM_MAX_ITER);
+	PropertySet infprops = getProps();
 
 	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
 	inf->init();
@@ -63,7 +56,6 @@ string mapper(EMdata &dat) {
 	Evidence e;
 	istringstream estream(dat.tabFile);
 	e.addEvidenceTabFile(estream, fg);
-//	cout << "Number of samples: " << e.nrSamples() << endl;
 
 	// Read EM specification
 	istringstream emstream(dat.emFile);

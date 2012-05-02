@@ -2,46 +2,7 @@
 // erikreed@cmu.edu
 
 #include "dai_mapreduce.h"
-
-void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
-	string fixedIn = emIn;
-
-	FactorGraph fg;
-	fg.ReadFromFile(fgIn);
-
-	// Prepare junction-tree object for doing exact inference for E-step
-	PropertySet infprops;
-	infprops.set("verbose", (size_t) 0);
-	infprops.set("updates", string("HUGIN"));
-	infprops.set("log_z_tol", LIB_EM_TOLERANCE);
-	infprops.set("MAX_ITERS", EM_MAX_ITER);
-
-	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
-	inf->init();
-
-	// Read sample from file
-	Evidence e;
-	ifstream estream(tabIn);
-	e.addEvidenceTabFile(estream, fg);
-//	cout << "Number of samples: " << e.nrSamples() << endl;
-
-	// Read EM specification
-	ifstream emstream(emIn);
-	EMAlg em(e, *inf, emstream);
-
-	// Iterate EM until convergence
-	while (!em.hasSatisfiedTermConditions()) {
-		em.iterate();
-	}
-
-	stringstream ss;
-	ss << inf->fg() << endl;
-
-	// Clean up
-	delete inf;
-	//	return ss.str();
-
-}
+#include <map>
 
 Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 	Real logZ = 0;
@@ -67,9 +28,6 @@ Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 		delete clamped;
 	}
 
-	// Maximization of parameters
-	//    mstep.maximize( _estep.fg() );
-
 	return likelihood;
 }
 
@@ -93,15 +51,6 @@ bool emHasSatisfiedTermConditions(size_t iter, Real previous, Real current) {
     }
 }
 
-Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
-		InfAlg &inf) {
-	Real likelihood = 0;
-	for (size_t i = 0; i < msteps.size(); ++i)
-		likelihood = EM_estep(msteps[i], e, inf);
-	//    _lastLogZ.push_back( likelihood );
-	//    ++_iters;
-	return likelihood;
-}
 
 EMdata em_reduce(vector<EMdata>& in) {
 	// using first EMdata to store e-step counts and create fg
@@ -139,53 +88,46 @@ EMdata em_reduce(vector<EMdata>& in) {
 
 
 int main(int argc, char* argv[]) {
+	bool alem = false;
+	if (argc == 2 && string(argv[1]) == "-alem")
+		alem = true;
+
 
 	//read data from mappers
 	ostringstream ss;
 
-	// get evidence
 	string s;
 	while (std::getline(std::cin, s))
 		ss << s << '\n';
 
 	string input = ss.str();
 
-//	cout << input << endl;
-//	return 0;
 	vector<string> data = str_split(input, '\n');
 
-
-	ifstream fin("in/pop");
-	int pop_size;
-	fin >> pop_size;
-	fin.close();
-
-	vector<EMdata>* datsForReducer = new vector<EMdata>[pop_size];
-
+	map<int,vector<EMdata> > idToDat;
 
 	for (size_t i=0; i<data.size(); i++) {
 		string line = data[i];
 		str_char_replace(line,'^','\n');
 		vector<string> parts = str_split(line, '*');
-//		cerr << parts[0] << endl;
 		assert(parts.size() == 2);
 
 		EMdata dat = stringToEM(parts[1]); // value
 		int id = atoi(parts[0].c_str()); // key
-		assert(id == dat.bnID && id >= 0 && id < pop_size);
-		datsForReducer[dat.bnID].push_back(dat);
+		assert(id == dat.bnID && id >= 0);
+		if (idToDat.count(id) == 0)
+			idToDat[id] = vector<EMdata>();
+		idToDat[id].push_back(dat);
 	}
 
-	for (int id=0; id < pop_size; id++) {
-		EMdata out = em_reduce(datsForReducer[id]);
+	for (map<int, std::vector<EMdata> >::iterator iter =idToDat.begin(); iter!= idToDat.end(); iter++) {
+		EMdata out = em_reduce(iter->second);
 		out.emFile = ""; // reduce amount of serialization
 		out.tabFile = "";
 		string outstring = emToString(out);
 		str_char_replace(outstring,'\n','^');
 		cout << outstring << endl;
 	}
-
-	delete[] datsForReducer;
 
 	return 0;
 }
