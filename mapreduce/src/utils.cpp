@@ -126,6 +126,7 @@ int main(int argc, char* argv[]) {
 //		datForMapper.emFile = emFile;
 		datForMapper.likelihood = 0;
 		datForMapper.bnID = -1;
+		datForMapper.ALEM_layer = 0;
 
 		ostringstream ss;
 		ss << fg;

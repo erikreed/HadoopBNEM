@@ -35,8 +35,6 @@ Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
 	Real likelihood = 0;
 	for (size_t i = 0; i < msteps.size(); ++i)
 		likelihood = EM_estep(msteps[i], e, inf);
-	//    _lastLogZ.push_back( likelihood );
-	//    ++_iters;
 	return likelihood;
 }
 
@@ -45,8 +43,6 @@ string mapper(EMdata &dat) {
 	istringstream fgStream(dat.fgFile);
 	fgStream >> fg;
 
-
-	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops = getProps();
 
 	InfAlg* inf = newInfAlg(INF_TYPE, fg, infprops);
@@ -69,6 +65,9 @@ string mapper(EMdata &dat) {
 
 	// Clean up
 	delete inf;
+
+	dat.emFile = ""; // reduce amount of serialization
+	dat.tabFile = "";
 
 	return emToString(dat);
 }

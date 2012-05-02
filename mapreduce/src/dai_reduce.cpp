@@ -92,7 +92,6 @@ int main(int argc, char* argv[]) {
 	if (argc == 2 && string(argv[1]) == "-alem")
 		alem = true;
 
-
 	//read data from mappers
 	ostringstream ss;
 
@@ -119,6 +118,15 @@ int main(int argc, char* argv[]) {
 			idToDat[id] = vector<EMdata>();
 		idToDat[id].push_back(dat);
 	}
+
+
+	// create ALEM layer structure
+	vector<vector<EMAlg*> > emAlgs;
+	for (size_t i = 0; i < numLayers ; i++)
+		emAlgs.push_back(vector<EMAlg*> ());
+
+	// TODO: add ALEM
+
 
 	for (map<int, std::vector<EMdata> >::iterator iter =idToDat.begin(); iter!= idToDat.end(); iter++) {
 		EMdata out = em_reduce(iter->second);
