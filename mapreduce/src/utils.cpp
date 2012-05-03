@@ -148,9 +148,9 @@ void alem(vector<vector<EMdata> > &emAlgs) {
 
 	// M_i (min number of runs of layer i)
 	size_t* min_runs = new size_t[numLayers];
-	min_runs[0] = 4;
+	min_runs[0] = min_runs_layer0;
 	for (size_t i = 1; i < numLayers - 1; i++)
-		min_runs[i] = 3;
+		min_runs[i] = min_runs_intermediate;
 	min_runs[numLayers - 1] = pop_size;
 
 	ALEM_check(emAlgs, min_runs, ageLimit);
@@ -199,6 +199,7 @@ int main(int argc, char* argv[]) {
 			// get post mapreduce data -- update
 
 			size_t numConverged = 0;
+			size_t total=0;
 			string s;
 			Real bestLikelihood = -1e100;
 			size_t bestIters = -1;
@@ -216,6 +217,9 @@ int main(int argc, char* argv[]) {
 				// check if all BNs have converged
 				if (terminated)
 					terminated = dat.isConverged();
+				if (dat.isConverged())
+					numConverged++;
+				total++;
 				cout << "iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
 
 				if (dat.likelihood > bestLikelihood) {
@@ -224,14 +228,8 @@ int main(int argc, char* argv[]) {
 				}
 
 			}
+			cout << "Runs converged: " << numConverged << "/" << total << endl;
 			cout << "Best EM likelihood so far: " << bestLikelihood << ", iters: " << bestIters << endl;
-
-			if (flag == "-alem" && numConverged >= pop_size) {
-				cout << "ALEM converged. Completed runs = " << numConverged << endl;
-				terminated = true;
-			}
-			else
-				terminated = false;
 		}
 
 		else if (flag == "-alem") {

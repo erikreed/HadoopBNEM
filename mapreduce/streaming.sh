@@ -2,11 +2,15 @@
 # erik reed
 # runs EM algorithm on hadoop streaming
 
+# if using Amazon EC2 Linux AMI
+HADOOP_JAR=hadoop-0.19.0-streaming.jar
+#HADOOP_JAR=hadoop-streaming-1.0.0.jar
+
 # expects: fg,em,tab files
 DAT_DIR=dat_small
 
 # max MapReduce job iterations, not max EM iters
-MAX_ITERS=100 
+MAX_ITERS=100
 
 REDUCERS=1 # TODO: bug when REDUCERS > 1
 
@@ -14,23 +18,30 @@ REDUCERS=1 # TODO: bug when REDUCERS > 1
 # -u corresponds to update; standard EM with fixed population size
 #		e.g. a simple random restart with $POP BNs
 # -alem corresponds to Age-Layered EM with dynamic population size
-EM_FLAGS="-alem"
+EM_FLAGS="-u"
 
 # set to min_runs[0]
-POP=1
-MAPPERS=2
+POP=10
+MAPPERS=10
 
-echo -- Using parameters -- 
-echo Directory: $DAT_DIR
-echo Max number of MapReduce iterations: $MAX_ITERS
-echo Reducers: $REDUCERS
-echo Mappers: $MAPPERS
-echo Population size: $POP
-#echo BNs per mapper: $(($POP / $MAPPERS))
-echo ----------------------
-./scripts/make_input.sh $DAT_DIR
+# (disabled) save previous run if it exists (just in case)
+#rm -rf out.prev
+#mv -f out out.prev || true
 rm -rf out
 mkdir -p out
+
+LOG="tee -a out/log.txt"
+echo $0 started at `date`  | $LOG
+echo -- Using parameters -- | $LOG
+echo Directory: $DAT_DIR | $LOG
+echo Max number of MapReduce iterations: $MAX_ITERS | $LOG
+echo Reducers: $REDUCERS | $LOG
+echo Mappers: $MAPPERS | $LOG
+echo Population size: $POP | $LOG
+#echo BNs per mapper: $(($POP / $MAPPERS))
+echo ---------------------- | $LOG
+./scripts/make_input.sh $DAT_DIR
+
 hadoop fs -rmr out in || true
 hadoop fs -put in in || true
 
@@ -52,12 +63,13 @@ cp in/dat.* out/iter.0
 for i in $(seq 1 1 $MAX_ITERS); do
 	echo starting MapReduce job iteration: $i
 	# ASD used because * delimeter is removed; need to tweak reducer
-	$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming-1.0.0.jar \
+	$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/$HADOOP_JAR \
 		-files "./dai_map,./dai_reduce,./in" \
 		-D 'stream.map.output.field.separator=ASD' \
 		-D 'stream.reduce.output.field.separator=ASD' \
 		-D mapred.tasktracker.tasks.maximum=$MAPPERS \
 		-D mapred.map.tasks=$MAPPERS \
+		-D mapred.output.compress=false \
 		-D dfs.block.size=256KB \
 		-input ./in/tab_content \
 		-output out \

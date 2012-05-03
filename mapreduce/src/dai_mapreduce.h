@@ -26,7 +26,7 @@ using namespace std;
 using namespace dai;
 
 const string INF_TYPE = "JTREE";
-const Real LIB_EM_TOLERANCE = 1e-9;
+const Real LIB_EM_TOLERANCE = 1e-4;
 const size_t EM_MAX_ITER = 1000;
 
 // ALEM (Saluja et al) parameters
@@ -34,6 +34,8 @@ const size_t pop_size = 10; // i.e. EMruns, denoted N
 const size_t numLayers = 4;
 const double agegap = 2; // denoted a
 const bool verbose = true;
+const size_t min_runs_layer0 = 10;
+const size_t min_runs_intermediate = 4;
 // end ALEM parameters
 
 struct EMdata {
