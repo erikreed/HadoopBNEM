@@ -1,6 +1,7 @@
 // erik reed
 // erikreed@cmu.edu
 #include "dai_mapreduce.h"
+#include "boost/foreach.hpp"
 
 // run vanilla EM
 Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numItersRet) {
@@ -45,11 +46,149 @@ Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numIte
 	//	return ss.str();
 	return likelihood;
 }
+void checkRuns(vector<vector<EMdata> > &emAlgs, size_t*  min_runs, size_t layer, size_t index) {
+	EMdata &em = emAlgs[layer][index];
+	Real likelihood = em.likelihood;
+
+	if (emAlgs[layer+1].size() < min_runs[layer+1]) {
+		emAlgs[layer+1].push_back(em);
+		if (verbose)
+			cout << "Moved run from layer " << layer << " to " << layer + 1 << endl;
+	}
+	else {
+		// find out if there is a worse run in next layer
+		for (size_t j=0; j<emAlgs[layer+1].size(); j++) {
+			Real next = emAlgs[layer+1][j].likelihood;
+			if (next < likelihood) {
+				// discard em_next
+				emAlgs[layer+1].erase(emAlgs[layer+1].begin() + j);
+				if (verbose)
+					cout << "Discarded run from layer " << layer +1 << endl;
+				// insert em
+				emAlgs[layer+1].push_back(em);
+				if (verbose)
+					cout << "Moved (better) run from layer " << layer << " to " << layer + 1 << endl;
+				break;
+			}
+		}
+	}
+
+	// remove em from original layer
+	emAlgs[layer].erase(emAlgs[layer].begin()+index);
+	if (verbose)
+		cout << "Deleted run from layer " << layer << endl;
+}
+
+void ALEM_check(vector<vector<EMdata> > &emAlgs, size_t* min_runs, size_t* ageLimit) {
+	size_t runsTerminated = 0;
+	// perform ALEM likelihood checking and move EMs
+	// between layers
+	for (size_t i=0; i<numLayers; i++) {
+		for (int j=emAlgs[i].size()-1; j>=0; j--){
+			EMdata &em = emAlgs[i][j];
+			// em trial has terminated
+			if (em.isConverged()) {
+
+				runsTerminated++;
+				if (verbose)
+					cout << "layer " << i << ", run " << j <<
+					" converged. runsTerminated=" << runsTerminated << endl;
+				// move run to completed EMs layer emAlgs[numLayers-1]
+				EMdata &converged = emAlgs[i][j];
+				emAlgs[i].erase(emAlgs[i].begin() + j);
+				emAlgs[numLayers-1].push_back(converged);
+			}
+			else if (i < numLayers && em.iter >= ageLimit[i]) {
+				if (verbose)
+					cout << "layer " << i << ", run " << j <<
+					" hit age limit of " << ageLimit[i] << endl;
+				checkRuns(emAlgs,min_runs, i, j);
+			}
+		}
+	}
+
+}
+
+string getFirstFG(vector<vector<EMdata> > &emAlgs) {
+	// optimize
+	foreach(vector<EMdata> &layer, emAlgs) {
+		foreach(EMdata &em, layer) {
+			return em.fgFile;
+		}
+	}
+	return "ERROR";
+}
+
+string randomize_fg_str(string &fgStr) {
+	FactorGraph fg;
+	stringstream fgStream(fgStr);
+	fgStream >> fg;
+	randomize_fg(&fg);
+	fgStream.clear();
+	fgStream << fg;
+	return fgStream.str();
+}
+
+
+int getMaxID(vector<vector<EMdata> > &emAlgs) {
+	int id_max = -1;
+	foreach(vector<EMdata> &layer, emAlgs) {
+		foreach(EMdata &em, layer) {
+			id_max = max(id_max,em.bnID);
+		}
+	}
+	return id_max;
+}
+
+void alem(vector<vector<EMdata> > &emAlgs) {
+	// beta_i (age limit of layer i)
+	size_t* ageLimit = new size_t[numLayers];
+	for (size_t i = 0; i < numLayers - 1; i++)
+		ageLimit[i] = agegap * pow(2, i);
+	ageLimit[numLayers - 1] = EM_MAX_ITER;
+
+	// M_i (min number of runs of layer i)
+	size_t* min_runs = new size_t[numLayers];
+	min_runs[0] = 4;
+	for (size_t i = 1; i < numLayers - 1; i++)
+		min_runs[i] = 3;
+	min_runs[numLayers - 1] = pop_size;
+
+
+	// add EMs to first layer
+	if (emAlgs[0].size() < min_runs[0]) {
+		// insert k new EM runs
+		int k = min_runs[0] - emAlgs[0].size();
+		if (k > 0) {
+			int currentID = getMaxID(emAlgs) + 1;
+			for (int j=0; j<k; j++) {
+				EMdata newEM;
+				newEM.fgFile = getFirstFG(emAlgs);
+				newEM.fgFile = randomize_fg_str(newEM.fgFile);
+				newEM.iter = 0;
+				newEM.likelihood = 0;
+				newEM.bnID = currentID++;
+				newEM.ALEM_layer = 0;
+				emAlgs[0].push_back(newEM);
+				if (verbose)
+					cout << "Adding run to layer 0. Total in layer 0: "
+					<< emAlgs[0].size() << endl;
+			}
+		}
+	}
+
+	ALEM_check(emAlgs, min_runs, ageLimit);
+
+	delete[] ageLimit;
+	delete[] min_runs;
+}
 
 int main(int argc, char* argv[]) {
+	rnd_seed(time(NULL));
 	if (argc == 1) {
 		cout << "usage:" << argv[0] << endl;
 		cout << "-u when piping serialized EMdata in" << endl;
+		cout << "-alem when piping serialized EMdata in using ALEM" << endl;
 		cout << "-b num_iters num_trials for benchmarking w/o MR" << endl;
 		cout << "\t num_iters < 0 results in iterating to convergence" << endl;
 		cout << "no flags and list of files to initialize random serialized EMdatas" << endl;
@@ -57,10 +196,14 @@ int main(int argc, char* argv[]) {
 	}
 	if (argc == 2) {
 		string flag = argv[1];
+		bool terminated = true;
 		if (flag == "-u"){
 			// get post mapreduce data -- update
-			bool terminated = true;
+
+			size_t numConverged = 0;
 			string s;
+			Real bestLikelihood = -1e100;
+			size_t bestIters = -1;
 			while (std::getline(std::cin, s)) {
 				str_char_replace(s,'^','\n');
 				EMdata dat = stringToEM(s);
@@ -75,16 +218,82 @@ int main(int argc, char* argv[]) {
 				// check if all BNs have converged
 				if (terminated)
 					terminated = dat.isConverged();
-
 				cout << "iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
+
+				if (dat.likelihood > bestLikelihood) {
+					bestLikelihood = dat.likelihood;
+					bestIters = dat.iter;
+				}
+
 			}
-			ofstream fout("out/converged");
-			if (terminated)
-				fout << 1 << endl;
+			cout << "Best EM likelihood: " << bestLikelihood << ", iters: " << bestIters << endl;
+
+			if (flag == "-alem" && numConverged >= pop_size) {
+				cout << "ALEM converged. Completed runs = " << numConverged << endl;
+				terminated = true;
+			}
 			else
-				fout << 0 << endl;
-			fout.close();
+				terminated = false;
 		}
+
+		else if (flag == "-alem") {
+			size_t numConverged = 0;
+			string s;
+			Real bestLikelihood = -1e100;
+			size_t bestIters = -1;
+
+			// initialize ALEM structures
+			vector<vector<EMdata> > emAlgs;
+			for (size_t i = 0; i < numLayers ; i++)
+				emAlgs.push_back(vector<EMdata> ());
+
+			while (std::getline(std::cin, s)) {
+				str_char_replace(s,'^','\n');
+				EMdata dat = stringToEM(s);
+				int layer = dat.ALEM_layer;
+				assert(layer >= 0 && (size_t) layer < numLayers);
+				emAlgs[layer].push_back(dat);
+
+
+				if (dat.likelihood > bestLikelihood) {
+					bestLikelihood = dat.likelihood;
+					bestIters = dat.iter;
+				}
+
+				cout << "layer: "<< dat.ALEM_layer << "\t iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
+				if (dat.isConverged())
+					numConverged++;
+			}
+
+			if (numConverged >= pop_size) {
+				cout << "ALEM converged. Completed runs = " << numConverged << endl;
+				terminated = true;
+			}
+			else
+				terminated = false;
+			cout << "Best EM likelihood: " << bestLikelihood << ", iters: " << bestIters << endl;
+
+			if (!terminated)
+				alem(emAlgs);
+
+			foreach(vector<EMdata> &layer, emAlgs) {
+				foreach(EMdata &em, layer) {
+					ostringstream outname;
+					outname << "out/dat." << em.bnID;
+					ofstream fout;
+					fout.open (outname.str().c_str());
+					fout << s << endl;
+					fout.close();
+				}
+			}
+		}
+
+		ofstream fout("out/converged");
+		if (terminated)
+			fout << 1 << endl;
+		else
+			fout << 0 << endl;
+		fout.close();
 
 		return 0;
 	}
@@ -112,11 +321,10 @@ int main(int argc, char* argv[]) {
 		return 0;
 	}
 
-	rnd_seed(time(NULL));
 	FactorGraph fg;
 	fg.ReadFromFile(argv[1]);
 
-	string emFile = readFile("in/em");
+//	string emFile = readFile("in/em");
 
 	for (int i=2; i<argc; i++) {
 		randomize_fg(&fg);

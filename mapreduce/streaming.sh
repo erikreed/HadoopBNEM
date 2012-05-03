@@ -1,3 +1,4 @@
+#!/bin/bash -e
 # erik reed
 # run EM algorithm on hadoop streaming
 
@@ -17,9 +18,9 @@ echo Population size: $POP
 
 ./scripts/make_input.sh $DAT_DIR
 rm -rf out
-mkdir out
-hadoop fs -rmr out in
-hadoop fs -put in in
+mkdir -p out
+hadoop fs -rmr out in || true
+hadoop fs -put in in || true
 
 echo $POP > in/pop
 
@@ -54,10 +55,11 @@ for i in $(seq 1 1 $MAX_ITERS); do
 
 	hadoop fs -get out/part-00000 out/tmp
 	hadoop fs -rmr out
-	cat out/tmp | ./utils -u
+	cat out/tmp | ./utils -alem
 	rm out/tmp
 	mkdir -p out/iter.$i
-	cp out/dat.* in # overwrite previous iteration
+	rm in/dat.* # remove previous iteration
+	cp out/dat.* in 
 	mv out/dat.* out/iter.$i
 
 	converged=`cat out/converged`

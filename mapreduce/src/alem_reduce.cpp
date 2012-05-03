@@ -31,26 +31,6 @@ Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 	return likelihood;
 }
 
-bool emHasSatisfiedTermConditions(size_t iter, Real previous, Real current) {
-    if( iter >= EM_MAX_ITER )
-        return true;
-    else if( iter < 3 )
-        // need at least 2 to calculate ratio
-        // Also, throw away first iteration, as the parameters may not
-        // have been normalized according to the estimation method
-        return false;
-    else {
-        if( previous == 0 )
-            return false;
-        Real diff = current - previous;
-        if( diff < 0 ) {
-            std::cerr << "Error: in EM log-likehood decreased from " << previous << " to " << current << std::endl;
-            return true;
-        }
-        return (diff / fabs(previous)) <= LIB_EM_TOLERANCE;
-    }
-}
-
 
 EMdata em_reduce(vector<EMdata>& in) {
 	// using first EMdata to store e-step counts and create fg
@@ -118,23 +98,30 @@ int main(int argc, char* argv[]) {
 
 
 	// create ALEM layer structure
-	vector<vector<EMdata> > emAlgs;
-	for (size_t i = 0; i <= numLayers ; i++)
-		emAlgs.push_back(vector<EMdata> ());
-	// last layer is for converged EMs
-
-	for (map<int, std::vector<EMdata> >::iterator iter =idToDat.begin(); iter!= idToDat.end(); iter++) {
+//	vector<vector<EMdata> > emAlgs;
+//	for (size_t i = 0; i <= numLayers ; i++)
+//		emAlgs.push_back(vector<EMdata> ());
+//	// last layer is for converged EMs
+//
+//	for (map<int, std::vector<EMdata> >::iterator iter = idToDat.begin(); iter!= idToDat.end(); iter++) {
+//		// reduce EMs
+//		EMdata out = em_reduce(iter->second);
+//		iter->second.clear(); // clean up
+//		int layer = out.ALEM_layer;
+//		assert(layer >= 0 && (size_t) layer <= numLayers);
+//		// add EM to ALEM structure
+//		emAlgs[layer].push_back(out);
+//	}
+//	idToDat.clear(); // clean up reducer input
+//
+//	// now perform ALEM
+//
+//
+//	// print results to stdout
+//	foreach(vector<EMdata> &layer, emAlgs) {
+	//		foreach(EMdata &out, layer) {
+	for (map<int, std::vector<EMdata> >::iterator iter = idToDat.begin(); iter!= idToDat.end(); iter++) {
 		// reduce EMs
-		EMdata out = em_reduce(iter->second);
-		iter->second.clear(); // clean up
-		int layer = out.ALEM_layer;
-		assert(layer >= 0 && layer <= numLayers);
-		// add EM to ALEM structure
-		emAlgs[layer].push_back(out);
-	}
-
-
-	for (map<int, vector<EMdata> >::iterator iter =idToDat.begin(); iter!= idToDat.end(); iter++) {
 		EMdata out = em_reduce(iter->second);
 		out.emFile = ""; // reduce amount of serialization
 		out.tabFile = "";
@@ -142,6 +129,5 @@ int main(int argc, char* argv[]) {
 		str_char_replace(outstring,'\n','^');
 		cout << outstring << endl;
 	}
-
 	return 0;
 }

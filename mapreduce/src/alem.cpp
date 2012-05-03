@@ -18,18 +18,18 @@ int getNumRuns(vector<vector<EMAlg*> > &emAlgs) {
 
 // tons of memory leaks in here
 EMAlg *initEMAlg(FactorGraph fg, PropertySet &infprops) {
-    Evidence* e = new Evidence();
-    randomize_fg(&fg);
-//    InfAlgPtr inf = InfAlgPtr(newInfAlg(INF_TYPE, fg, infprops));
-//    inf.get()->init();
-    InfAlg* inf = newInfAlg(INF_TYPE, *fg.clone(), infprops);
+	Evidence* e = new Evidence();
+	randomize_fg(&fg);
+	//    InfAlgPtr inf = InfAlgPtr(newInfAlg(INF_TYPE, fg, infprops));
+	//    inf.get()->init();
+	InfAlg* inf = newInfAlg(INF_TYPE, *fg.clone(), infprops);
 
-    ifstream estream("dat/tab");
-    e->addEvidenceTabFile(estream, *fg.clone());
-    // Read EM specification
-    ifstream emstream("dat/em");
-    EMAlg *newEMalg = new EMAlg(*e, *inf, emstream);
-    return newEMalg;
+	ifstream estream("dat/tab");
+	e->addEvidenceTabFile(estream, *fg.clone());
+	// Read EM specification
+	ifstream emstream("dat/em");
+	EMAlg *newEMalg = new EMAlg(*e, *inf, emstream);
+	return newEMalg;
 }
 
 void checkRuns(vector<vector<EMAlg*> > &emAlgs, size_t*  min_runs, size_t layer, size_t index) {
@@ -74,22 +74,21 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 	size_t runsTerminated = 0;
 	// while non-terminated runs exist
 	while (runsTerminated < pop_size) {
-		for (size_t i=0; i<numLayers; i++) {
 
-			// if first layer...
-			if (i == 0 &&  emAlgs[i].size() < min_runs[0]) {
-				// insert k new EM runs
-				int k = min_runs[i] - emAlgs[i].size();
-//				int k = min_runs[i] - getNumRuns(emAlgs);
-				for (int j=0; j<k; j++) {
-					emAlgs[i].push_back(initEMAlg(fg,infprops));
-					if (verbose)
-						cout << "Adding run to layer 0. Total in layer 0: "
-						<< emAlgs[i].size() << endl;
-				}
-				// todo: verify that all of layer 0 is iterated
+		// add EMs to first layer
+		if (emAlgs[0].size() < min_runs[0]) {
+			// insert k new EM runs
+			int k = min_runs[0] - emAlgs[0].size();
+			for (int j=0; j<k; j++) {
+				emAlgs[0].push_back(initEMAlg(fg,infprops));
+				if (verbose)
+					cout << "Adding run to layer 0. Total in layer 0: "
+					<< emAlgs[0].size() << endl;
 			}
+		}
 
+		// iterate EMs over all layers
+		for (size_t i=0; i<numLayers; i++) {
 			#pragma omp parallel for
 			for (int j=emAlgs[i].size()-1; j>=0; j--){
 				EMAlg* em = emAlgs[i][j];
@@ -102,6 +101,11 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 						em->Iterations() << endl;
 				}
 			}
+		}
+
+		// perform ALEM likelihood checking and move EMs
+		// between layers
+		for (size_t i=0; i<numLayers; i++) {
 			for (int j=emAlgs[i].size()-1; j>=0; j--){
 				EMAlg* em = emAlgs[i][j];
 				// em trial has terminated
@@ -110,7 +114,7 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 					runsTerminated++;
 					if (verbose)
 						cout << "layer " << i << ", run " << j <<
-							" converged. runsTerminated=" << runsTerminated << endl;
+						" converged. runsTerminated=" << runsTerminated << endl;
 					// move run to completed EMs layer emAlgs[numLayers-1]
 					EMAlg* converged = emAlgs[i][j];
 					emAlgs[i].erase(emAlgs[i].begin() + j);
@@ -154,7 +158,7 @@ int main(int argc, char* argv[]) {
 	for (size_t i = 0; i < min_runs[0]; i++) {
 
 		EMAlg *newEMalg = initEMAlg(fg, infprops);
-//		newEMalg->iterate();
+		//		newEMalg->iterate();
 
 		// add EMAlg to first layer
 		emAlgs[0].push_back(newEMalg);

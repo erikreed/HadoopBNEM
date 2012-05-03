@@ -1,6 +1,22 @@
 // erik reed
 // erikreed@cmu.edu
 #include "dai_mapreduce.h"
+#include "boost/foreach.hpp"
+
+string execCommand(const char* cmd) {
+    FILE* pipe = popen(cmd, "r");
+    if (!pipe) return "ERROR";
+    char buffer[128];
+    string result = "";
+    while(!feof(pipe)) {
+        if(fgets(buffer, 128, pipe) != NULL)
+                result += buffer;
+    }
+    pclose(pipe);
+    return result;
+}
+
+
 
 Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 	Real logZ = 0;
@@ -74,6 +90,8 @@ string mapper(EMdata &dat) {
 
 string mapper(string &in) {
 	EMdata dat = stringToEM(in);
+	assert(dat.ALEM_layer >= 0);
+
 	if (dat.isConverged())
 		return in;
 	return mapper(dat);
@@ -101,18 +119,22 @@ int main(int argc, char* argv[]) {
 	fin >> pop_size;
 	fin.close();
 
-	for (int id=0; id< pop_size; id++) {
-		// read fg corresponding to current BN ID
-		ostringstream datName;
-		datName << "in/dat." << id;
-		string datFile = readFile(datName.str().c_str());
+	string ls = "ls in/dat.* | cat";
+	string datFiles = execCommand(ls.c_str());
+	vector<string> datFilesSplit = str_split(datFiles, '\n');
+
+	foreach(string file, datFilesSplit) {
+		string datFile = readFile(file.c_str());
+		// inefficient way of grabbing ID from filename
+		string id = file;
+		str_replace(id,"in/dat.","");
 
 		EMdata datForMapper = stringToEM(datFile);
 		datForMapper.lastLikelihood = datForMapper.likelihood;
 		datForMapper.likelihood = 0;
 		datForMapper.emFile = emFile;
 		datForMapper.tabFile = tabFile;
-		datForMapper.bnID = id;
+		datForMapper.bnID = atoi(id.c_str());
 
 		string out = mapper(datForMapper);
 
@@ -123,7 +145,7 @@ int main(int argc, char* argv[]) {
 		str_char_replace(out,'\n','^');
 
 		// print BN_ID
-		cout << id << '*';
+		cout << atoi(id.c_str()) << '*';
 		// print data for reducer
 		cout << out << endl;
 	}
