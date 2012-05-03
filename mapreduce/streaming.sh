@@ -1,21 +1,33 @@
 #!/bin/bash -e
 # erik reed
-# run EM algorithm on hadoop streaming
+# runs EM algorithm on hadoop streaming
 
+# expects: fg,em,tab files
 DAT_DIR=dat_small
-MAX_ITERS=100  # max iters
-REDUCERS=1 # bug when REDUCERS > 1
+
+# max MapReduce job iterations, not max EM iters
+MAX_ITERS=100 
+
+REDUCERS=1 # TODO: bug when REDUCERS > 1
+
+# 2 choices: -u and -alem
+# -u corresponds to update; standard EM with fixed population size
+#		e.g. a simple random restart with $POP BNs
+# -alem corresponds to Age-Layered EM with dynamic population size
+EM_FLAGS="-alem"
+
+# set to min_runs[0]
 POP=1
 MAPPERS=2
 
-echo Using parameters:
-echo Using directory: $DAT_DIR
+echo -- Using parameters -- 
+echo Directory: $DAT_DIR
 echo Max number of MapReduce iterations: $MAX_ITERS
 echo Reducers: $REDUCERS
 echo Mappers: $MAPPERS
 echo Population size: $POP
 #echo BNs per mapper: $(($POP / $MAPPERS))
-
+echo ----------------------
 ./scripts/make_input.sh $DAT_DIR
 rm -rf out
 mkdir -p out
@@ -38,7 +50,7 @@ cp in/dat.* out/iter.0
 
 
 for i in $(seq 1 1 $MAX_ITERS); do
-	echo starting iteration number: $i
+	echo starting MapReduce job iteration: $i
 	# ASD used because * delimeter is removed; need to tweak reducer
 	$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/hadoop-streaming-1.0.0.jar \
 		-files "./dai_map,./dai_reduce,./in" \
@@ -55,7 +67,7 @@ for i in $(seq 1 1 $MAX_ITERS); do
 
 	hadoop fs -get out/part-00000 out/tmp
 	hadoop fs -rmr out
-	cat out/tmp | ./utils -alem
+	cat out/tmp | ./utils $EM_FLAGS
 	rm out/tmp
 	mkdir -p out/iter.$i
 	rm in/dat.* # remove previous iteration

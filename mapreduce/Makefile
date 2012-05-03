@@ -1,11 +1,8 @@
 #erikreed@cmu.edu
-# change lib64 to lib on ubuntu
 
 OPT_FLAGS= -Wall -g -O3 -fwhole-program
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_DEBUG -DDAI_WITH_BP -DDAI_WITH_FBP -DDAI_WITH_TRWBP -DDAI_WITH_MF -DDAI_WITH_HAK -DDAI_WITH_LC -DDAI_WITH_TREEEP -DDAI_WITH_JTREE -DDAI_WITH_MR -DDAI_WITH_GIBBS -DDAI_WITH_CBP -DDAI_WITH_DECMAP
-
-
 
 export PLATFORM=Linux-amd64-64
 export HADOOP_INSTALL=/home/erik/hadoop/hadoop-1.0.0
@@ -19,7 +16,7 @@ LIBS=-lhadooppipes -lhadooputils -lgmpxx -lm -lc -lgmp \
 LIBS2=-lgmpxx -lm -lc -lgmp \
     -lboost_serialization -lpthread
 
-all: dai_map dai_reduce utils alem alem_reduce
+all: dai_map dai_reduce utils alem 
 	
 pipes: daicontrol
 	hadoop pipes \
@@ -54,10 +51,6 @@ dai_reduce: src/dai_reduce.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -odai_reduce src/dai_reduce.cpp ../lib/libdai.a $(LIBS2)
 
-alem_reduce: src/alem_reduce.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
-    -oalem_reduce src/alem_reduce.cpp ../lib/libdai.a $(LIBS2)
-
 daicontrol: src/daicontrol.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE)  \
 	-odaicontrol src/daicontrol.cpp ../lib/libdai.a $(LIBS)
@@ -66,6 +59,7 @@ utils : src/utils.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -outils src/utils.cpp ../lib/libdai.a $(LIBS2)
 
+# alem.cpp doesn't compile with -static for some reason...
 alem: src/alem.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -oalem src/alem.cpp ../lib/libdai.a $(LIBS2)

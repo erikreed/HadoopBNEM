@@ -46,12 +46,14 @@ Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numIte
 	//	return ss.str();
 	return likelihood;
 }
+
 void checkRuns(vector<vector<EMdata> > &emAlgs, size_t*  min_runs, size_t layer, size_t index) {
 	EMdata &em = emAlgs[layer][index];
 	Real likelihood = em.likelihood;
-
 	if (emAlgs[layer+1].size() < min_runs[layer+1]) {
+		em.ALEM_layer = layer+1;
 		emAlgs[layer+1].push_back(em);
+
 		if (verbose)
 			cout << "Moved run from layer " << layer << " to " << layer + 1 << endl;
 	}
@@ -65,6 +67,7 @@ void checkRuns(vector<vector<EMdata> > &emAlgs, size_t*  min_runs, size_t layer,
 				if (verbose)
 					cout << "Discarded run from layer " << layer +1 << endl;
 				// insert em
+				em.ALEM_layer = layer+1;
 				emAlgs[layer+1].push_back(em);
 				if (verbose)
 					cout << "Moved (better) run from layer " << layer << " to " << layer + 1 << endl;
@@ -80,7 +83,6 @@ void checkRuns(vector<vector<EMdata> > &emAlgs, size_t*  min_runs, size_t layer,
 }
 
 void ALEM_check(vector<vector<EMdata> > &emAlgs, size_t* min_runs, size_t* ageLimit) {
-	size_t runsTerminated = 0;
 	// perform ALEM likelihood checking and move EMs
 	// between layers
 	for (size_t i=0; i<numLayers; i++) {
@@ -88,15 +90,12 @@ void ALEM_check(vector<vector<EMdata> > &emAlgs, size_t* min_runs, size_t* ageLi
 			EMdata &em = emAlgs[i][j];
 			// em trial has terminated
 			if (em.isConverged()) {
-
-				runsTerminated++;
-				if (verbose)
-					cout << "layer " << i << ", run " << j <<
-					" converged. runsTerminated=" << runsTerminated << endl;
 				// move run to completed EMs layer emAlgs[numLayers-1]
 				EMdata &converged = emAlgs[i][j];
-				emAlgs[i].erase(emAlgs[i].begin() + j);
+				converged.ALEM_layer = numLayers-1;
 				emAlgs[numLayers-1].push_back(converged);
+				emAlgs[i].erase(emAlgs[i].begin() + j);
+
 			}
 			else if (i < numLayers && em.iter >= ageLimit[i]) {
 				if (verbose)
@@ -154,6 +153,7 @@ void alem(vector<vector<EMdata> > &emAlgs) {
 		min_runs[i] = 3;
 	min_runs[numLayers - 1] = pop_size;
 
+	ALEM_check(emAlgs, min_runs, ageLimit);
 
 	// add EMs to first layer
 	if (emAlgs[0].size() < min_runs[0]) {
@@ -176,8 +176,6 @@ void alem(vector<vector<EMdata> > &emAlgs) {
 			}
 		}
 	}
-
-	ALEM_check(emAlgs, min_runs, ageLimit);
 
 	delete[] ageLimit;
 	delete[] min_runs;
@@ -226,7 +224,7 @@ int main(int argc, char* argv[]) {
 				}
 
 			}
-			cout << "Best EM likelihood: " << bestLikelihood << ", iters: " << bestIters << endl;
+			cout << "Best EM likelihood so far: " << bestLikelihood << ", iters: " << bestIters << endl;
 
 			if (flag == "-alem" && numConverged >= pop_size) {
 				cout << "ALEM converged. Completed runs = " << numConverged << endl;
@@ -260,21 +258,24 @@ int main(int argc, char* argv[]) {
 					bestIters = dat.iter;
 				}
 
-				cout << "layer: "<< dat.ALEM_layer << "\t iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
+				cout << "ID: " << dat.bnID <<  "\t layer: "<< dat.ALEM_layer << "\t iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
 				if (dat.isConverged())
 					numConverged++;
 			}
 
 			if (numConverged >= pop_size) {
+				cout << "Best EM likelihood: " << bestLikelihood << ", iters: " << bestIters << endl;
 				cout << "ALEM converged. Completed runs = " << numConverged << endl;
 				terminated = true;
 			}
-			else
+			else {
+				cout << "Best EM likelihood so far: " << bestLikelihood << ", iters: " << bestIters << endl;
+				cout << "ALEM progress: " << numConverged << "/" << pop_size << " converged." << endl;
 				terminated = false;
-			cout << "Best EM likelihood: " << bestLikelihood << ", iters: " << bestIters << endl;
-
-			if (!terminated)
 				alem(emAlgs);
+			}
+
+
 
 			foreach(vector<EMdata> &layer, emAlgs) {
 				foreach(EMdata &em, layer) {
@@ -282,7 +283,7 @@ int main(int argc, char* argv[]) {
 					outname << "out/dat." << em.bnID;
 					ofstream fout;
 					fout.open (outname.str().c_str());
-					fout << s << endl;
+					fout << emToString(em) << endl;
 					fout.close();
 				}
 			}

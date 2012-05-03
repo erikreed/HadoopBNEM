@@ -55,6 +55,8 @@ bool emHasSatisfiedTermConditions(size_t iter, Real previous, Real current) {
 EMdata em_reduce(vector<EMdata>& in) {
 	// using first EMdata to store e-step counts and create fg
 	EMdata dat = in[0];
+	if (dat.isConverged())
+		return dat;
 	FactorGraph fg;
 	istringstream fgStream(dat.fgFile);
 	fgStream >> fg;
@@ -63,7 +65,7 @@ EMdata em_reduce(vector<EMdata>& in) {
 	for (size_t i=1; i<in.size(); i++) {
 		EMdata next = in[i];
 		DAI_ASSERT(dat.msteps.size() == next.msteps.size());
-		DAI_ASSERT(dat.bnID == next.bnID);
+		DAI_ASSERT(dat.bnID == next.bnID && dat.ALEM_layer == next.ALEM_layer);
 
 		for (size_t j = 0; j < dat.msteps.size(); j++) {
 			dat.msteps[j].addExpectations(next.msteps[j]);
