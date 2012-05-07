@@ -5,12 +5,14 @@
 
 // run vanilla EM
 Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numItersRet) {
+
 	string fixedIn = emIn;
 
 	FactorGraph fg;
 	fg.ReadFromFile(fgIn);
 
 	randomize_fg(&fg);
+
 	// Prepare junction-tree object for doing exact inference for E-step
 	PropertySet infprops = getProps();
 
@@ -19,9 +21,11 @@ Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numIte
 
 	// Read sample from file
 	Evidence e;
+
 	ifstream estream(tabIn);
+
 	e.addEvidenceTabFile(estream, fg);
-//	cout << "Number of samples: " << e.nrSamples() << endl;
+	//	cout << "Number of samples: " << e.nrSamples() << endl;
 
 	// Read EM specification
 	ifstream emstream(emIn);
