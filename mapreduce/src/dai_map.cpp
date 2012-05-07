@@ -16,8 +16,6 @@ string execCommand(const char* cmd) {
     return result;
 }
 
-
-
 Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 	Real logZ = 0;
 	Real likelihood = 0;
@@ -45,7 +43,6 @@ Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 	return likelihood;
 }
 
-//TODO: sum likelihood when evidence is split up
 Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
 		InfAlg &inf) {
 	Real likelihood = 0;
@@ -57,6 +54,7 @@ Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
 string mapper(EMdata &dat) {
 	FactorGraph fg;
 	istringstream fgStream(dat.fgFile);
+	fgStream.precision(20);
 	fgStream >> fg;
 
 	PropertySet infprops = getProps();

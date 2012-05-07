@@ -109,7 +109,6 @@ void ALEM_check(vector<vector<EMdata> > &emAlgs, size_t* min_runs, size_t* ageLi
 }
 
 string getFirstFG(vector<vector<EMdata> > &emAlgs) {
-	// optimize
 	foreach(vector<EMdata> &layer, emAlgs) {
 		foreach(EMdata &em, layer) {
 			return em.fgFile;
@@ -121,9 +120,11 @@ string getFirstFG(vector<vector<EMdata> > &emAlgs) {
 string randomize_fg_str(string &fgStr) {
 	FactorGraph fg;
 	stringstream fgStream(fgStr);
+	fgStream.precision(20);
 	fgStream >> fg;
 	randomize_fg(&fg);
 	fgStream.clear();
+	fgStream.precision(20);
 	fgStream << fg;
 	return fgStream.str();
 }
@@ -158,7 +159,8 @@ void alem(vector<vector<EMdata> > &emAlgs) {
 	// add EMs to first layer
 	if (emAlgs[0].size() < min_runs[0]) {
 		// insert k new EM runs
-		int k = min_runs[0] - emAlgs[0].size();
+//		int k = min_runs[0] - emAlgs[0].size();
+		int k = min_runs[0] - getNumRuns(emAlgs);
 		if (k > 0) {
 			int currentID = getMaxID(emAlgs) + 1;
 			for (int j=0; j<k; j++) {
@@ -336,6 +338,7 @@ int main(int argc, char* argv[]) {
 		datForMapper.ALEM_layer = 0;
 
 		ostringstream ss;
+		ss.precision(20);
 		ss << fg;
 		datForMapper.fgFile = ss.str();
 

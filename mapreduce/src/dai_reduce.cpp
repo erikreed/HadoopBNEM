@@ -59,6 +59,7 @@ EMdata em_reduce(vector<EMdata>& in) {
 		return dat;
 	FactorGraph fg;
 	istringstream fgStream(dat.fgFile);
+	fgStream.precision(20);
 	fgStream >> fg;
 
 	// collect stats for each set of evidence
@@ -67,10 +68,10 @@ EMdata em_reduce(vector<EMdata>& in) {
 		DAI_ASSERT(dat.msteps.size() == next.msteps.size());
 		DAI_ASSERT(dat.bnID == next.bnID && dat.ALEM_layer == next.ALEM_layer);
 
-		for (size_t j = 0; j < dat.msteps.size(); j++) {
+		for (size_t j = 0; j < dat.msteps.size(); j++)
 			dat.msteps[j].addExpectations(next.msteps[j]);
-			dat.likelihood += next.likelihood;
-		}
+
+		dat.likelihood += next.likelihood;
 	}
 
 	// m-step
@@ -78,6 +79,7 @@ EMdata em_reduce(vector<EMdata>& in) {
 		dat.msteps[i].maximize(fg);
 
 	ostringstream newFg;
+	newFg.precision(20);
 	newFg << fg;
 
 	// save new fg, clear counts, increment iter

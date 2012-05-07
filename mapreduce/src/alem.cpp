@@ -8,12 +8,14 @@
 FactorGraph fg;
 PropertySet infprops;
 
-int getNumRuns(vector<vector<EMAlg*> > &emAlgs) {
-	int sum = 0;
-	foreach(vector<EMAlg*> v, emAlgs) {
-		sum += v.size();
+vector<EMAlg*> getAllRuns(vector<vector<EMAlg*> > &emAlgs) {
+	vector<EMAlg*> ems;
+	foreach(vector<EMAlg*> &layer, emAlgs) {
+			foreach(EMAlg* em, layer) {
+				ems.push_back(em);
+			}
 	}
-	return sum;
+	return ems;
 }
 
 // tons of memory leaks in here
@@ -78,7 +80,8 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 		// add EMs to first layer
 		if (emAlgs[0].size() < min_runs[0]) {
 			// insert k new EM runs
-			int k = min_runs[0] - emAlgs[0].size();
+//			int k = min_runs[0] - emAlgs[0].size();
+			int k = min_runs[0] - getNumRuns(emAlgs);
 			for (int j=0; j<k; j++) {
 				emAlgs[0].push_back(initEMAlg(fg,infprops));
 				if (verbose)
@@ -88,20 +91,34 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 		}
 
 		// iterate EMs over all layers
-		for (size_t i=0; i<numLayers; i++) {
-			#pragma omp parallel for
-			for (int j=emAlgs[i].size()-1; j>=0; j--){
-				EMAlg* em = emAlgs[i][j];
-				if (!em->hasSatisfiedTermConditions()) {
-					em->ALEM_active = true;
-					em->iterate();
-					if (verbose)
-						cout << "iteration: layer " << i << ", run " << j <<
-						" iterated to likelihood " << em->logZ() << " and iters=" <<
-						em->Iterations() << endl;
-				}
+		vector<EMAlg*> ems = getAllRuns(emAlgs);
+		#pragma omp parallel for
+		for (size_t i=0; i<ems.size(); i++) {
+			EMAlg* em = ems[i];
+			if (!em->hasSatisfiedTermConditions()) {
+				em->ALEM_active = true;
+				em->iterate();
+				if (verbose)
+					cout << "iteration: layer " << i <<
+					" iterated to likelihood " << em->logZ() << " and iters=" <<
+					em->Iterations() << endl;
 			}
 		}
+
+//		for (size_t i=0; i<numLayers; i++) {
+//			#pragma omp parallel for
+//			for (int j=emAlgs[i].size()-1; j>=0; j--){
+//				EMAlg* em = emAlgs[i][j];
+//				if (!em->hasSatisfiedTermConditions()) {
+//					em->ALEM_active = true;
+//					em->iterate();
+//					if (verbose)
+//						cout << "iteration: layer " << i << ", run " << j <<
+//						" iterated to likelihood " << em->logZ() << " and iters=" <<
+//						em->Iterations() << endl;
+//				}
+//			}
+//		}
 
 		// perform ALEM likelihood checking and move EMs
 		// between layers
@@ -178,8 +195,8 @@ int main(int argc, char* argv[]) {
 		for (size_t j = 0; j < emAlgs[i].size(); j++) {
 			EMAlg* em = emAlgs[i][j];
 			// only print out the inactive/converged EMs
-			if (!em->ALEM_active)
-				cout << "iteration: layer " << i << ", run " << j <<
+			if (em->hasSatisfiedTermConditions())
+				cout << "converged: layer " << i << ", run " << j <<
 				" likelihood: " << em->logZ() << " iters: " <<
 				em->Iterations() << endl;
 			if (em->logZ() > bestLikelihood) {

@@ -20,21 +20,20 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
-#include <boost/format.hpp>
 
 using namespace std;
 using namespace dai;
 
 const string INF_TYPE = "JTREE";
-const Real LIB_EM_TOLERANCE = 1e-4;
+const Real LIB_EM_TOLERANCE = 1e-6;
 const size_t EM_MAX_ITER = 1000;
 
 // ALEM (Saluja et al) parameters
-const size_t pop_size = 10; // i.e. EMruns, denoted N
-const size_t numLayers = 4;
-const double agegap = 2; // denoted a
-const bool verbose = true;
-const size_t min_runs_layer0 = 10;
+const size_t pop_size = 250; // i.e. EMruns, denoted N
+const size_t numLayers = 5;
+const double agegap = 3; // denoted a
+const bool verbose = false;
+const size_t min_runs_layer0 = 50;
 const size_t min_runs_intermediate = 4;
 // end ALEM parameters
 
@@ -86,8 +85,32 @@ struct EMdata {
 	}
 };
 
+int getNumRuns(vector<vector<EMAlg*> > &emAlgs) {
+	int sum = 0;
+	foreach(vector<EMAlg*> &layer, emAlgs) {
+		foreach(EMAlg* em, layer) {
+			if (!em->hasSatisfiedTermConditions())
+				sum++;
+		}
+	}
+	return sum;
+}
+
+int getNumRuns(vector<vector<EMdata> > &emAlgs) {
+	int sum = 0;
+
+	foreach(vector<EMdata> &layer, emAlgs) {
+		foreach(EMdata &em, layer) {
+			if (!em.isConverged())
+				sum++;
+		}
+	}
+	return sum;
+}
+
 string emToString(const EMdata &em) {
 	ostringstream s;
+	s.precision(20);
 	s << scientific;
 	boost::archive::text_oarchive oa(s);
 	oa << em;
@@ -96,6 +119,7 @@ string emToString(const EMdata &em) {
 
 EMdata stringToEM(const string &s) {
 	istringstream ss(s);
+	ss.precision(20);
 	boost::archive::text_iarchive ia(ss);
 	EMdata em;
 	ia >> em;

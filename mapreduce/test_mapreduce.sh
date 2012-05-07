@@ -1,10 +1,6 @@
 #!/bin/bash -e
 # erik reed
-# runs EM algorithm on hadoop streaming
-
-# if using Amazon EC2 Linux AMI
-HADOOP_JAR=hadoop-0.19.0-streaming.jar
-#HADOOP_JAR=hadoop-streaming-1.0.0.jar
+# runs EM algoritm on MapReduce locally
 
 # expects: fg,em,tab files
 DAT_DIR=dat_small
@@ -21,8 +17,7 @@ REDUCERS=1 # TODO: bug when REDUCERS > 1
 EM_FLAGS="-u"
 
 # set to min_runs[0]
-POP=10
-MAPPERS=10
+POP=5
 
 # (disabled) save previous run if it exists (just in case)
 #rm -rf out.prev
@@ -35,16 +30,10 @@ echo $0 started at `date`  | $LOG
 echo -- Using parameters -- | $LOG
 echo Directory: $DAT_DIR | $LOG
 echo Max number of MapReduce iterations: $MAX_ITERS | $LOG
-echo Reducers: $REDUCERS | $LOG
-echo Mappers: $MAPPERS | $LOG
 echo Population size: $POP | $LOG
-#echo BNs per mapper: $(($POP / $MAPPERS))
 echo EM flags: $EM_FLAGS
 echo ---------------------- | $LOG
 ./scripts/make_input.sh $DAT_DIR
-
-hadoop fs -rmr out in || true
-hadoop fs -put in in || true
 
 echo $POP > in/pop
 
@@ -60,28 +49,11 @@ done
 mkdir -p out/iter.0
 cp in/dat.* out/iter.0
 
-
 for i in $(seq 1 1 $MAX_ITERS); do
-	echo starting MapReduce job iteration: $i
-	# ASD used because * delimeter is removed; need to tweak reducer
-	$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/$HADOOP_JAR \
-		-files "./dai_map,./dai_reduce,./in" \
-		-D 'stream.map.output.field.separator=ASD' \
-		-D 'stream.reduce.output.field.separator=ASD' \
-		-D mapred.tasktracker.tasks.maximum=$MAPPERS \
-		-D mapred.map.tasks=$MAPPERS \
-		-D mapred.output.compress=false \
-		-D dfs.block.size=256KB \
-		-input ./in/tab_content \
-		-output out \
-		-mapper ./dai_map \
-		-reducer ./dai_reduce \
-		-numReduceTasks $REDUCERS
+	echo starting local MapReduce job iteration: $i
 
-	hadoop fs -get out/part-00000 out/tmp
-	hadoop fs -rmr out
-	cat out/tmp | ./utils $EM_FLAGS
-	rm out/tmp
+	cat in/tab_content | ./dai_map | ./dai_reduce | ./utils $EM_FLAGS
+
 	mkdir -p out/iter.$i
 	rm in/dat.* # remove previous iteration
 	cp out/dat.* in 

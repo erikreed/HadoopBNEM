@@ -1,6 +1,6 @@
 #erikreed@cmu.edu
 
-OPT_FLAGS= -Wall -O3 -fwhole-program -flto
+OPT_FLAGS= -Wall -O2 # -O3 -fwhole-program -flto
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_WITH_JTREE -DDAI_WITH_GIBBS 
 DAI_FLAGS+= #-DDAI_DEBUG
@@ -59,8 +59,7 @@ utils : src/utils.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -outils src/utils.cpp ../lib/libdai.a $(LIBS2)
 
-# alem.cpp doesn't compile with -static for some reason...
 alem: src/alem.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
+	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -oalem src/alem.cpp ../lib/libdai.a $(LIBS2)
 
