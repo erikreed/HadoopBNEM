@@ -4,16 +4,17 @@
 #include "boost/foreach.hpp"
 
 string execCommand(const char* cmd) {
-    FILE* pipe = popen(cmd, "r");
-    if (!pipe) return "ERROR";
-    char buffer[128];
-    string result = "";
-    while(!feof(pipe)) {
-        if(fgets(buffer, 128, pipe) != NULL)
-                result += buffer;
-    }
-    pclose(pipe);
-    return result;
+	FILE* pipe = popen(cmd, "r");
+	if (!pipe)
+		return "ERROR";
+	char buffer[128];
+	string result = "";
+	while(!feof(pipe)) {
+		if(fgets(buffer, 128, pipe) != NULL)
+			result += buffer;
+	}
+	pclose(pipe);
+	return result;
 }
 
 Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
@@ -27,8 +28,7 @@ Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 	for (Evidence::const_iterator e = evidence.begin(); e != evidence.end(); ++e) {
 		InfAlg* clamped = inf.clone();
 		// Apply evidence
-		for (Evidence::Observation::const_iterator i = e->begin(); i
-				!= e->end(); ++i)
+		for (Evidence::Observation::const_iterator i = e->begin(); i != e->end(); ++i)
 			clamped->clamp(clamped->fg().findVar(i->first), i->second);
 		clamped->init();
 		clamped->run();

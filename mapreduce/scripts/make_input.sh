@@ -4,7 +4,7 @@ if test "$1" == "" ; then
 fi  
 
 mkdir -p in
-rm in/*
+rm -f in/*
 
 head -2 $1/tab > in/tab_header
 

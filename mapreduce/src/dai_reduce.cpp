@@ -16,7 +16,7 @@ Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 		InfAlg* clamped = inf.clone();
 		// Apply evidence
 		for (Evidence::Observation::const_iterator i = e->begin(); i
-				!= e->end(); ++i)
+		!= e->end(); ++i)
 			clamped->clamp(clamped->fg().findVar(i->first), i->second);
 		clamped->init();
 		clamped->run();
@@ -32,23 +32,23 @@ Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 }
 
 bool emHasSatisfiedTermConditions(size_t iter, Real previous, Real current) {
-    if( iter >= EM_MAX_ITER )
-        return true;
-    else if( iter < 3 )
-        // need at least 2 to calculate ratio
-        // Also, throw away first iteration, as the parameters may not
-        // have been normalized according to the estimation method
-        return false;
-    else {
-        if( previous == 0 )
-            return false;
-        Real diff = current - previous;
-        if( diff < 0 ) {
-            std::cerr << "Error: in EM log-likehood decreased from " << previous << " to " << current << std::endl;
-            return true;
-        }
-        return (diff / fabs(previous)) <= LIB_EM_TOLERANCE;
-    }
+	if( iter >= EM_MAX_ITER )
+		return true;
+	else if( iter < 3 )
+		// need at least 2 to calculate ratio
+		// Also, throw away first iteration, as the parameters may not
+		// have been normalized according to the estimation method
+		return false;
+	else {
+		if( previous == 0 )
+			return false;
+		Real diff = current - previous;
+		if( diff < 0 ) {
+			std::cerr << "Error: in EM log-likehood decreased from " << previous << " to " << current << std::endl;
+			return true;
+		}
+		return (diff / fabs(previous)) <= LIB_EM_TOLERANCE;
+	}
 }
 
 

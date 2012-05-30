@@ -16,8 +16,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
 
@@ -31,10 +31,10 @@ const size_t EM_MAX_ITER = 1000;
 // ALEM (Saluja et al) parameters
 const size_t pop_size = 250; // i.e. EMruns, denoted N
 const size_t numLayers = 5;
-const double agegap = 3; // denoted a
-const bool verbose = false;
-const size_t min_runs_layer0 = 50;
-const size_t min_runs_intermediate = 4;
+const double agegap = 5; // denoted a
+const bool verbose = true;
+const size_t min_runs_layer0 = 5;
+const size_t min_runs_intermediate = 2;
 // end ALEM parameters
 
 struct EMdata {
@@ -113,6 +113,7 @@ string emToString(const EMdata &em) {
 	s.precision(20);
 	s << scientific;
 	boost::archive::text_oarchive oa(s);
+//	boost::archive::binary_oarchive oa(s);
 	oa << em;
 	return s.str();
 }
@@ -121,6 +122,7 @@ EMdata stringToEM(const string &s) {
 	istringstream ss(s);
 	ss.precision(20);
 	boost::archive::text_iarchive ia(ss);
+//	boost::archive::binary_iarchive ia(ss);
 	EMdata em;
 	ia >> em;
 	return em;

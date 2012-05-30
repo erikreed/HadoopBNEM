@@ -2,12 +2,18 @@
 # erik reed
 # runs EM algorithm on hadoop streaming
 
+if [ $# -ne 1 ]; then
+    echo Usage: $0 \"dir with net,fg,em\"
+    exit 1
+fi
+
+DAT_DIR=$1
 # if using Amazon EC2 Linux AMI
 HADOOP_JAR=hadoop-0.19.0-streaming.jar
 #HADOOP_JAR=hadoop-streaming-1.0.0.jar
 
 # expects: fg,em,tab files
-DAT_DIR=dat_small
+
 
 # max MapReduce job iterations, not max EM iters
 MAX_ITERS=100
@@ -27,10 +33,10 @@ MAPPERS=10
 # (disabled) save previous run if it exists (just in case)
 #rm -rf out.prev
 #mv -f out out.prev || true
-rm -rf out
-mkdir -p out
+rm -rf dat/out
+mkdir -p dat/out
 
-LOG="tee -a out/log.txt"
+LOG="tee -a dat/out/log.txt"
 echo $0 started at `date`  | $LOG
 echo -- Using parameters -- | $LOG
 echo Directory: $DAT_DIR | $LOG
@@ -52,13 +58,13 @@ echo $POP > in/pop
 names=
 for id in $(seq 0 1 $(($POP - 1)))
 do
-	names+="in/dat.$id "
+	names+="dat/in/dat.$id "
 done
 ./utils in/fg $names
 
 # copy 0th iteration (i.e. initial values)
-mkdir -p out/iter.0
-cp in/dat.* out/iter.0
+mkdir -p dat/out/iter.0
+cp dat/in/dat.* dat/out/iter.0
 
 
 for i in $(seq 1 1 $MAX_ITERS); do
@@ -72,22 +78,22 @@ for i in $(seq 1 1 $MAX_ITERS); do
 		-D mapred.map.tasks=$MAPPERS \
 		-D mapred.output.compress=false \
 		-D dfs.block.size=256KB \
-		-input ./in/tab_content \
+		-input dat/in/tab_content \
 		-output out \
 		-mapper ./dai_map \
 		-reducer ./dai_reduce \
 		-numReduceTasks $REDUCERS
 
-	hadoop fs -get out/part-00000 out/tmp
-	hadoop fs -rmr out
-	cat out/tmp | ./utils $EM_FLAGS
-	rm out/tmp
-	mkdir -p out/iter.$i
-	rm in/dat.* # remove previous iteration
-	cp out/dat.* in 
-	mv out/dat.* out/iter.$i
+	hadoop fs -get out/part-00000 dat/out/tmp
+	hadoop fs -rmr dat/out
+	cat dat/out/tmp | ./utils $EM_FLAGS
+	rm dat/out/tmp
+	mkdir -p dat/out/iter.$i
+	rm dat/in/dat.* # remove previous iteration
+	cp dat/out/dat.* dat/in 
+	mv dat/out/dat.* dat/out/iter.$i
 
-	converged=`cat out/converged`
+	converged=`cat dat/out/converged`
 	if [ "$converged" = 1 ]; then
 		echo EM complete!
 		break

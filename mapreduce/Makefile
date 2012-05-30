@@ -3,7 +3,7 @@
 OPT_FLAGS= -Wall -O3 -fwhole-program -flto
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_WITH_JTREE -DDAI_WITH_GIBBS 
-DAI_FLAGS+= #-DDAI_DEBUG
+DAI_FLAGS+= -DDAI_DEBUG
 export PLATFORM=Linux-amd64-64
 export HADOOP_INSTALL=/home/erik/hadoop/hadoop-1.0.0
 

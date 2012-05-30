@@ -11,9 +11,9 @@ PropertySet infprops;
 vector<EMAlg*> getAllRuns(vector<vector<EMAlg*> > &emAlgs) {
 	vector<EMAlg*> ems;
 	foreach(vector<EMAlg*> &layer, emAlgs) {
-			foreach(EMAlg* em, layer) {
-				ems.push_back(em);
-			}
+		foreach(EMAlg* em, layer) {
+			ems.push_back(em);
+		}
 	}
 	return ems;
 }
@@ -80,7 +80,7 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 		// add EMs to first layer
 		if (emAlgs[0].size() < min_runs[0]) {
 			// insert k new EM runs
-//			int k = min_runs[0] - emAlgs[0].size();
+			//			int k = min_runs[0] - emAlgs[0].size();
 			int k = min_runs[0] - getNumRuns(emAlgs);
 			for (int j=0; j<k; j++) {
 				emAlgs[0].push_back(initEMAlg(fg,infprops));
@@ -92,7 +92,7 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 
 		// iterate EMs over all layers
 		vector<EMAlg*> ems = getAllRuns(emAlgs);
-		#pragma omp parallel for
+#pragma omp parallel for
 		for (size_t i=0; i<ems.size(); i++) {
 			EMAlg* em = ems[i];
 			if (!em->hasSatisfiedTermConditions()) {
@@ -104,21 +104,6 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 					em->Iterations() << endl;
 			}
 		}
-
-//		for (size_t i=0; i<numLayers; i++) {
-//			#pragma omp parallel for
-//			for (int j=emAlgs[i].size()-1; j>=0; j--){
-//				EMAlg* em = emAlgs[i][j];
-//				if (!em->hasSatisfiedTermConditions()) {
-//					em->ALEM_active = true;
-//					em->iterate();
-//					if (verbose)
-//						cout << "iteration: layer " << i << ", run " << j <<
-//						" iterated to likelihood " << em->logZ() << " and iters=" <<
-//						em->Iterations() << endl;
-//				}
-//			}
-//		}
 
 		// perform ALEM likelihood checking and move EMs
 		// between layers

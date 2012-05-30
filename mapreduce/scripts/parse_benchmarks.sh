@@ -1,4 +1,9 @@
 #!/bin/bash -e
+if [ $# -eq 0 ]; then                                                                         
+    echo Usage: $0 txt_files [...]                                           
+    exit 1                                                                                    
+fi
+
 for i in "$@"
 do
 	echo Number of iterations: $i

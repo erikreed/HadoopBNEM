@@ -2,6 +2,7 @@
 // erikreed@cmu.edu
 #include "dai_mapreduce.h"
 #include "boost/foreach.hpp"
+#include <time.h>
 
 // run vanilla EM
 Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numItersRet) {
@@ -35,12 +36,20 @@ Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numIte
 
 	// Iterate EM until convergence
 	if (numIters > 0) {
-		for (int i=0; i<numIters; i++)
+		for (int i=0; i<numIters; i++) {
 			likelihood = em.iterate();
+			if (verbose)
+				cout << "iters: " << em.Iterations() <<
+				" likelihood: " << likelihood << endl;
+		}
 	}
 	else {
-		while (!em.hasSatisfiedTermConditions())
+		while (!em.hasSatisfiedTermConditions()) {
 			likelihood= em.iterate();
+			if (verbose)
+				cout << "iters: " << em.Iterations() <<
+				" likelihood: " << likelihood << endl;
+		}
 	}
 
 	*numItersRet = em.Iterations();
@@ -314,7 +323,7 @@ int main(int argc, char* argv[]) {
 		#pragma omp parallel for
 		for (int i=0; i<numTrials; i++) {
 			size_t numItersRet;
-			Real l = doEmIters("dat/fg","dat/tab","dat/em",numIters,&numItersRet);
+			Real l = doEmIters("in/fg","in/tab","in/em",numIters,&numItersRet);
 			cout << "likelihood: " << l << " iters: " << numItersRet << endl;
 
 			#pragma omp critical
@@ -329,14 +338,12 @@ int main(int argc, char* argv[]) {
 	FactorGraph fg;
 	fg.ReadFromFile(argv[1]);
 
-//	string emFile = readFile("in/em");
-
 	for (int i=2; i<argc; i++) {
 		randomize_fg(&fg);
 
 		EMdata datForMapper;
 		datForMapper.iter = 0;
-//		datForMapper.emFile = emFile;
+
 		datForMapper.likelihood = 0;
 		datForMapper.bnID = -1;
 		datForMapper.ALEM_layer = 0;
