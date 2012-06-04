@@ -59,6 +59,7 @@ echo Creating EM file em/$EM
 echo
 python scripts/write_em2.py dat/fg/$FG dat/dat/$DAT dat/em/$EM
 
+rm dat/*.info
 echo Creating dat/$INFO
 echo "Created by $0 on `date`" > dat/$INFO
 echo >> dat/$INFO
@@ -69,6 +70,7 @@ echo "CPTs [total_entries/num_parents]: \
 	`python scripts/CPT_dim.py dat/dat/$DAT $HIDDEN_NODES`" >> dat/$INFO
 echo >> dat/$INFO
 
+rm -rf dat/in
 mkdir -p dat/in
 cp dat/fg/$FG dat/in/fg
 cp dat/em/$EM dat/in/em

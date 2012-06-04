@@ -3,15 +3,15 @@
 # runs EM algoritm on MapReduce locally
 
 # expects: fg,em,tab files
-if [ $# -ne 1 ]; then                                                                         
-    echo Usage: $0 \"dir with net,fg,em\"
+if [ $# -ne 4 ]; then                                                                         
+    echo Usage: $0 \"dir with net,fg,em\", max_iters, population size, em_flags\(-u or -alem\)
     exit 1                                                                                    
 fi                                                                                            
                                                                                               
 DAT_DIR=$1
 
 # max MapReduce job iterations, not max EM iters
-MAX_ITERS=5
+MAX_ITERS=$2
 
 REDUCERS=1 # TODO: bug when REDUCERS > 1
 
@@ -19,10 +19,10 @@ REDUCERS=1 # TODO: bug when REDUCERS > 1
 # -u corresponds to update; standard EM with fixed population size
 #		e.g. a simple random restart with $POP BNs
 # -alem corresponds to Age-Layered EM with dynamic population size
-EM_FLAGS="-u"
+EM_FLAGS=$4
 
 # set to min_runs[0]
-POP=100
+POP=$3
 
 # (disabled) save previous run if it exists (just in case)
 #rm -rf dat/out.prev
@@ -50,7 +50,7 @@ do
 done
 ./utils dat/in/fg $names
 
-cp dat/in/* in
+cp $DAT_DIR/* in
 
 # copy 0th iteration (i.e. initial values)
 mkdir -p out/iter.0
