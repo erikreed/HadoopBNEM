@@ -4,8 +4,6 @@
 #
 # Use of this source code is governed by a BSD-style license that can be found in the LICENSE file.
 
-run: all
-	cd mapreduce; make run
 
 # Load the platform independent build configuration file
 include Makefile.ALL
