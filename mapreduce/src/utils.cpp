@@ -121,27 +121,15 @@ void ALEM_check(vector<vector<EMdata> > &emAlgs, size_t* min_runs, size_t* ageLi
 
 }
 
-string getFirstFG(vector<vector<EMdata> > &emAlgs) {
+FactorGraph getFirstFG(vector<vector<EMdata> > &emAlgs) {
 	foreach(vector<EMdata> &layer, emAlgs) {
 		foreach(EMdata &em, layer) {
-			return em.fgFile;
+			return em.fg;
 		}
 	}
-	return "ERROR";
+	cerr << "No FGs found. Should never happen." << endl;
+	throw 5;
 }
-
-string randomize_fg_str(string &fgStr) {
-	FactorGraph fg;
-	stringstream fgStream(fgStr);
-	fgStream.precision(20);
-	fgStream >> fg;
-	randomize_fg(&fg);
-	fgStream.clear();
-	fgStream.precision(20);
-	fgStream << fg;
-	return fgStream.str();
-}
-
 
 int getMaxID(vector<vector<EMdata> > &emAlgs) {
 	int id_max = -1;
@@ -178,8 +166,8 @@ void alem(vector<vector<EMdata> > &emAlgs) {
 			int currentID = getMaxID(emAlgs) + 1;
 			for (int j=0; j<k; j++) {
 				EMdata newEM;
-				newEM.fgFile = getFirstFG(emAlgs);
-				newEM.fgFile = randomize_fg_str(newEM.fgFile);
+				newEM.fg = getFirstFG(emAlgs);
+				randomize_fg(&newEM.fg);
 				newEM.iter = 0;
 				newEM.likelihood = 0;
 				newEM.bnID = currentID++;
@@ -328,7 +316,7 @@ int main(int argc, char* argv[]) {
 
 			#pragma omp critical
 			{
-				bestLikelihood = max(bestLikelihood,l);
+				bestLikelihood = max(bestLikelihood, l);
 			}
 		}
 		cout << "best likelihood: " << bestLikelihood << endl;
@@ -348,10 +336,7 @@ int main(int argc, char* argv[]) {
 		datForMapper.bnID = -1;
 		datForMapper.ALEM_layer = 0;
 
-		ostringstream ss;
-		ss.precision(20);
-		ss << fg;
-		datForMapper.fgFile = ss.str();
+		datForMapper.fg = fg;
 
 		ofstream fout;
 		fout.open (argv[i]);

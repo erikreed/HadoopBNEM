@@ -5,8 +5,10 @@
 
 string execCommand(const char* cmd) {
 	FILE* pipe = popen(cmd, "r");
-	if (!pipe)
-		return "ERROR";
+	if (!pipe) {
+	   cerr << "Error executing command: " << cmd << endl;
+		throw 6;
+	}
 	char buffer[128];
 	string result = "";
 	while(!feof(pipe)) {
@@ -18,11 +20,10 @@ string execCommand(const char* cmd) {
 }
 
 Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
-	Real logZ = 0;
 	Real likelihood = 0;
 
 	inf.run();
-	logZ = inf.logZ();
+	Real logZ = inf.logZ();
 
 	// Expectation calculation
 	for (Evidence::const_iterator e = evidence.begin(); e != evidence.end(); ++e) {
@@ -52,10 +53,7 @@ Real hadoop_iterate(vector<MaximizationStep>& msteps, const Evidence &e,
 }
 
 string mapper(EMdata &dat) {
-	FactorGraph fg;
-	istringstream fgStream(dat.fgFile);
-	fgStream.precision(20);
-	fgStream >> fg;
+	FactorGraph fg = dat.fg;
 
 	PropertySet infprops = getProps();
 
@@ -140,9 +138,7 @@ int main(int argc, char* argv[]) {
 		// print BN_ID
 		cout << atoi(id.c_str()) << '*';
 		// print data for reducer
-		DAI_ASSERT(sizeof(char) == sizeof(unsigned char));
-		cout << base64_encode(reinterpret_cast<const unsigned char*>(out.c_str()),
-				out.size()) << endl;
+		cout << out << endl;
 	}
 
 	return 0;

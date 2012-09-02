@@ -27,7 +27,7 @@ using namespace std;
 using namespace dai;
 
 const string INF_TYPE = "JTREE";
-const Real LIB_EM_TOLERANCE = 1e-6;
+const Real LIB_EM_TOLERANCE = 1e-2;
 const size_t EM_MAX_ITER = 1000;
 
 // ALEM (Saluja et al) parameters
@@ -41,7 +41,7 @@ const size_t min_runs_intermediate = 2;
 
 struct EMdata {
 	string emFile;
-	string fgFile;
+	FactorGraph fg;
 	string tabFile;
 	size_t iter;
 	Real likelihood;
@@ -56,7 +56,7 @@ struct EMdata {
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int version) {
 		ar & emFile;
-		ar & fgFile;
+		ar & fg;
 		ar & tabFile;
 		ar & iter;
 		ar & likelihood;
@@ -110,15 +110,18 @@ int getNumRuns(vector<vector<EMdata> > &emAlgs) {
 	return sum;
 }
 
-inline string emToString(const EMdata &em) {
+string emToString(const EMdata &em) {
 	ostringstream s(ios::binary);
 	boost::archive::binary_oarchive oa(s);
 	oa << em;
-	return s.str();
+	const string nonEncoded = s.str();
+	return base64_encode(reinterpret_cast<const unsigned char*>(nonEncoded.c_str()),
+			nonEncoded.size());
 }
 
-inline EMdata stringToEM(const string &s) {
-	istringstream ss(s, ios::binary);
+EMdata stringToEM(const string &s) {
+	string decoded = base64_decode(s);
+	istringstream ss(decoded, ios::binary);
 	boost::archive::binary_iarchive ia(ss);
 	EMdata em;
 	ia >> em;
