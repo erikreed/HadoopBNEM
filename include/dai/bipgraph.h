@@ -22,6 +22,9 @@
 #include <dai/exceptions.h>
 #include <dai/graph.h>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 
 namespace dai {
 
@@ -53,10 +56,17 @@ class BipartiteGraph {
         /// Used internally by isTree()
         struct levelType {
             /// Indices of nodes of type 1
-            std::vector<size_t> ind1;       
+            std::vector<size_t> ind1;
             /// Indices of nodes of type 2
             std::vector<size_t> ind2;
         };
+
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {
+        	ar & _nb1;
+        	ar & _nb2;
+        }
 
     public:
     /// \name Constructors and destructors

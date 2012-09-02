@@ -9,6 +9,8 @@
 #define DAI_MAPREDUCE_H_
 
 #include <dai/alldai.h>
+#include <src/base64.cpp>
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -108,21 +110,16 @@ int getNumRuns(vector<vector<EMdata> > &emAlgs) {
 	return sum;
 }
 
-string emToString(const EMdata &em) {
-	ostringstream s;
-	s.precision(20);
-	s << scientific;
-	boost::archive::text_oarchive oa(s);
-//	boost::archive::binary_oarchive oa(s);
+inline string emToString(const EMdata &em) {
+	ostringstream s(ios::binary);
+	boost::archive::binary_oarchive oa(s);
 	oa << em;
 	return s.str();
 }
 
-EMdata stringToEM(const string &s) {
-	istringstream ss(s);
-	ss.precision(20);
-	boost::archive::text_iarchive ia(ss);
-//	boost::archive::binary_iarchive ia(ss);
+inline EMdata stringToEM(const string &s) {
+	istringstream ss(s, ios::binary);
+	boost::archive::binary_iarchive ia(ss);
 	EMdata em;
 	ia >> em;
 	return em;

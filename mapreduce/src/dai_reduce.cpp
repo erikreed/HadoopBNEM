@@ -107,11 +107,10 @@ int main(int argc, char* argv[]) {
 
 	for (size_t i=0; i<data.size(); i++) {
 		string line = data[i];
-		str_char_replace(line,'^','\n');
 		vector<string> parts = str_split(line, '*');
 		assert(parts.size() == 2);
 
-		EMdata dat = stringToEM(parts[1]); // value
+		EMdata dat = stringToEM(base64_decode(parts[1])); // value
 		int id = atoi(parts[0].c_str()); // key
 		assert(id == dat.bnID && id >= 0);
 		if (idToDat.count(id) == 0)

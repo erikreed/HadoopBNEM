@@ -22,6 +22,9 @@
 #include <dai/index.h>
 #include <dai/util.h>
 
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
+
 
 namespace dai {
 
@@ -59,6 +62,12 @@ class TFactor {
         /// Stores the factor values
         TProb<T> _p;
 
+        friend class boost::serialization::access;
+        template<class Archive>
+        void serialize(Archive & ar, const unsigned int version) {
+        	ar & _vs;
+        	ar & _p;
+        }
     public:
     /// \name Constructors and destructors
     //@{
@@ -157,7 +166,7 @@ class TFactor {
 
         /// Returns sum of all values
         T sum() const { return _p.sum(); }
-        
+
         /// Returns sum of absolute values
         T sumAbs() const { return _p.sumAbs(); }
 
@@ -182,7 +191,7 @@ class TFactor {
     /// \name Unary transformations
     //@{
         /// Returns negative of \c *this
-        TFactor<T> operator- () const { 
+        TFactor<T> operator- () const {
             // Note: the alternative (shorter) way of implementing this,
             //   return TFactor<T>( _vs, _p.abs() );
             // is slower because it invokes the copy constructor of TProb<T>
@@ -395,7 +404,7 @@ class TFactor {
          *  \param op Operation of type \a binOp
          */
         template<typename binOp> TFactor<T> binaryTr( const TFactor<T> &g, binOp op ) const {
-            // Note that to prevent a copy to be made, it is crucial 
+            // Note that to prevent a copy to be made, it is crucial
             // that the result is declared outside the if-else construct.
             TFactor<T> result;
             if( _vs == g._vs ) { // optimize special case
@@ -467,10 +476,10 @@ class TFactor {
          *  returned corresponds with the factor \f$g : \prod_{l \in L \setminus M} X_l \to [0,\infty)\f$
          *  defined by \f$g(\{x_l\}_{l\in L \setminus M}) = f(\{x_l\}_{l\in L \setminus M}, \{s(x_m)\}_{m\in M})\f$.
          */
-        TFactor<T> slice( const VarSet& vars, size_t varsState ) const; 
+        TFactor<T> slice( const VarSet& vars, size_t varsState ) const;
 
         /// Embeds this factor in a larger VarSet
-        /** \pre vars() should be a subset of \a vars 
+        /** \pre vars() should be a subset of \a vars
          *
          *  If *this corresponds with \f$f : \prod_{l\in L} X_l \to [0,\infty)\f$ and \f$L \subset M\f$, then
          *  the embedded factor corresponds with \f$g : \prod_{m\in M} X_m \to [0,\infty) : x \mapsto f(x_L)\f$.

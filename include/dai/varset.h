@@ -23,8 +23,8 @@
 
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/binary_oarchive.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 
 namespace dai {
 
@@ -92,7 +92,7 @@ std::map<Var, size_t> calcState( const VarSet &vs, size_t linearState );
 /// Represents a set of variables.
 /** \note A VarSet is implemented using a SmallSet<Var> instead
  *  of the more natural std::set<Var> because of efficiency reasons.
- *  That is, internally, the variables in the set are sorted ascendingly
+ *  That is, internally, the variables in the set are sorted ascending
  *  according to their labels.
  */
 class VarSet : public SmallSet<Var> {

@@ -39,7 +39,8 @@ then
 	echo dat/tab/$TAB already exists. Skipping tab creation.
 	echo
 else
-	echo ERROR1
+    # Assumes .tab file is pre-generated. Not automated here.
+	echo ERROR: `pwd`/dat/tab/$TAB doesn\'t exist!!
 	exit 1
 	#./simple/simple fg/$FG $NUM_SAMPLES
 	#echo Moving fg/$TAB to tab/$TAB

@@ -1,6 +1,6 @@
 #erikreed@cmu.edu
 
-OPT_FLAGS= -march=native -mtune=native -Wall -O3 -ffast-math -fwhole-program -flto
+OPT_FLAGS= -g -Wall #-march=native -mtune=native -Wall -O3 -ffast-math -fwhole-program -flto
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_WITH_JTREE -DDAI_WITH_GIBBS 
 DAI_FLAGS+= -DDAI_DEBUG
@@ -60,6 +60,9 @@ utils : src/utils.cpp ../lib/libdai.a src/dai_mapreduce.h
     -outils src/utils.cpp ../lib/libdai.a $(LIBS2)
 
 alem: src/alem.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
+	g++ -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -oalem src/alem.cpp ../lib/libdai.a $(LIBS2)
+
+#base64: src/base64.cpp src/base64.h
+#	g++ -static $(DAI_FLAGS) -o base64 src/base64.cpp
 

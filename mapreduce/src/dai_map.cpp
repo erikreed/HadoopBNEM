@@ -88,7 +88,7 @@ string mapper(EMdata &dat) {
 
 string mapper(string &in) {
 	EMdata dat = stringToEM(in);
-	assert(dat.ALEM_layer >= 0);
+	DAI_ASSERT(dat.ALEM_layer >= 0);
 
 	if (dat.isConverged())
 		return in;
@@ -136,16 +136,13 @@ int main(int argc, char* argv[]) {
 
 		string out = mapper(datForMapper);
 
-		//
 		// * is delimiter for K-V; e.g. key*value
-		// ^ is replacement for \n
-
-		str_char_replace(out,'\n','^');
-
 		// print BN_ID
 		cout << atoi(id.c_str()) << '*';
 		// print data for reducer
-		cout << out << endl;
+		DAI_ASSERT(sizeof(char) == sizeof(unsigned char));
+		cout << base64_encode(reinterpret_cast<const unsigned char*>(out.c_str()),
+				out.size()) << endl;
 	}
 
 	return 0;
