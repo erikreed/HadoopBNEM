@@ -27,8 +27,8 @@ using namespace std;
 using namespace dai;
 
 const string INF_TYPE = "JTREE";
-const Real LIB_EM_TOLERANCE = 1e-2;
-const size_t EM_MAX_ITER = 1000;
+const Real LIB_EM_TOLERANCE = 1e-3;
+const size_t EM_MAX_ITER = 100;
 
 // ALEM (Saluja et al) parameters
 const size_t pop_size = 250; // i.e. EMruns, denoted N

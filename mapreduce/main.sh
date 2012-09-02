@@ -1,13 +1,12 @@
 #!/bin/bash
 # erik reed
 
-# num_samples, num_hidden
-
 mkdir -p results
 
-trials=50
+trials=1
 iters=15
 pop=10
+export OMP_NUM_THREADS=4
 
 # asia tests -- 8 nodes, 2hrs
 net=asia
@@ -21,4 +20,5 @@ for samp in 100 200 400 800 1600; do
 		done
 	done
 done
-
+7za a $net.results.7z results
+rm -rf results

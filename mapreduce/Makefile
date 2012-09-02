@@ -1,6 +1,6 @@
 #erikreed@cmu.edu
 
-OPT_FLAGS= -g -Wall #-march=native -mtune=native -Wall -O3 -ffast-math -fwhole-program -flto
+OPT_FLAGS= -Wall -O3 -ffast-math -fwhole-program -flto
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_WITH_JTREE -DDAI_WITH_GIBBS 
 DAI_FLAGS+= -DDAI_DEBUG
@@ -17,20 +17,8 @@ LIBS2=-lgmpxx -lm -lc -lgmp \
     -lboost_serialization -lpthread
 
 all: dai_map dai_reduce utils alem 
-	
-pipes: daicontrol
-	hadoop pipes \
-	-D hadoop.pipes.java.recordwriter=true \
-	-input in/tab_content \
-	-output out \
-	-program daicontrol
 
-mvdat: daicontrol
-	./make_input.sh && \
-	hadoop fs -put in . && \
-	hadoop fs -put daicontrol .
-
-.PHONY: run clean hadoop mvjar mvdat cleanout clobber
+.PHONY: run clean hadoop mvjar cleanout clobber
 clobber:
 	rm -rf tmp /tmp/hadoop-erik* in out
 
@@ -38,7 +26,7 @@ cleanout:
 	hadoop fs -rmr out 
 
 clean:
-	rm -f daicontrol dai_map dai_reduce utils alem
+	rm -f dai_map dai_reduce utils alem
 
 run: all
 	./streaming.sh
@@ -51,11 +39,7 @@ dai_reduce: src/dai_reduce.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -odai_reduce src/dai_reduce.cpp ../lib/libdai.a $(LIBS2)
 
-daicontrol: src/daicontrol.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS) $(INCLUDE)  \
-	-odaicontrol src/daicontrol.cpp ../lib/libdai.a $(LIBS)
-
-utils : src/utils.cpp ../lib/libdai.a src/dai_mapreduce.h
+utils: src/utils.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -outils src/utils.cpp ../lib/libdai.a $(LIBS2)
 
@@ -63,6 +47,4 @@ alem: src/alem.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -oalem src/alem.cpp ../lib/libdai.a $(LIBS2)
 
-#base64: src/base64.cpp src/base64.h
-#	g++ -static $(DAI_FLAGS) -o base64 src/base64.cpp
 
