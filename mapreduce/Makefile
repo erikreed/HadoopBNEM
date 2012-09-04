@@ -20,7 +20,7 @@ all: dai_map dai_reduce utils alem
 
 .PHONY: run clean hadoop mvjar cleanout clobber
 clobber:
-	rm -rf tmp /tmp/hadoop-erik* in out
+	rm -rf tmp $(shell echo /tmp/hadoop-`whoami`*) in out dat/{in,out}
 
 cleanout: 
 	hadoop fs -rmr out 

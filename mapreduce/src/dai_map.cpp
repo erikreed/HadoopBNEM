@@ -118,6 +118,7 @@ int main(int argc, char* argv[]) {
 	string ls = "ls in/dat.* | cat";
 	string datFiles = execCommand(ls.c_str());
 	vector<string> datFilesSplit = str_split(datFiles, '\n');
+	assert(datFilesSplit.size() > 0);
 
 	foreach(string file, datFilesSplit) {
 		string datFile = readFile(file.c_str());
