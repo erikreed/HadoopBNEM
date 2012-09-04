@@ -26,7 +26,7 @@ HADOOP_JAR=hadoop-streaming-1.0.0.jar
 # max MapReduce job iterations, not max EM iters, which
 # is defined in dai_mapreduce.h
 
-MAX_ITERS=50
+MAX_ITERS=15
 
 REDUCERS=1 # TODO: bug when REDUCERS > 1
 
