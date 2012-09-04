@@ -74,8 +74,8 @@ for i in $(seq 1 1 $MAX_ITERS); do
 	# ASD used because * delimeter is removed; need to tweak reducer
 	$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/$HADOOP_JAR \
 		-files "dai_map,dai_reduce,in" \
-		-D 'stream.map.output.field.separator=ASD' \
-		-D 'stream.reduce.output.field.separator=ASD' \
+		-D 'stream.map.output.field.separator=:' \
+		-D 'stream.reduce.output.field.separator=:' \
 		-D mapred.tasktracker.tasks.maximum=$MAPPERS \
 		-D mapred.map.tasks=$MAPPERS \
 		-D mapred.output.compress=false \

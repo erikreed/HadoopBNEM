@@ -93,6 +93,7 @@ int main(int argc, char* argv[]) {
    string input = ss.str();
 
    vector<string> data = str_split(input, '\n');
+   assert(data.size() > 0);
 
    map<int, vector<EMdata> > idToDat;
 
@@ -100,13 +101,23 @@ int main(int argc, char* argv[]) {
       string line = data[i];
       vector<string> parts = str_split(line, '*');
       assert(parts.size() == 2);
-
-      EMdata dat = stringToEM(parts[1]); // value
-      int id = atoi(parts[0].c_str()); // key
-      assert(id == dat.bnID && id >= 0);
-      if (idToDat.count(id) == 0)
-         idToDat[id] = vector<EMdata> ();
-      idToDat[id].push_back(dat);
+      try {
+         EMdata dat = stringToEM(parts[1]); // value
+         int id = atoi(parts[0].c_str()); // key
+         assert(id == dat.bnID && id >= 0);
+         if (idToDat.count(id) == 0) {
+            idToDat[id] = vector<EMdata> ();
+         }
+         idToDat[id].push_back(dat);
+      } catch(int e) {
+         cerr << "Exception " << e << " on loop " << i << endl;
+         cerr << "Key: " << parts[0] << endl;
+         cerr << "Data passed to stringToEM:" << endl;
+         cerr << parts[1] << endl;
+         cerr << endl << endl << "Full input:" << endl;
+         cerr << input << endl;
+         throw 7;
+      }
    }
 
    for (map<int, std::vector<EMdata> >::iterator iter = idToDat.begin();
@@ -115,7 +126,6 @@ int main(int argc, char* argv[]) {
       out.emFile = ""; // reduce amount of serialization
       out.tabFile = "";
       string outstring = emToString(out);
-      str_char_replace(outstring, '\n', '^');
       cout << outstring << endl;
    }
 

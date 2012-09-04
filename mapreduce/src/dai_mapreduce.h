@@ -31,7 +31,7 @@ const Real LIB_EM_TOLERANCE = 1e-3;
 const size_t EM_MAX_ITER = 100;
 
 // ALEM (Saluja et al) parameters
-const size_t pop_size = 250; // i.e. EMruns, denoted N
+const size_t pop_size = 10; // i.e. EMruns, denoted N
 const size_t numLayers = 5;
 const double agegap = 5; // denoted a
 const bool verbose = true;

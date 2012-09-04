@@ -3,9 +3,9 @@
 
 mkdir -p results
 
-trials=10
-iters=15
-pop=10
+trials=1
+iters=2
+pop=2
 
 # water tests -- 32 nodes
 # single core benchmarks: ~20 seconds per iteration w/ pop 1
@@ -13,7 +13,7 @@ pop=10
 # -- so, estimated 80 hours for 1000 samples, 15 iters, pop=10
 net=water
 for i in `seq 1 1 $trials`; do
-	for samp in 1000; do
+	for samp in 5; do
 		for hid in 15; do
 			echo $net: samples=$samp, hidden=$hid, $i of $trials
 			rm -rf dat/{in,out}
