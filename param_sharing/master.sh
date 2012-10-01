@@ -74,7 +74,7 @@ else
 		echo "Initializing number of samples to 5000"
 		NUM_SAMPLES=5000
 	fi
-	./simple/simple fg/$FG $NUM_SAMPLES
+	./param_sharing fg/$FG $NUM_SAMPLES
 	echo Moving fg/$TAB to tab/$TAB
 	echo
 	mv fg/$TAB tab/$TAB
@@ -102,7 +102,7 @@ echo
 echo no longer -- Running EM using all initialization types
 echo
 
-#simple/simple -all fg/$FG tab/$HIDDEN em/$EM
+#./param_sharing -all fg/$FG tab/$HIDDEN em/$EM
 #mv output.dat.default out/$DAT.default
 #mv output.dat.noise out/$DAT.noise
 #mv output.dat.random out/$DAT.random
@@ -130,7 +130,7 @@ echo >> out/$INFO
 echo
 echo Running EM with increasing number of samples for random initialization types
 echo
-./simple/simple -s -random fg/$FG em/$EM $PY_CMD
+./param_sharing -s -random fg/$FG em/$EM $PY_CMD
 #mv output.samp.default out/$SAMPLES.default
 #mv output.samp.noise out/$SAMPLES.noise
 #mv output.samp.random out/$SAMPLES.random

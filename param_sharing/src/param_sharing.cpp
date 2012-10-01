@@ -20,177 +20,17 @@ using namespace dai;
 #define INF_TYPE "JTREE"
 
 // constants for compareEM(...)
-const size_t EM_MAX_SAMPLES =400;
-const size_t EM_SAMPLES_DELTA= 2; // now set to double each time
-const size_t EM_INIT_SAMPLES =25;
+const size_t EM_MAX_SAMPLES = 5000;
+const size_t EM_SAMPLES_DELTA = 5;
+const size_t EM_INIT_SAMPLES = 5;
 
 const Real LIB_EM_TOLERANCE = 1e-4;
 const size_t EM_MAX_ITER = 100;
 //#define OLD_FIXING
 
-const size_t RANDOM_EM_TRIALS = 600;
+const size_t RANDOM_EM_TRIALS = 1;
 const size_t RANDOM_EM_ITERATIONS = 600; //unused now
 const size_t VERBOSE = 0;
-void displayStats(char** argv) {
-	//Builtin inference algorithms: {BP, CBP, DECMAP, EXACT, FBP, GIBBS, HAK, JTREE, LC, MF, MR, TREEEP, TRWBP}
-
-	FactorGraph fg;
-	fg.ReadFromFile( argv[1] );
-
-	cout << fg.nrVars() << " variables" << endl;
-	cout << fg.nrFactors() << " factors" << endl;
-	cout << endl << "Given factor graph:" << endl << "##################" << endl;
-	cout.precision(12);
-	cout << fg;
-
-
-
-	size_t maxstates = 1000000;
-	size_t maxiter = 10000;
-	Real   tol = 1e-9;
-	size_t verb = 1;
-
-	PropertySet opts;
-	opts.set("maxiter",maxiter);  // Maximum number of iterations
-	opts.set("tol",tol);          // Tolerance for convergence
-	opts.set("verbose",verb);     // Verbosity (amount of output generated)
-
-	// Bound treewidth for junctiontree
-	bool do_jt = true;
-	try {
-		boundTreewidth(fg, &eliminationCost_MinFill, maxstates );
-	} catch( Exception &e ) {
-		if( e.getCode() == Exception::OUT_OF_MEMORY ) {
-			do_jt = false;
-			cout << "Skipping junction tree (need more than " << maxstates << " states)." << endl;
-		}
-		else
-			throw;
-	}
-
-	JTree jt, jtmap;
-	vector<size_t> jtmapstate;
-	if( do_jt ) {
-		// Construct a JTree (junction tree) object from the FactorGraph fg
-		// using the parameters specified by opts and an additional property
-		// that specifies the type of updates the JTree algorithm should perform
-		jt = JTree( fg, opts("updates",string("HUGIN")) );
-		// Initialize junction tree algorithm
-		jt.init();
-		// Run junction tree algorithm
-		jt.run();
-
-		// Construct another JTree (junction tree) object that is used to calculate
-		// the joint configuration of variables that has maximum probability (MAP state)
-		jtmap = JTree( fg, opts("updates",string("HUGIN"))("inference",string("MAXPROD")) );
-		// Initialize junction tree algorithm
-
-		jtmap.init();
-		// Run junction tree algorithm
-		jtmap.run();
-		// Calculate joint state of all variables that has maximum probability
-		jtmapstate = jtmap.findMaximum();
-	}
-
-	// Construct a BP (belief propagation) object from the FactorGraph fg
-	// using the parameters specified by opts and two additional properties,
-	// specifying the type of updates the BP algorithm should perform and
-	// whether they should be done in the real or in the logdomain
-	BP bp(fg, opts("updates",string("SEQRND"))("logdomain",false));
-	// Initialize belief propagation algorithm
-	bp.init();
-	// Run belief propagation algorithm
-	bp.run();
-
-	// Construct a BP (belief propagation) object from the FactorGraph fg
-	// using the parameters specified by opts and two additional properties,
-	// specifying the type of updates the BP algorithm should perform and
-	// whether they should be done in the real or in the logdomain
-	//
-	// Note that inference is set to MAXPROD, which means that the object
-	// will perform the max-product algorithm instead of the sum-product algorithm
-	BP mp(fg, opts("updates",string("SEQRND"))("logdomain",false)("inference",string("MAXPROD"))("damping",string("0.1")));
-	// Initialize max-product algorithm
-	mp.init();
-	// Run max-product algorithm
-	mp.run();
-	// Calculate joint state of all variables that has maximum probability
-	// based on the max-product result
-	vector<size_t> mpstate = mp.findMaximum();  //fails for adapt.fg
-
-	// Construct a decimation algorithm object from the FactorGraph fg
-	// using the parameters specified by opts and three additional properties,
-	// specifying that the decimation algorithm should use the max-product
-	// algorithm and should completely reinitalize its state at every step
-	DecMAP decmap(fg, opts("reinit",true)("ianame",string("BP"))("iaopts",string("[damping=0.1,inference=MAXPROD,logdomain=0,maxiter=1000,tol=1e-9,updates=SEQRND,verbose=1]")) );
-	decmap.init();
-	decmap.run();
-	vector<size_t> decmapstate = decmap.findMaximum();
-
-	if( do_jt ) {
-		// Report variable marginals for fg, calculated by the junction tree algorithm
-		cout << "Exact variable marginals:" << endl;
-		for( size_t i = 0; i < fg.nrVars(); i++ ) // iterate over all variables in fg
-			cout << jt.belief(fg.var(i)) << endl; // display the "belief" of jt for that variable
-	}
-
-	// Report variable marginals for fg, calculated by the belief propagation algorithm
-	cout << "Approximate (loopy belief propagation) variable marginals:" << endl;
-	for( size_t i = 0; i < fg.nrVars(); i++ ) // iterate over all variables in fg
-		cout << bp.belief(fg.var(i)) << endl; // display the belief of bp for that variable
-
-	if( do_jt ) {
-		// Report factor marginals for fg, calculated by the junction tree algorithm
-		cout << "Exact factor marginals:" << endl;
-		for( size_t I = 0; I < fg.nrFactors(); I++ ) // iterate over all factors in fg
-			cout << jt.belief(fg.factor(I).vars()) << endl;  // display the "belief" of jt for the variables in that factor
-	}
-
-
-	// Report log partition sum of fg, approximated by the belief propagation algorithm
-	cout << "Approximate (loopy belief propagation) log partition sum: " << bp.logZ() << endl;
-
-	if( do_jt ) {
-		// Report exact MAP variable marginals
-		cout << "Exact MAP variable marginals:" << endl;
-		for( size_t i = 0; i < fg.nrVars(); i++ )
-			cout << jtmap.belief(fg.var(i)) << endl;
-	}
-
-	// Report max-product variable marginals
-	cout << "Approximate (max-product) MAP variable marginals:" << endl;
-	for( size_t i = 0; i < fg.nrVars(); i++ )
-		cout << mp.belief(fg.var(i)) << endl;
-
-	if( do_jt ) {
-		// Report exact MAP factor marginals
-		cout << "Exact MAP factor marginals:" << endl;
-		for( size_t I = 0; I < fg.nrFactors(); I++ )
-			cout << jtmap.belief(fg.factor(I).vars()) << " == " << jtmap.beliefF(I) << endl;
-	}
-
-	// Report max-product factor marginals
-	cout << "Approximate (max-product) MAP factor marginals:" << endl;
-	for( size_t I = 0; I < fg.nrFactors(); I++ )
-		cout << mp.belief(fg.factor(I).vars()) << " == " << mp.beliefF(I) << endl;
-
-	if( do_jt ) {
-		// Report exact MAP joint state
-		cout << "Exact MAP state (log score = " << fg.logScore( jtmapstate ) << "):" << endl;
-		for( size_t i = 0; i < jtmapstate.size(); i++ )
-			cout << fg.var(i) << ": " << jtmapstate[i] << endl;
-	}
-	// Report max-product MAP joint state
-	cout << "Approximate (max-product) MAP state (log score = " << fg.logScore( mpstate ) << "):" << endl;
-	for( size_t i = 0; i < mpstate.size(); i++ )
-		cout << fg.var(i) << ": " << mpstate[i] << endl;
-
-	// Report DecMAP joint state
-	cout << "Approximate DecMAP state (log score = " << fg.logScore( decmapstate ) << "):" << endl;
-	for( size_t i = 0; i < decmapstate.size(); i++ )
-		cout << fg.var(i) << ": " << decmapstate[i] << endl;
-
-}
 
 string generateTab(const char* input, int numSamples, const char* custom_out) {
 	string outName = input;
@@ -477,8 +317,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 	ifstream emstream( emIn );
 	EMAlg em(e, *inf, emstream);
 	em.setTermConditions(infprops);
-	em._log_z_tol = LIB_EM_TOLERANCE;
-	em._max_iters = EM_MAX_ITER;
+
 	//compareFG(&fg, inf->fg().clone());
 	cout.precision(16);
 	stringstream s_out_l;
@@ -517,7 +356,7 @@ void doEm(char* fgIn, char* tabIn, char* emIn, int init) {
 		}
 #endif
 		double fg_diff = compareFG(current_fg, fg_orig);
-		s_out_l << em.Iterations() << "\t" << l << "\t" << 
+		s_out_l << em.Iterations() << "\t" << l << "\t" <<
 				fg_diff << "\t" << l/e.nrSamples() <<
 				"\t" << KLcompareFG(current_fg, fg_orig) << endl;
 
@@ -556,7 +395,7 @@ void printUsage() {
 	cout << "run EM (now w/ intermediate results) \n\t./simple asd.fg asd.tab asd.em" << endl;
 	cout << "for different EM initialization types use: -noise, -random, -uniform, -all" << endl;
 	cout << "\te.g. ./simple -noise asd.fg asd.tab asd.em" << endl;
-	cout << "compare EM files (e.g. for shared/non-shared)\n\t" << 
+	cout << "compare EM files (e.g. for shared/non-shared)\n\t" <<
 			"./simple -c asd.fg asd1.em asd2.em" << endl;
 	cout << "Run EM with increasing number of samples\n\t" <<
 			".simple -s asd.fg asd.em\n\t" <<
@@ -570,7 +409,7 @@ void printUsage() {
 	cout << "Results output to \"out/TYPE\"" << endl;
 	cout << "Builtin inference algorithms: " << builtinInfAlgNames() << endl;
 	cout << "Currently used inference algorithm: " << INF_TYPE << endl;
-	//cout << "compare FG files (e.g. checking difference from true vs. EM generated FGs)\n\t" << 
+	//cout << "compare FG files (e.g. checking difference from true vs. EM generated FGs)\n\t" <<
 	//	"./simple -f asd.fg asd2.fg" << endl;
 }
 
@@ -728,8 +567,7 @@ void doRandomEM(char* fgIn, char* tabIn, char* emIn, size_t rand_trials, size_t 
 		//ifstream emstream( emIn );
 		stringstream emstream(emFile);
 		EMAlg em(e, *inf, emstream);
-		em._log_z_tol = LIB_EM_TOLERANCE;
-		em._max_iters = EM_MAX_ITER;
+
 		//compareFG(&fg, inf->fg().clone());
 
 		trials_out.precision(16);
@@ -948,10 +786,6 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 	typedef std::map<Var, size_t> Observation;
 	vector<Observation> samples = e1.getEvidence();
 
-	ParameterEstimation::loadDefaultRegistry();
-	//	EMAlg::LOG_Z_TOL_DEFAULT = LIB_EM_TOLERANCE;
-	//	EMAlg::MAX_ITERS_DEFAULT = EM_MAX_ITER;
-
 	// assumes samples evenly divide
 	size_t num_sample_iterations = (EM_MAX_SAMPLES-EM_INIT_SAMPLES)/EM_SAMPLES_DELTA + 1;
 	stringstream *ss_data = new stringstream[num_sample_iterations*RANDOM_EM_TRIALS];
@@ -959,7 +793,7 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 	// TODO: fixed params not local in this loop
 	// TODO: keep samples identical between shared/non-shared
 	//
-	for (size_t i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i*=EM_SAMPLES_DELTA) {
+	for (size_t i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i+=EM_SAMPLES_DELTA) {
 		cout << "samples: " << i << endl;
 		vector<Observation> samples_copy = samples;
 		//random_shuffle ( samples_copy.begin(), samples_copy.end() );
@@ -988,8 +822,6 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 
 			stringstream emstream(emFile);
 			EMAlg em(e, *inf1, emstream);
-			em._log_z_tol = LIB_EM_TOLERANCE;
-			em._max_iters = EM_MAX_ITER;
 
 			Real l1;
 			// Iterate EM until convergence
@@ -1032,7 +864,7 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 	cout << "writing data to files... " << trials_dir << endl;
 	//fout.close();
 
-	for (size_t i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i*=EM_SAMPLES_DELTA) {
+	for (size_t i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i+=EM_SAMPLES_DELTA) {
 		string temp_s = trials_dir;
 		temp_s = temp_s.append("n").append(convertInt(i)).append("/");
 		system(string("mkdir -p ").append(temp_s).c_str());
@@ -1086,7 +918,7 @@ void compareEM(char* fgIn, char* emIn1, char* emIn2) {
 		// Iterate EM until convergence
 		while( !em1.hasSatisfiedTermConditions() ) {
 			l1 = em1.iterate();
-			cout << "em1: Iteration " << em1.Iterations() << " likelihood: " << l1 
+			cout << "em1: Iteration " << em1.Iterations() << " likelihood: " << l1
 					<< " avg: " << l1/100*(i+1)<<endl;
 		}
 
@@ -1094,7 +926,7 @@ void compareEM(char* fgIn, char* emIn1, char* emIn2) {
 		// Iterate EM until convergence
 		while( !em2.hasSatisfiedTermConditions() ) {
 			l2 = em2.iterate();
-			cout << "em2: Iteration " << em2.Iterations() << " likelihood: " << l2 
+			cout << "em2: Iteration " << em2.Iterations() << " likelihood: " << l2
 					<< " avg: " << l1/100*(i+1) <<endl;
 		}
 
@@ -1118,8 +950,6 @@ void compareEM(char* fgIn, char* emIn1, char* emIn2) {
 		delete inf1;
 		delete inf2;
 	}
-	// Clean up
-
 	fout.close();
 
 }
@@ -1133,19 +963,19 @@ int main(int argc, char* argv[]) {
 		else {
 			int argCheck = atoi(argv[2]);
 			if (argCheck == 0)
-				displayStats(argv);
+			   printUsage();
 			else
 				generateTab(argv[1], argCheck, NULL);
 		}
 	}
 	else if(argc == 2) {
 
-		displayStats(argv);
+	   printUsage();
 		//generateTab(argv[1], 100);
 	}
 
 	else if (argc == 4) {
-		// expecting .fg, .tab, .em 
+		// expecting .fg, .tab, .em
 		if (strcmp(argv[1],"-s") == 0)
 			doEmSamples(argv[2], argv[3], 0, NULL);
 		else
@@ -1190,13 +1020,14 @@ int main(int argc, char* argv[]) {
 			doEm(argv[2], argv[3], argv[4], 3);
 		}
 		else if (strcmp(argv[1],"-all") == 0) {
+
+#ifdef DO_RANDOM_EM
+			doRandomEM(argv[2], argv[3], argv[4], RANDOM_EM_TRIALS, RANDOM_EM_ITERATIONS);
+#else
 			doEm(argv[2], argv[3], argv[4], 0);
 			doEm(argv[2], argv[3], argv[4], 1);
 			doEm(argv[2], argv[3], argv[4], 2);
 			doEm(argv[2], argv[3], argv[4], 3);
-#ifdef DO_RANDOM_EM
-			doRandomEM(argv[2], argv[3], argv[4], RANDOM_EM_TRIALS, RANDOM_EM_ITERATIONS);
-			//doRandomEM(argv[2], argv[3], argv[4], 500, 3);
 #endif
 		}
 		else if (strcmp(argv[1],"-many_random") == 0)
