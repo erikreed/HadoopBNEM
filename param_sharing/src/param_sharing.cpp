@@ -20,7 +20,7 @@ using namespace dai;
 #define INF_TYPE "JTREE"
 
 // constants for compareEM(...)
-const size_t EM_MAX_SAMPLES = 5000;
+const size_t EM_MAX_SAMPLES = 15;
 const size_t EM_SAMPLES_DELTA = 5;
 const size_t EM_INIT_SAMPLES = 5;
 
@@ -815,7 +815,7 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 
 			//			stringstream trials_out;
 			//			trials_out << "Iteration\tLikelihood\tL2_error" << endl;
-			ss_data[(i-EM_INIT_SAMPLES)/EM_SAMPLES_DELTA*RANDOM_EM_TRIALS+k] << "Iteration\tLikelihood\tL2_error" << endl;
+			ss_data[(i-EM_INIT_SAMPLES)/EM_SAMPLES_DELTA*RANDOM_EM_TRIALS+k] << "Iteration\tLikelihood\tL2_error\tKL-Divergence" << endl;
 
 			inf1->init();
 			Evidence e(samples_copy);
@@ -842,10 +842,11 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 				}
 #endif
 				double fg_diff = compareFG(&inf1->fg(), &fg_orig);
+				double kl_diff = KLcompareFG(&inf1->fg(), &fg_orig);
 				//				trials_out << em.Iterations() << "\t" << l1 << "\t" <<
 				//						fg_diff << endl;
 				ss_data[(i-EM_INIT_SAMPLES)/EM_SAMPLES_DELTA*RANDOM_EM_TRIALS+k] << em.Iterations() << "\t" << l1 << "\t" <<
-						fg_diff << endl;
+						fg_diff << "\t" << kl_diff << endl;
 			}
 			double fg_diff = compareFG(&inf1->fg(), &fg_orig);
 			//			sampledataout << e.nrSamples() << "\t" << l1 << "\t"

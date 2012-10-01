@@ -30,7 +30,7 @@ for net in $BNETS; do
 		if [ $SHARED -eq $s ]; then
 			sharedvars=`python net_to_fg/read_net_erik.py $BNET_DIR/$net.net $s`
 			echo using hidden nodes: $sharedvars
-			for j in $(seq $SHARED -15 0)
+			for j in $(seq $SHARED -1 2)
 			do
 				svars=`echo $sharedvars |  tr " " "\n" | head -$j`
 				echo using shared nodes: $svars
