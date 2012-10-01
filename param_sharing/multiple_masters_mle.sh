@@ -10,11 +10,11 @@ SHARED=3
 BNETS="alarm"  #pigs water link adapt10_v7e mildew diabetes"
 BNET_DIR=bnets
 
-export NUM_SAMPLES=1000
+export NUM_SAMPLES=5000
 
 echo Using $BNETS
 
-#export OMP_NUM_THREADS=50 #uncomment for maxthreads (64)
+export OMP_NUM_THREADS=4 #uncomment for maxthreads (64)
 echo Using $OMP_NUM_THREADS threads
 
 

@@ -20,7 +20,7 @@ using namespace dai;
 #define INF_TYPE "JTREE"
 
 // constants for compareEM(...)
-const size_t EM_MAX_SAMPLES = 15;
+const size_t EM_MAX_SAMPLES = 5000;
 const size_t EM_SAMPLES_DELTA = 5;
 const size_t EM_INIT_SAMPLES = 5;
 
@@ -793,13 +793,13 @@ void doEmSamples(char* fgIn, char* emIn, int init, string py_cmd) {
 	// TODO: fixed params not local in this loop
 	// TODO: keep samples identical between shared/non-shared
 	//
+#pragma omp parallel for
 	for (size_t i=EM_INIT_SAMPLES; i<=EM_MAX_SAMPLES; i+=EM_SAMPLES_DELTA) {
 		cout << "samples: " << i << endl;
 		vector<Observation> samples_copy = samples;
 		//random_shuffle ( samples_copy.begin(), samples_copy.end() );
 		samples_copy.resize(i);
-#pragma omp parallel for \
-		schedule(static, 1)
+
 		for (size_t k=0; k<RANDOM_EM_TRIALS; k++) {
 			stringstream maxiterss;
 			stringstream sampledataout;
