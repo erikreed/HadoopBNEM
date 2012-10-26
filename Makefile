@@ -31,7 +31,7 @@ else
 endif
 
 # Define build targets; tests, utils, examples disabled
-TARGETS:=lib
+TARGETS:=lib utils
 ifdef WITH_MATLAB
   TARGETS:=$(TARGETS) matlabs
 endif
@@ -92,7 +92,7 @@ ifdef WITH_DECMAP
 endif
 
 # Define standard libDAI header dependencies, source file names and object file names
-HEADERS=$(foreach name,outstream graph dag bipgraph index var factor varset smallset prob daialg properties alldai enum exceptions util,$(INC)/$(name).h)
+HEADERS=$(foreach name,graph dag bipgraph index var factor varset smallset prob daialg properties alldai enum exceptions util,$(INC)/$(name).h)
 SOURCES:=$(foreach name,$(NAMES),$(SRC)/$(name).cpp)
 OBJECTS:=$(foreach name,$(NAMES),$(name)$(OE))
 
