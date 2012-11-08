@@ -20,9 +20,9 @@ using namespace dai;
 #define INF_TYPE "JTREE"
 
 // constants for compareEM(...)
-const size_t EM_MAX_SAMPLES = 5000;
-const size_t EM_SAMPLES_DELTA = 5;
-const size_t EM_INIT_SAMPLES = 5;
+const size_t EM_MAX_SAMPLES = 500;
+const size_t EM_SAMPLES_DELTA = 2;
+const size_t EM_INIT_SAMPLES = 2;
 
 const Real LIB_EM_TOLERANCE = 1e-4;
 const size_t EM_MAX_ITER = 100;
