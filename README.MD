@@ -11,14 +11,14 @@ make
 ## How to run using Hadoop locally
 
 This is useful for testing purposes before deploying on
-Amazon EC2 or another Hadoop cluster. 
+Amazon EC2 or another Hadoop cluster.
 
 1. Install Hadoop 1.0.0
 
 2. Set up environment variables (e.g.)
    export PLATFORM=/home/erik/hadoop/hadoop-1.0.0
    export HADOOP_INSTALL=/home/erik/hadoop/hadoop-1.0.0
-   
+
 3. Run the following (I have hadoop in my path):
   ```bash
   # working directory: .../libdai/mapreduce
@@ -37,7 +37,7 @@ Amazon EC2 or another Hadoop cluster.
   make
   ./scripts/streaming dat/in
   ```
-   
+
 6. Gander at results
   ```bash
   ls out
@@ -51,16 +51,16 @@ Amazon EC2 or another Hadoop cluster.
 
 1. ```$ make```
 
-2. Launch an EC2 instance and send the mapreduce 
+2. Launch an EC2 instance and send the mapreduce
    folder to it.
   ```bash
   scp -rCi ~/Downloads/dai-mapreduce.pem mapreduce ec2-user@ec2-107-21-71-50.compute-1.amazonaws.com:
   ```
-   
+
 3. ssh into the instance and launch a cluster.
   ```bash
   ssh -Ci ~/Downloads/dai-mapreduce.pem ec2-user@ec2-107-21-71-50.compute-1.amazonaws.com
-   
+
   # Assumes hadoop-ec2 has been configured.
   # Launch a cluster of 10 (small) instances
   hadoop-ec2 launch cluster dai-mapreduce 10
@@ -84,7 +84,7 @@ Amazon EC2 or another Hadoop cluster.
   ./scripts/streaming dat/in -u 10 10
   # ... wait a few hours
   ```
- 
+
 7. Collect data!
   ```bash
   ls out

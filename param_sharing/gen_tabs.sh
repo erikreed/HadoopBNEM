@@ -1,8 +1,9 @@
-BNETS="ADAPT_PHM09_T1 ADAPT_PHM09_T2 ADAPT_PHM10_P1 ADAPT_PHM10_P2"
-samples=5000
+#!/bin/bash -e
+BNETS=`ls bnets | sed 's/.net//g'`
+samples=1000000
 
 for net in $BNETS
 do
-	python net_to_fg/read_net.py bnets/$net.net fg/$net.fg dat/$net.dat
-	./param_sharing fg/$net.fg $samples && mv fg/$net.tab tab/$net.tab &
+        python net_to_fg/read_net.py bnets/$net.net fg/$net.fg dat/$net.dat
+        ./param_sharing fg/$net.fg $samples && mv fg/$net.tab tab/$net.tab &
 done
