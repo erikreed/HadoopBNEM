@@ -102,9 +102,17 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
       if (!em->hasSatisfiedTermConditions()) {
         em->ALEM_active = true;
         em->iterate();
-        if (verbose)
-          cout << "iteration: layer " << i << " iterated to likelihood " << em->logZ()
+        if (verbose) {
+          cout << "iteration: run " << i << " iterated to likelihood " << em->logZ()
               << " and iters=" << em->Iterations() << endl;
+        }
+        em->alemItersActive = em->Iterations();
+      } else {
+        em->alemItersActive++;
+        if (verbose) {
+          cout << "iteration: run " << i << " remained at likelihood " << em->logZ()
+              << " and itersActive=" << em->alemItersActive << endl;
+        }
       }
     }
 
@@ -114,18 +122,14 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
       for (int j = emAlgs[i].size() - 1; j >= 0; j--) {
         EMAlg* em = emAlgs[i][j];
         // em trial has terminated
-        if (em->hasSatisfiedTermConditions() && em->ALEM_active) {
+        if (em->hasSatisfiedTermConditions() && em->ALEM_active && i == numLayers - 1) {
           em->ALEM_active = false;
           runsTerminated++;
           if (verbose) {
             cout << "layer " << i << ", run " << j << " converged. runsTerminated="
                 << runsTerminated << endl;
           }
-          // move run to completed EMs layer emAlgs[numLayers-1]
-          EMAlg* converged = emAlgs[i][j];
-          emAlgs[i].erase(emAlgs[i].begin() + j);
-          emAlgs[numLayers - 1].push_back(converged);
-        } else if (i < numLayers && em->Iterations() >= ageLimit[i]) {
+        } else if (i < numLayers - 1 && em->alemItersActive >= ageLimit[i]) {
           if (verbose)
             cout << "layer " << i << ", run " << j << " hit age limit of " << ageLimit[i] << endl;
           checkRuns(emAlgs, min_runs, i, j);
@@ -183,7 +187,7 @@ int main(int argc, char* argv[]) {
       // only print out the inactive/converged EMs
       if (em->hasSatisfiedTermConditions())
         cout << "converged: layer " << i << ", run " << j << " likelihood: " << em->logZ()
-            << " iters: " << em->Iterations() << endl;
+            << " iters: " << em->Iterations() << " itersActive: " << em->alemItersActive << endl;
       if (em->logZ() > bestLikelihood) {
         bestLikelihood = em->logZ();
         bestIters = em->Iterations();
