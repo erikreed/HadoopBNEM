@@ -8,6 +8,12 @@
 FactorGraph fg;
 PropertySet infprops;
 
+// generate these via something like ./scripts/init.sh dat/bnets/asia.net 100 3
+// TODO: make these args
+const char* EM_PATH = "dat/in/em";
+const char* TAB_PATH = "dat/in/tab";
+const char* FG_PATH = "dat/in/fg";
+
 vector<EMAlg*> getAllRuns(vector<vector<EMAlg*> > &emAlgs) {
 	vector<EMAlg*> ems;
 	foreach(vector<EMAlg*> &layer, emAlgs) {
@@ -26,10 +32,10 @@ EMAlg *initEMAlg(FactorGraph fg, PropertySet &infprops) {
 	//    inf.get()->init();
 	InfAlg* inf = newInfAlg(INF_TYPE, *fg.clone(), infprops);
 
-	ifstream estream("dat/tab");
+	ifstream estream(TAB_PATH);
 	e->addEvidenceTabFile(estream, *fg.clone());
 	// Read EM specification
-	ifstream emstream("dat/em");
+	ifstream emstream(EM_PATH);
 	EMAlg *newEMalg = new EMAlg(*e, *inf, emstream);
 	return newEMalg;
 }
@@ -44,8 +50,7 @@ void checkRuns(vector<vector<EMAlg*> > &emAlgs, size_t*  min_runs, size_t layer,
 		emAlgs[layer+1].push_back(em);
 		if (verbose)
 			cout << "Moved run from layer " << layer << " to " << layer + 1 << endl;
-	}
-	else {
+	} else {
 		// find out if there is a worse run in next layer
 		for (size_t j=0; j<emAlgs[layer+1].size(); j++) {
 			Real next = emAlgs[layer+1][j]->logZ();
@@ -114,15 +119,15 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 				if (em->hasSatisfiedTermConditions() && em->ALEM_active) {
 					em->ALEM_active = false;
 					runsTerminated++;
-					if (verbose)
+					if (verbose) {
 						cout << "layer " << i << ", run " << j <<
 						" converged. runsTerminated=" << runsTerminated << endl;
+					}
 					// move run to completed EMs layer emAlgs[numLayers-1]
 					EMAlg* converged = emAlgs[i][j];
 					emAlgs[i].erase(emAlgs[i].begin() + j);
 					emAlgs[numLayers-1].push_back(converged);
-				}
-				else if (i < numLayers && em->Iterations() >= ageLimit[i]) {
+				} else if (i < numLayers && em->Iterations() >= ageLimit[i]) {
 					if (verbose)
 						cout << "layer " << i << ", run " << j <<
 						" hit age limit of " << ageLimit[i] << endl;
@@ -135,7 +140,7 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLi
 
 int main(int argc, char* argv[]) {
 	rnd_seed(time(NULL));
-	fg.ReadFromFile("dat/fg");
+	fg.ReadFromFile(FG_PATH);
 	infprops = getProps();
 
 	vector<vector<EMAlg*> > emAlgs;
@@ -151,8 +156,9 @@ int main(int argc, char* argv[]) {
 	// M_i (min number of runs of layer i)
 	size_t* min_runs = new size_t[numLayers];
 	min_runs[0] = min_runs_layer0;
-	for (size_t i = 1; i < numLayers - 1; i++)
+	for (size_t i = 1; i < numLayers - 1; i++) {
 		min_runs[i] = min_runs_intermediate;
+	}
 	min_runs[numLayers - 1] = pop_size;
 
 
