@@ -40,8 +40,7 @@ EMAlg *initEMAlg(FactorGraph fg, PropertySet &infprops) {
   return newEMalg;
 }
 
-void checkRuns(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t layer,
-               size_t index) {
+void checkRuns(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t layer, size_t index) {
   assert(layer + 1 < emAlgs.size());
 
   EMAlg* em = emAlgs[layer][index];
@@ -65,8 +64,7 @@ void checkRuns(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t layer,
         // insert em
         emAlgs[layer + 1].push_back(em);
         if (verbose)
-          cout << "Moved (better) run from layer " << layer << " to " << layer
-              + 1 << endl;
+          cout << "Moved (better) run from layer " << layer << " to " << layer + 1 << endl;
         break;
       }
     }
@@ -78,8 +76,7 @@ void checkRuns(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t layer,
     cout << "Deleted run from layer " << layer << endl;
 }
 
-void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs,
-                size_t* ageLimit) {
+void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs, size_t* ageLimit) {
 
   size_t runsTerminated = 0;
   // while non-terminated runs exist
@@ -93,22 +90,21 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs,
       for (int j = 0; j < k; j++) {
         emAlgs[0].push_back(initEMAlg(fg, infprops));
         if (verbose)
-          cout << "Adding run to layer 0. Total in layer 0: "
-              << emAlgs[0].size() << endl;
+          cout << "Adding run to layer 0. Total in layer 0: " << emAlgs[0].size() << endl;
       }
     }
 
     // iterate EMs over all layers
     vector<EMAlg*> ems = getAllRuns(emAlgs);
-#pragma omp parallel for
+    #pragma omp parallel for
     for (size_t i = 0; i < ems.size(); i++) {
       EMAlg* em = ems[i];
       if (!em->hasSatisfiedTermConditions()) {
         em->ALEM_active = true;
         em->iterate();
         if (verbose)
-          cout << "iteration: layer " << i << " iterated to likelihood "
-              << em->logZ() << " and iters=" << em->Iterations() << endl;
+          cout << "iteration: layer " << i << " iterated to likelihood " << em->logZ()
+              << " and iters=" << em->Iterations() << endl;
       }
     }
 
@@ -122,8 +118,8 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs,
           em->ALEM_active = false;
           runsTerminated++;
           if (verbose) {
-            cout << "layer " << i << ", run " << j
-                << " converged. runsTerminated=" << runsTerminated << endl;
+            cout << "layer " << i << ", run " << j << " converged. runsTerminated="
+                << runsTerminated << endl;
           }
           // move run to completed EMs layer emAlgs[numLayers-1]
           EMAlg* converged = emAlgs[i][j];
@@ -131,8 +127,7 @@ void ALEM_check(vector<vector<EMAlg*> > &emAlgs, size_t* min_runs,
           emAlgs[numLayers - 1].push_back(converged);
         } else if (i < numLayers && em->Iterations() >= ageLimit[i]) {
           if (verbose)
-            cout << "layer " << i << ", run " << j << " hit age limit of "
-                << ageLimit[i] << endl;
+            cout << "layer " << i << ", run " << j << " hit age limit of " << ageLimit[i] << endl;
           checkRuns(emAlgs, min_runs, i, j);
         }
       }
@@ -172,8 +167,7 @@ int main(int argc, char* argv[]) {
     // add EMAlg to first layer
     emAlgs[0].push_back(newEMalg);
     if (verbose)
-      cout << "Adding run to layer 0. Total in layer 0: " << emAlgs[0].size()
-          << endl;
+      cout << "Adding run to layer 0. Total in layer 0: " << emAlgs[0].size() << endl;
   }
 
   // start ALEM
@@ -188,8 +182,8 @@ int main(int argc, char* argv[]) {
       EMAlg* em = emAlgs[i][j];
       // only print out the inactive/converged EMs
       if (em->hasSatisfiedTermConditions())
-        cout << "converged: layer " << i << ", run " << j << " likelihood: "
-            << em->logZ() << " iters: " << em->Iterations() << endl;
+        cout << "converged: layer " << i << ", run " << j << " likelihood: " << em->logZ()
+            << " iters: " << em->Iterations() << endl;
       if (em->logZ() > bestLikelihood) {
         bestLikelihood = em->logZ();
         bestIters = em->Iterations();
