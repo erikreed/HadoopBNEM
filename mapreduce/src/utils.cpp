@@ -4,8 +4,14 @@
 #include "boost/foreach.hpp"
 #include <time.h>
 
+// generate these via something like ./scripts/init.sh dat/bnets/asia.net 100 3
+// TODO: make these args
+const char* EM_PATH = "dat/in/em";
+const char* TAB_PATH = "dat/in/tab";
+const char* FG_PATH = "dat/in/fg";
+
 // run vanilla EM
-Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numItersRet) {
+Real doEmIters(const char* fgIn, const char* tabIn, const char* emIn, int numIters, size_t *numItersRet) {
 
 	string fixedIn = emIn;
 
@@ -60,39 +66,42 @@ Real doEmIters(char* fgIn, char* tabIn, char* emIn, int numIters, size_t *numIte
 	return likelihood;
 }
 
-void checkRuns(vector<vector<EMdata> > &emAlgs, size_t*  min_runs, size_t layer, size_t index) {
-	EMdata &em = emAlgs[layer][index];
-	Real likelihood = em.likelihood;
-	if (emAlgs[layer+1].size() < min_runs[layer+1]) {
-		em.ALEM_layer = layer+1;
-		emAlgs[layer+1].push_back(em);
+void checkRuns(vector<vector<EMdata> > &emAlgs, size_t* min_runs, size_t layer, size_t index) {
+  assert(layer + 1 < emAlgs.size());
 
-		if (verbose)
-			cout << "Moved run from layer " << layer << " to " << layer + 1 << endl;
-	}
-	else {
-		// find out if there is a worse run in next layer
-		for (size_t j=0; j<emAlgs[layer+1].size(); j++) {
-			Real next = emAlgs[layer+1][j].likelihood;
-			if (next < likelihood) {
-				// discard em_next
-				emAlgs[layer+1].erase(emAlgs[layer+1].begin() + j);
-				if (verbose)
-					cout << "Discarded run from layer " << layer +1 << endl;
-				// insert em
-				em.ALEM_layer = layer+1;
-				emAlgs[layer+1].push_back(em);
-				if (verbose)
-					cout << "Moved (better) run from layer " << layer << " to " << layer + 1 << endl;
-				break;
-			}
-		}
-	}
+  EMdata &em = emAlgs[layer][index];
+  Real likelihood = em.likelihood;
+  if (emAlgs[layer + 1].size() < min_runs[layer + 1]) {
+    em.ALEM_layer = layer + 1;
+    emAlgs[layer + 1].push_back(em);
 
-	// remove em from original layer
-	emAlgs[layer].erase(emAlgs[layer].begin()+index);
-	if (verbose)
-		cout << "Deleted run from layer " << layer << endl;
+    if (verbose) {
+      cout << "Moved run from layer " << layer << " to " << layer + 1 << endl;
+    }
+  } else {
+    // find out if there is a worse run in next layer
+    for (size_t j = 0; j < emAlgs[layer + 1].size(); j++) {
+      Real next = emAlgs[layer + 1][j].likelihood;
+      if (next < likelihood) {
+        // discard em_next
+        emAlgs[layer + 1].erase(emAlgs[layer + 1].begin() + j);
+        if (verbose) {
+          cout << "Discarded run from layer " << layer + 1 << endl;
+        }
+        // insert em
+        em.ALEM_layer = layer + 1;
+        emAlgs[layer + 1].push_back(em);
+        if (verbose) {
+          cout << "Moved (better) run from layer " << layer << " to " << layer + 1 << endl;
+        }
+        break;
+      }
+    }
+  }
+  // remove em from original layer
+  emAlgs[layer].erase(emAlgs[layer].begin() + index);
+  if (verbose)
+    cout << "Deleted run from layer " << layer << endl;
 }
 
 void ALEM_check(vector<vector<EMdata> > &emAlgs, size_t* min_runs, size_t* ageLimit) {
@@ -102,15 +111,7 @@ void ALEM_check(vector<vector<EMdata> > &emAlgs, size_t* min_runs, size_t* ageLi
 		for (int j=emAlgs[i].size()-1; j>=0; j--){
 			EMdata &em = emAlgs[i][j];
 			// em trial has terminated
-			if (em.isConverged()) {
-				// move run to completed EMs layer emAlgs[numLayers-1]
-				EMdata &converged = emAlgs[i][j];
-				converged.ALEM_layer = numLayers-1;
-				emAlgs[numLayers-1].push_back(converged);
-				emAlgs[i].erase(emAlgs[i].begin() + j);
-
-			}
-			else if (i < numLayers && em.iter >= ageLimit[i]) {
+			if (i < numLayers - 1 && em.alemItersActive >= ageLimit[i]) {
 				if (verbose)
 					cout << "layer " << i << ", run " << j <<
 					" hit age limit of " << ageLimit[i] << endl;
@@ -118,7 +119,6 @@ void ALEM_check(vector<vector<EMdata> > &emAlgs, size_t* min_runs, size_t* ageLi
 			}
 		}
 	}
-
 }
 
 FactorGraph getFirstFG(vector<vector<EMdata> > &emAlgs) {
@@ -160,8 +160,12 @@ void alem(vector<vector<EMdata> > &emAlgs) {
 	// add EMs to first layer
 	if (emAlgs[0].size() < min_runs[0]) {
 		// insert k new EM runs
-//		int k = min_runs[0] - emAlgs[0].size();
-		int k = min_runs[0] - getNumRuns(emAlgs);
+	   int k = min_runs[0] - emAlgs[0].size();
+	   // TODO: check original ALEM paper to see what was done here
+
+	  // TODO: note this is using the total population to determine how the first layer is filled,
+	  // effectively putting a cap on population size. This is different from alem.cpp
+//		int k = min_runs[0] - getNumRuns(emAlgs);
 		if (k > 0) {
 			int currentID = getMaxID(emAlgs) + 1;
 			for (int j=0; j<k; j++) {
@@ -169,13 +173,15 @@ void alem(vector<vector<EMdata> > &emAlgs) {
 				newEM.fg = getFirstFG(emAlgs);
 				randomize_fg(&newEM.fg);
 				newEM.iter = 0;
+				newEM.alemItersActive = 0;
 				newEM.likelihood = 0;
 				newEM.bnID = currentID++;
 				newEM.ALEM_layer = 0;
 				emAlgs[0].push_back(newEM);
-				if (verbose)
+				if (verbose) {
 					cout << "Adding run to layer 0. Total in layer 0: "
-					<< emAlgs[0].size() << endl;
+              << emAlgs[0].size() << endl;
+				}
 			}
 		}
 	}
@@ -187,7 +193,7 @@ void alem(vector<vector<EMdata> > &emAlgs) {
 int main(int argc, char* argv[]) {
 	rnd_seed(time(NULL));
 	if (argc == 1) {
-		cout << "usage:" << argv[0] << endl;
+		cout << "usage for: " << argv[0] << endl;
 		cout << "-u when piping serialized EMdata in" << endl;
 		cout << "-alem when piping serialized EMdata in using ALEM" << endl;
 		cout << "-b num_iters num_trials for benchmarking w/o MR" << endl;
@@ -198,7 +204,7 @@ int main(int argc, char* argv[]) {
 	if (argc == 2) {
 		string flag = argv[1];
 		bool terminated = true;
-		if (flag == "-u"){
+		if (flag == "-u") {
 			// get post mapreduce data -- update
 
 			size_t numConverged = 0;
@@ -249,8 +255,8 @@ int main(int argc, char* argv[]) {
 			while (std::getline(std::cin, s)) {
 				str_char_replace(s,'^','\n');
 				EMdata dat = stringToEM(s);
-				int layer = dat.ALEM_layer;
-				assert(layer >= 0 && (size_t) layer < numLayers);
+				size_t layer = (size_t) dat.ALEM_layer;
+				assert(layer >= 0 && layer < numLayers);
 				emAlgs[layer].push_back(dat);
 
 
@@ -259,8 +265,8 @@ int main(int argc, char* argv[]) {
 					bestIters = dat.iter;
 				}
 
-				cout << "ID: " << dat.bnID <<  "\t layer: "<< dat.ALEM_layer << "\t iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
-				if (dat.isConverged())
+				cout << "ID: " << dat.bnID <<  "\t layer: "<< layer << "\t iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
+				if (dat.isConverged() && layer == numLayers - 1)
 					numConverged++;
 			}
 
@@ -275,8 +281,6 @@ int main(int argc, char* argv[]) {
 				terminated = false;
 				alem(emAlgs);
 			}
-
-
 
 			foreach(vector<EMdata> &layer, emAlgs) {
 				foreach(EMdata &em, layer) {
@@ -311,7 +315,7 @@ int main(int argc, char* argv[]) {
 		#pragma omp parallel for
 		for (int i=0; i<numTrials; i++) {
 			size_t numItersRet;
-			Real l = doEmIters("in/fg","in/tab","in/em",numIters,&numItersRet);
+			Real l = doEmIters(FG_PATH, TAB_PATH, EM_PATH, numIters, &numItersRet);
 			cout << "likelihood: " << l << " iters: " << numItersRet << endl;
 
 			#pragma omp critical

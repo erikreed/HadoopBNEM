@@ -54,8 +54,10 @@ bool emHasSatisfiedTermConditions(size_t iter, Real previous, Real current) {
 EMdata em_reduce(vector<EMdata>& in) {
   // using first EMdata to store e-step counts and create fg
   EMdata dat = in[0];
-  if (dat.isConverged())
+  if (dat.isConverged()) {
+    dat.alemItersActive++;
     return dat;
+  }
   FactorGraph fg = dat.fg;
 
   // collect stats for each set of evidence
@@ -78,6 +80,7 @@ EMdata em_reduce(vector<EMdata>& in) {
   dat.fg = fg;
   dat.msteps.clear();
   dat.iter++;
+  dat.alemItersActive = dat.iter;
 
   return dat;
 }

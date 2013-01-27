@@ -4,17 +4,17 @@
 mkdir -p results
 
 trials=1
-iters=15
-pop=10
+iters=100
+pop=5
 
 # water tests -- 32 nodes
 # single core benchmarks: ~20 seconds per iteration w/ pop 1
 # for 10 samples
 # -- so, estimated 80 hours for 1000 samples, 15 iters, pop=10
-net=water
+net=alarm
 for i in `seq 1 1 $trials`; do
-	for samp in 5; do
-		for hid in 15; do
+	for samp in 100; do
+		for hid in 10; do
 			echo $net: samples=$samp, hidden=$hid, $i of $trials
 			rm -rf dat/{in,out}
 			./scripts/init.sh dat/bnets/$net.net $samp $hid
