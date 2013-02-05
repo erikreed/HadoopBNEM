@@ -1,0 +1,28 @@
+#!/bin/bash -e
+# erik reed
+
+RESULTS=results_time
+mkdir -p result
+pops="1 10 100 1000 10000"
+mappers="5 10 15"
+nets="asia alarm water"
+
+SAMPLES=1000
+HIDDEN=rand
+
+for net in $nets; do
+	rm -rf dat/{in,out} in out
+	./scripts/init.sh dat/bnets/$net.net $SAMPLES $HIDDEN
+	for mapper in $mappers; do
+		for pop in $pops; do 	
+			echo $net: pop=$pop, mappers=$mapper
+
+			#/usr/bin/time -o $RESULTS/$net.$mapper.$pop.log \
+			#	./scripts/streaming.sh dat/in -u $mapper $pop 2>&1 | \
+			#	tee $RESULTS/$net.$mapper.$pop.txt
+			#mv dat/out/log.txt $RESULTS/$net.info
+		done
+	done
+done
+rm -rf dat/{in,out} in out
+

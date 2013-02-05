@@ -10,6 +10,12 @@ out=$2
 n=$3
 nodes=`head -1 $in | grep -o $'\t' | wc -l`
 
+shopt -s nocasematch
+if [[ ! $n =~ ^[0-9]+$ ]]; then
+	echo Number of hidden nodes set to half of total
+	n=$(($nodes / 2))
+fi
+
 echo Hiding $n of $(($nodes + 1)) nodes...
 
 nodes=$(($nodes - $n))
