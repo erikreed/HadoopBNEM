@@ -26,9 +26,9 @@ HADOOP_JAR=hadoop-streaming-1.0.0.jar
 # max MapReduce job iterations, not max EM iters, which
 # is defined in dai_mapreduce.h
 
-MAX_ITERS=15
+MAX_ITERS=1
 
-REDUCERS=4 # TODO: bug when REDUCERS > 1
+REDUCERS=1 # TODO: broken; make parameter
 
 
 
@@ -66,14 +66,15 @@ mkdir -p dat/out/iter.0
 cp dat/in/dat.* dat/out/iter.0 
 cp dat/in/dat.* in
 
-hadoop fs -rmr out in || true
+echo Clearing previous input from HDFS
+hadoop fs -rmr -skipTrash out in &> /dev/null || true 
+echo Adding input to HDFS
 hadoop fs -put in in
 
 for i in $(seq 1 1 $MAX_ITERS); do
 	echo starting MapReduce job iteration: $i
-	# ASD used because * delimeter is removed; need to tweak reducer
 	$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/$HADOOP_JAR \
-		-files "dai_map,dai_reduce,in" \
+		-files "dai_map,dai_reduce" \
 		-D 'stream.map.output.field.separator=:' \
 		-D 'stream.reduce.output.field.separator=:' \
 		-D mapred.tasktracker.tasks.maximum=$MAPPERS \
@@ -85,16 +86,19 @@ for i in $(seq 1 1 $MAX_ITERS); do
 		-mapper ./dai_map \
 		-reducer ./dai_reduce \
 		-numReduceTasks $REDUCERS
-#TODO: tweak this for larger number of reducers
-		exit 1
-	hadoop fs -get out/part-00000 dat/out/tmp
-	hadoop fs -rmr out in/dat.*
+	hadoop fs -cat out/part-* > dat/out/tmp
+	hadoop fs -rmr -skipTrash out in/dat.*
 	cat dat/out/tmp | ./utils $EM_FLAGS
 	rm dat/out/tmp in/dat.* # remove previous iteration
 	mkdir -p dat/out/iter.$i
-	cp out/dat.* in
-	hadoop fs -put out/dat.* in
 	mv out/* dat/out/iter.$i
+	
+	if [ $i != $MAX_ITERS ]; then
+		cp out/dat.* in
+		echo Adding next iteration input to HDFS
+		hadoop fs -put out/dat.* in
+	fi
+
 
 	converged=`cat dat/out/iter.$i/converged`
 	if [ "$converged" = 1 ]; then

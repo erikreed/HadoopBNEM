@@ -95,6 +95,11 @@ int main(int argc, char* argv[]) {
 
   string input = ss.str();
 
+  if (input.empty()) {
+    cerr << "No data for reducer" << endl;
+    return 0;
+  }
+
   vector<string> data = str_split(input, '\n');
   assert(data.size() > 0);
 

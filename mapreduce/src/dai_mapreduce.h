@@ -163,13 +163,12 @@ void str_char_replace(string &s, char from, char to) {
 	replace( s.begin(), s.end(), from, to);
 }
 
-bool str_replace(string& str, const string& from,
-		const string& to) {
-	size_t start_pos = str.find(from);
-	if (start_pos == string::npos)
-		return false;
-	str.replace(start_pos, from.length(), to);
-	return true;
+bool str_replace(string& str, const string& from, const string& to) {
+  size_t start_pos = str.find(from);
+  if (start_pos == string::npos)
+    return false;
+  str.replace(start_pos, from.length(), to);
+  return true;
 }
 
 void randomize_fg(FactorGraph* fg) {
@@ -182,19 +181,19 @@ void randomize_fg(FactorGraph* fg) {
 	}
 }
 
-vector<string> &str_split(const string &s, char delim,
-		vector<string> &elems) {
-	stringstream ss(s);
-	string item;
-	while (getline(ss, item, delim))
-		elems.push_back(item);
-	return elems;
+vector<string> &str_split(const string &s, char delim, vector<string> &elems) {
+  stringstream ss(s);
+  string item;
+  while (getline(ss, item, delim))
+    elems.push_back(item);
+  return elems;
 }
 
 vector<string> str_split(const string &s, char delim) {
 	vector<string> elems;
 	return str_split(s, delim, elems);
 }
+
 PropertySet getProps() {
 	PropertySet infprops;
 	infprops.set("verbose", (size_t) 0);
