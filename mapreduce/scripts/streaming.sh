@@ -28,7 +28,7 @@ HADOOP_JAR=hadoop-streaming-1.0.0.jar
 
 MAX_ITERS=15
 
-REDUCERS=1 # TODO: bug when REDUCERS > 1
+REDUCERS=4 # TODO: bug when REDUCERS > 1
 
 
 
@@ -85,7 +85,8 @@ for i in $(seq 1 1 $MAX_ITERS); do
 		-mapper ./dai_map \
 		-reducer ./dai_reduce \
 		-numReduceTasks $REDUCERS
-
+#TODO: tweak this for larger number of reducers
+		exit 1
 	hadoop fs -get out/part-00000 dat/out/tmp
 	hadoop fs -rmr out in/dat.*
 	cat dat/out/tmp | ./utils $EM_FLAGS
