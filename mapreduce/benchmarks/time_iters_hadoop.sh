@@ -5,7 +5,7 @@ RESULTS=results_time
 mkdir -p $RESULTS
 pops="1 10 100 1000 10000"
 mappers="5 10 15"
-nets="asia alarm water"
+nets="asia alarm" #TODO: water
 
 SAMPLES=1000
 HIDDEN=rand
@@ -16,10 +16,14 @@ for net in $nets; do
 	for mapper in $mappers; do
 		for pop in $pops; do 	
 			echo $net: pop=$pop, mappers=$mapper
-
-			/usr/bin/time -o $RESULTS/$net.$mapper.$pop.log \
-				./scripts/streaming.sh dat/in -u $mapper $pop 2>&1 | \
-				tee $RESULTS/$net.$mapper.$pop.txt
+			if [ $pop -ge 1000 ]; then
+        reducers=15
+      else
+        reducers=1
+      fi
+      /usr/bin/time -o $RESULTS/$net.$mapper.$pop.log \
+          ./scripts/streaming.sh dat/in -u $mapper $reducers $pop 2>&1 | \
+          tee $RESULTS/$net.$mapper.$pop.txt
 			mv dat/out/log.txt $RESULTS/$net.info
 		done
 	done

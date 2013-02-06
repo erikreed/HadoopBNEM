@@ -1,12 +1,12 @@
 #!/bin/bash -e
 # erik reed
 
-pop=1
+pop=10
 mappers=2
 reducers=2
-net=water
+net=asia
 
-SAMPLES=10
+SAMPLES=1000000
 HIDDEN=rand
 
 rm -rf dat/{in,out} in out

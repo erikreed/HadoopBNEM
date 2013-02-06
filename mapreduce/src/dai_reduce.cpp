@@ -128,10 +128,10 @@ int main(int argc, char* argv[]) {
     }
   }
 
-  for (map<int, std::vector<EMdata> >::iterator iter = idToDat.begin(); iter
-      != idToDat.end(); iter++) {
+  for (map<int, std::vector<EMdata> >::iterator iter = idToDat.begin(); iter != idToDat.end();
+      iter++) {
     EMdata out = em_reduce(iter->second);
-    out.emFile = ""; // reduce amount of serialization
+    out.emFile = "";  // reduce amount of serialization
     out.tabFile = "";
     string outstring = emToString(out);
     cout << outstring << endl;

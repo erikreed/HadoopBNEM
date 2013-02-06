@@ -272,11 +272,10 @@ int main(int argc, char* argv[]) {
 
 			if (numConverged >= pop_size) {
 				cout << "Best EM likelihood: " << bestLikelihood << ", iters: " << bestIters << endl;
-				cout << "ALEM converged. Completed runs = " << numConverged << endl;
-				terminated = true;
-			}
-			else {
-				cout << "Best EM likelihood so far: " << bestLikelihood << ", iters: " << bestIters << endl;
+        cout << "ALEM converged. Completed runs = " << numConverged << endl;
+        terminated = true;
+      } else {
+        cout << "Best EM likelihood so far: " << bestLikelihood << ", iters: " << bestIters << endl;
 				cout << "ALEM progress: " << numConverged << "/" << pop_size << " converged." << endl;
 				terminated = false;
 				alem(emAlgs);
