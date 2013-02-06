@@ -135,9 +135,9 @@ int main(int argc, char* argv[]) {
 
 		string out = mapper(datForMapper);
 
-		// * is delimiter for K-V; e.g. key*value
+		// : is delimiter for Hadoop K-V; e.g. key*value
 		// print BN_ID
-		cout << atoi(id.c_str()) << '*';
+		cout << atoi(id.c_str()) << ':' << atoi(id.c_str()) << '*';
 		// print data for reducer
 		cout << out << endl;
 	}

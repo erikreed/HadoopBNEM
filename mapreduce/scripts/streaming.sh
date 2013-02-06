@@ -2,8 +2,8 @@
 # erik reed
 # runs EM algorithm on hadoop streaming
 
-if [ $# -ne 4 ]; then
-    echo Usage: $0 \"dir with net,tab,fg,em\" EM_FLAGS MAPPERS POP
+if [ $# -ne 5 ]; then
+    echo Usage: $0 \"dir with net,tab,fg,em\" EM_FLAGS MAPPERS REDUCERS POP
     echo "2 choices for EM_FLAGS: -u and -alem"
     echo "  -u corresponds to update; standard EM with fixed population size"
     echo "    e.g. a simple random restart with $POP BNs"
@@ -14,8 +14,9 @@ fi
 DAT_DIR=$1
 EM_FLAGS=$2
 MAPPERS=$3
-# set to min_runs[0]
-POP=$4
+REDUCERS=$4
+# set to min_runs[0] if using ALEM
+POP=$5
 
 # if using Amazon EC2 Linux AMI
 #  HADOOP_JAR=hadoop-0.19.0-streaming.jar
@@ -27,10 +28,6 @@ HADOOP_JAR=hadoop-streaming-1.0.0.jar
 # is defined in dai_mapreduce.h
 
 MAX_ITERS=1
-
-REDUCERS=1 # TODO: broken; make parameter
-
-
 
 # (disabled) save previous run if it exists (just in case)
 #rm -rf out.prev
@@ -69,18 +66,17 @@ cp dat/in/dat.* in
 echo Clearing previous input from HDFS
 hadoop fs -rmr -skipTrash out in &> /dev/null || true 
 echo Adding input to HDFS
-hadoop fs -put in in
+hadoop fs -D dfs.replication=1 -put in in
 
 for i in $(seq 1 1 $MAX_ITERS); do
 	echo starting MapReduce job iteration: $i
 	$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/$HADOOP_JAR \
-		-files "dai_map,dai_reduce" \
+		-files "dai_map,dai_reduce,in" \
 		-D 'stream.map.output.field.separator=:' \
 		-D 'stream.reduce.output.field.separator=:' \
 		-D mapred.tasktracker.tasks.maximum=$MAPPERS \
 		-D mapred.map.tasks=$MAPPERS \
 		-D mapred.output.compress=false \
-		-D dfs.block.size=256KB \
 		-input in/tab_content \
 		-output out \
 		-mapper ./dai_map \
@@ -96,7 +92,7 @@ for i in $(seq 1 1 $MAX_ITERS); do
 	if [ $i != $MAX_ITERS ]; then
 		cp out/dat.* in
 		echo Adding next iteration input to HDFS
-		hadoop fs -put out/dat.* in
+		hadoop fs -D dfs.replication=1 -put out/dat.* in
 	fi
 
 
