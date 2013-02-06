@@ -18,11 +18,7 @@ REDUCERS=$4
 # set to min_runs[0] if using ALEM
 POP=$5
 
-# if using Amazon EC2 Linux AMI
-#  HADOOP_JAR=hadoop-0.19.0-streaming.jar
-# else
-HADOOP_JAR=hadoop-streaming-1.0.0.jar
-# endif
+HADOOP_JAR=`echo $HADOOP_PREFIX/contrib/streaming/*.jar`
 
 # max MapReduce job iterations, not max EM iters, which
 # is defined in dai_mapreduce.h
@@ -70,7 +66,7 @@ hadoop fs -D dfs.replication=1 -put in in
 
 for i in $(seq 1 1 $MAX_ITERS); do
 	echo starting MapReduce job iteration: $i
-	$HADOOP_HOME/bin/hadoop jar $HADOOP_HOME/contrib/streaming/$HADOOP_JAR \
+	$HADOOP_PREFIX/bin/hadoop jar $HADOOP_JAR \
 		-files "dai_map,dai_reduce,in" \
 		-D 'stream.map.output.field.separator=:' \
 		-D 'stream.reduce.output.field.separator=:' \

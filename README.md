@@ -13,11 +13,12 @@ make
 This is useful for testing purposes before deploying on
 Amazon EC2 or another Hadoop cluster.
 
-1. Install Hadoop 1.0.0
+1. Install Hadoop (tested up to v1.1.1)
 
 2. Set up environment variables (e.g.)
-   export PLATFORM=/home/erik/hadoop/hadoop-1.0.0
-   export HADOOP_INSTALL=/home/erik/hadoop/hadoop-1.0.0
+   export HADOOP_PREFIX=/home/erik/hadoop/hadoop-1.1.1
+
+   Also set up Hadoop for pseudo-distributed operation: http://hadoop.apache.org/docs/r1.1.0/single_node_setup.html
 
 3. Run the following (I have hadoop in my path):
   ```bash
