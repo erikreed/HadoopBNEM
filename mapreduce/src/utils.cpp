@@ -329,7 +329,7 @@ int main(int argc, char* argv[]) {
 
 	FactorGraph fg;
 	fg.ReadFromFile(argv[1]);
-
+	int id = 0;
 	for (int i=2; i<argc; i++) {
 		randomize_fg(&fg);
 
@@ -337,7 +337,7 @@ int main(int argc, char* argv[]) {
 		datForMapper.iter = 0;
 
 		datForMapper.likelihood = 0;
-		datForMapper.bnID = -1;
+		datForMapper.bnID = id++;
 		datForMapper.ALEM_layer = 0;
 
 		datForMapper.fg = fg;

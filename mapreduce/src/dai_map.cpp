@@ -110,11 +110,6 @@ int main(int argc, char* argv[]) {
 
 	string tabFile = ss.str();
 
-	ifstream fin("in/pop");
-	int pop_size;
-	fin >> pop_size;
-	fin.close();
-
 	string ls = "ls in/dat.* | cat";
 	string datFiles = execCommand(ls.c_str());
 	vector<string> datFilesSplit = str_split(datFiles, '\n');
@@ -122,22 +117,17 @@ int main(int argc, char* argv[]) {
 
 	foreach(string file, datFilesSplit) {
 		string datFile = readFile(file.c_str());
-		// inefficient way of grabbing ID from filename
-		string id = file;
-		str_replace(id,"in/dat.","");
 
 		EMdata datForMapper = stringToEM(datFile);
 		datForMapper.lastLikelihood = datForMapper.likelihood;
 		datForMapper.likelihood = 0;
 		datForMapper.emFile = emFile;
 		datForMapper.tabFile = tabFile;
-		datForMapper.bnID = atoi(id.c_str());
 
 		string out = mapper(datForMapper);
 
 		// : is delimiter for Hadoop K-V; e.g. key*value
-		// print BN_ID
-		cout << atoi(id.c_str()) << ':' << atoi(id.c_str()) << '*';
+		cout << datForMapper.bnID << ':' << datForMapper.bnID << '*';
 		// print data for reducer
 		cout << out << endl;
 	}
