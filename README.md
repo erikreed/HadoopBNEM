@@ -64,7 +64,7 @@ Amazon EC2 or another Hadoop cluster.
 
   # Assumes hadoop-ec2 has been configured.
   # Launch a cluster of 10 (small) instances
-  hadoop-ec2 launch cluster dai-mapreduce 10
+  hadoop-ec2 launch-cluster dai-mapreduce 10
   # ... wait a really long time for the cluster to initialize
   ```
 
