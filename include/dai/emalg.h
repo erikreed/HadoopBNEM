@@ -41,12 +41,12 @@ BOOST_SERIALIZATION_ASSUME_ABSTRACT(ParameterEstimation)
 /// Base class for parameter estimation methods.
 /** This class defines the general interface of parameter estimation methods.
  *
- *  Implementations of this interface (see e.g. CondProbEstimation) should 
- *  register a factory function (virtual constructor) via the static 
+ *  Implementations of this interface (see e.g. CondProbEstimation) should
+ *  register a factory function (virtual constructor) via the static
  *  registerMethod() function.
- *  This factory function should return a pointer to a newly constructed 
- *  object, whose type is a subclass of ParameterEstimation, and gets as 
- *  input a PropertySet of parameters. After a subclass has been registered, 
+ *  This factory function should return a pointer to a newly constructed
+ *  object, whose type is a subclass of ParameterEstimation, and gets as
+ *  input a PropertySet of parameters. After a subclass has been registered,
  *  instances of it can be constructed using the construct() method.
  *
  *  Implementations are responsible for collecting data from a probability
@@ -183,7 +183,7 @@ class CondProbEstimation : public ParameterEstimation {
  *  class combines one or more factors (together with the specified orderings
  *  of the variables) with a ParameterEstimation object, taking care of the
  *  necessary permutations of the factor entries / parameters.
- * 
+ *
  *  \author Charles Vaske
  */
 class SharedParameters {
@@ -273,7 +273,7 @@ class SharedParameters {
         /// Estimate and set the shared parameters
         /** Based on the sufficient statistics collected so far, the shared parameters are estimated
          *  using the parameter estimation subclass method estimate(). Then, each of the relevant
-         *  factors in \a fg (that shares the parameters we are interested in) is set according 
+         *  factors in \a fg (that shares the parameters we are interested in) is set according
          *  to those parameters (permuting the parameters accordingly).
          */
         void setParameters( FactorGraph &fg );
@@ -390,6 +390,7 @@ class EMAlg {
         static const Real LOG_Z_TOL_DEFAULT;
 
         bool ALEM_active;
+        size_t alemItersActive;
 
         /// Construct an EMAlg from several objects
         /** \param evidence Specifies the observed evidence

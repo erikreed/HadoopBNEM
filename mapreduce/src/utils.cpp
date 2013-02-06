@@ -343,7 +343,7 @@ int main(int argc, char* argv[]) {
 		datForMapper.fg = fg;
 
 		ofstream fout;
-		fout.open (argv[i]);
+		fout.open(argv[i]);
 		fout << emToString(datForMapper) << endl;
 		fout.close();
 	}

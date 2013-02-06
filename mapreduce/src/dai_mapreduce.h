@@ -18,10 +18,15 @@
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
+
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/string.hpp>
+
+#include <boost/iostreams/filtering_streambuf.hpp>
+#include <boost/iostreams/copy.hpp>
+#include <boost/iostreams/filter/gzip.hpp>
 
 using namespace std;
 using namespace dai;
@@ -38,6 +43,8 @@ const bool verbose = true;
 const size_t min_runs_layer0 = 100;
 const size_t min_runs_intermediate = 25;
 // end ALEM parameters
+
+const bool use_gzip = true;
 
 struct EMdata {
 	string emFile;
@@ -113,16 +120,39 @@ int getNumRuns(vector<vector<EMdata> > &emAlgs) {
 }
 
 string emToString(const EMdata &em) {
-	ostringstream s(ios::binary);
-	boost::archive::binary_oarchive oa(s);
+	ostringstream ss(ios::binary);
+	boost::archive::binary_oarchive oa(ss);
 	oa << em;
-	const string nonEncoded = s.str();
-	return base64_encode(reinterpret_cast<const unsigned char*>(nonEncoded.c_str()),
-			nonEncoded.size());
+
+  string s = ss.str();
+
+	if (use_gzip) {
+    using namespace boost::iostreams;
+    stringstream gzIn(s);
+    filtering_streambuf<input> out;
+    out.push(gzip_compressor());
+    out.push(gzIn);
+    ostringstream gzOut(ios::binary);
+    boost::iostreams::copy(out, gzOut);
+    s = gzOut.str();
+	}
+
+	return base64_encode(reinterpret_cast<const unsigned char*>(s.c_str()), s.size());
 }
 
 EMdata stringToEM(const string &s) {
-	string decoded = base64_decode(s);
+  string decoded = base64_decode(s);
+  if (use_gzip) {
+    using namespace boost::iostreams;
+    stringstream gz(decoded);
+    filtering_streambuf<input> in;
+    in.push(gzip_decompressor());
+    in.push(gz);
+    ostringstream gzOut(ios::binary);
+    boost::iostreams::copy(in, gzOut);
+	  decoded = gzOut.str();
+  }
+
 	istringstream ss(decoded, ios::binary);
 	boost::archive::binary_iarchive ia(ss);
 	EMdata em;

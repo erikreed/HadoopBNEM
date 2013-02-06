@@ -25,9 +25,10 @@ Amazon EC2 or another Hadoop cluster.
   make clobber # WARNING: this clears any existing HDFS data
                # which seems to cause a bug sometimes when
                # accessing the HDFS
-  start-all
   hadoop namenode -format
+  start-all
   ```
+
 4. Initialize a BN and some data
   ```bash
   ./scripts/init dat/bnets/asia.net 100 4

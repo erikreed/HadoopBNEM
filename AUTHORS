@@ -1,3 +1,8 @@
+In this fork:
+* MapReduce: Erik Reed
+* param_sharing: Erik Reed
+  -- Some Python scripts courtesy of David Cohen (CMU)
+--
 libDAI was written by Joris M. Mooij with the help of the following people:
 
 Martijn Leisink (laid down the foundations for the library),

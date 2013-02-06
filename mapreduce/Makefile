@@ -1,6 +1,6 @@
 #erikreed@cmu.edu
 
-OPT_FLAGS= -Wall -O3 -ffast-math -fwhole-program -flto
+OPT_FLAGS= -g #-Wall -static -O3 -ffast-math -fwhole-program -flto
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_WITH_JTREE -DDAI_WITH_GIBBS 
 DAI_FLAGS+= -DDAI_DEBUG
@@ -14,9 +14,9 @@ LIBS=-lhadooppipes -lhadooputils -lgmpxx -lm -lc -lgmp \
 	-lpthread -lz -ldl
 
 LIBS2=-lgmpxx -lm -lc -lgmp \
-    -lboost_serialization -lpthread
+    -lboost_serialization -lz -lboost_iostreams -lpthread
 
-all: dai_map dai_reduce utils alem 
+all: dai_map dai_reduce utils 
 
 .PHONY: run clean hadoop mvjar cleanout clobber
 clobber:
@@ -32,20 +32,20 @@ run: all
 	./streaming.sh
 
 dai_map: src/dai_map.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
+	g++ -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -odai_map src/dai_map.cpp ../lib/libdai.a $(LIBS2)
 
 dai_reduce: src/dai_reduce.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
+	g++ -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \
     -odai_reduce src/dai_reduce.cpp ../lib/libdai.a $(LIBS2)
 
 utils: src/utils.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
+	g++ -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -outils src/utils.cpp ../lib/libdai.a $(LIBS2)
 
 # interesting: must use -O3 on main compilation for -static to compile successfully
 alem: src/alem.cpp ../lib/libdai.a src/dai_mapreduce.h
-	g++ -static -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
+	g++ -Wno-write-strings -fopenmp -I../include -I. $(DAI_FLAGS)  \
     -oalem src/alem.cpp ../lib/libdai.a $(LIBS2)
 
 
