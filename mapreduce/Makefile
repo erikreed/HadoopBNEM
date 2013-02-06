@@ -1,6 +1,6 @@
 #erikreed@cmu.edu
 
-OPT_FLAGS= -g #-Wall -static -O3 -ffast-math -fwhole-program -flto
+OPT_FLAGS= -Wall -static -O3 -ffast-math -fwhole-program -flto
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_WITH_JTREE -DDAI_WITH_GIBBS 
 DAI_FLAGS+= -DDAI_DEBUG
