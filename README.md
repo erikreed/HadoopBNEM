@@ -1,5 +1,23 @@
 _erikreed@cmu.edu_
 
+## Info
+This code amends the libDAI library to provide:
+
+* A new parameter learning implementation called **Age-Layered Expectation Maximization** (ALEM),
+    inspired by the [ALPS](https://github.com/ghornby/alps) genetic algorithm work of Greg Hornby of NASA Ames.
+* A distributed parameter learning implementation using MapReduce and a population structure,
+    with either ALEM or a large random restart-equivalent which my I call **Multiple Expectation Maximzation** (MEM).
+
+This code can be used to recreate the results shown in my paper:
+
+[Reed, E. and Mengshoel, O. “Scaling Bayesian Network Parameter Learning with Expectation Maximization using MapReduce”. In BigLearning Workshop of Neural Information Processing Systems (NIPS 2012).](http://fodava.gatech.edu/sites/default/files/FODAVA-12-19.pdf)
+
+Additionally, this work can be used (with more emphasis on high performance computing) to recreate the algorithms suggested in the following two papers:
+
+[Mengshoel, O. J., Saluja, A., & Sundararajan, P. (2012). Age-Layered Expectation Maximization for Parameter Learning in Bayesian Networks. In Proc. of the Fifteenth International Conference on Artificial Intelligence and Statistics (pp. 984-992).](http://works.bepress.com/cgi/viewcontent.cgi?article=1067&context=ole_mengshoel)
+
+[A. Basak, I. Brinster, X. Ma, and O.J. Mengshoel. Accelerating Bayesian network parameter learning using Hadoop and MapReduce. In Proceedings of the 1st International Workshop on Big Data, Streams and Heterogeneous Source Mining: Algorithms, Systems, Programming Models and Applications, BigMine '12, pages 101–108, Beijing, China, 2012. ACM.](http://fodava.gatech.edu/sites/default/files/FODAVA-12-16.pdf)
+
 ## How to test using non-Hadoop local MapReduce
 
 ```bash
