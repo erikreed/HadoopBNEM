@@ -82,59 +82,54 @@ EMdata em_reduce(vector<EMdata>& in) {
   dat.iter++;
   dat.alemItersActive = dat.iter;
 
+  dat.emFile = "";  // reduce amount of serialization
+  dat.tabFile = "";
   return dat;
 }
 
 int main(int argc, char* argv[]) {
   //read data from mappers
-  ostringstream ss;
 
-  string s;
-  while (std::getline(std::cin, s))
-    ss << s << '\n';
-
-  string input = ss.str();
-
-  if (input.empty()) {
-    cerr << "No data for reducer" << endl;
-    return 0;
-  }
-
-  vector<string> data = str_split(input, '\n');
-  assert(data.size() > 0);
-
-  map<int, vector<EMdata> > idToDat;
-
-  for (size_t i = 0; i < data.size(); i++) {
-    string line = data[i];
+  set<int> ids;
+  string line;
+  vector<EMdata> dats;
+  while (std::getline(std::cin, line)) {
     vector<string> parts = str_split(line, '*');
     assert(parts.size() == 2);
-    try {
-      EMdata dat = stringToEM(parts[1]); // value
-      int id = atoi(parts[0].c_str()); // key
-      assert(id == dat.bnID && id >= 0);
-      if (idToDat.count(id) == 0) {
-        idToDat[id] = vector<EMdata> ();
+
+    EMdata dat = stringToEM(parts[1]); // value
+    int id = atoi(parts[0].c_str()); // key
+    assert(id == dat.bnID && id >= 0);
+
+    if (dats.empty()) {
+      // thrown if the key/value pairs aren't sorted properly
+      assert(!ids.count(id));
+      dats.push_back(dat);
+    } else {
+      int lastId = dats.back().bnID;
+      if (lastId == id) {
+        dats.push_back(dat);
+      } else {
+        // new BN, so reduce
+        EMdata out = em_reduce(dats);
+        string outstring = emToString(out);
+        cout << outstring << endl;
+
+        dats.clear();
+        dats.push_back(dat);
       }
-      idToDat[id].push_back(dat);
-    } catch (int e) {
-      cerr << "Exception " << e << " on loop " << i << endl;
-      cerr << "Key: " << parts[0] << endl;
-      cerr << "Data passed to stringToEM:" << endl;
-      cerr << parts[1] << endl;
-      cerr << endl << endl << "Full input:" << endl;
-      cerr << input << endl;
-      throw 7;
     }
   }
 
-  for (map<int, std::vector<EMdata> >::iterator iter = idToDat.begin(); iter != idToDat.end();
-      iter++) {
-    EMdata out = em_reduce(iter->second);
-    out.emFile = "";  // reduce amount of serialization
-    out.tabFile = "";
+  if (!dats.empty()) {
+    EMdata out = em_reduce(dats);
     string outstring = emToString(out);
     cout << outstring << endl;
+  }
+
+  if (ids.empty()) {
+    cerr << "No data for reducer" << endl;
+    return 0;
   }
 
   return 0;
