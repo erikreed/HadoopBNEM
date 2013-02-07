@@ -329,23 +329,40 @@ int main(int argc, char* argv[]) {
 	FactorGraph fg;
 	fg.ReadFromFile(argv[1]);
 	int id = 0;
-	for (int i=2; i<argc; i++) {
-		randomize_fg(&fg);
 
-		EMdata datForMapper;
-		datForMapper.iter = 0;
+	ofstream fout;
 
-		datForMapper.likelihood = 0;
-		datForMapper.bnID = id++;
-		datForMapper.ALEM_layer = 0;
+	// TODO: make parameter
+  string path = "dat/in/dat";
+  cout << "Writing EM data to: " << path << endl;
+  fout.open(path.c_str());
 
-		datForMapper.fg = fg;
+  // Using scope hack from:
+  // http://stackoverflow.com/questions/1753469/how-to-hook-up-boost-serialization-iostreams-to-serialize-gzip-an-object-to
+  {
+    using namespace boost::iostreams;
 
-		ofstream fout;
-		fout.open(argv[i]);
-		fout << emToString(datForMapper) << endl;
-		fout.close();
-	}
+    filtering_streambuf<output> gzOut;
+    gzOut.push(gzip_compressor());
+    gzOut.push(fout);
 
-	return 0;
+    boost::archive::binary_oarchive oa(gzOut);
+
+    for (int i = 2; i < argc; i++) {
+      randomize_fg(&fg);
+
+      EMdata datForMapper;
+      datForMapper.iter = 0;
+
+      datForMapper.likelihood = 0;
+      datForMapper.bnID = id++;
+      datForMapper.ALEM_layer = 0;
+
+      datForMapper.fg = fg;
+
+      oa << datForMapper;
+    }
+  }
+  fout.close();
+  return 0;
 }

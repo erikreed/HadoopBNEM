@@ -56,8 +56,8 @@ done
 
 # copy 0th iteration (i.e. initial values)
 mkdir -p dat/out/iter.0
-cp dat/in/dat.* dat/out/iter.0 
-cp dat/in/dat.* in
+cp dat/in/dat dat/out/iter.0 
+cp dat/in/dat in
 
 echo Clearing previous input from HDFS
 hadoop fs -rmr -skipTrash out in &> /dev/null || true 
@@ -79,16 +79,16 @@ for i in $(seq 1 1 $MAX_ITERS); do
 		-reducer ./dai_reduce \
 		-numReduceTasks $REDUCERS
 	hadoop fs -cat out/part-* > dat/out/tmp
-	hadoop fs -rmr -skipTrash out in/dat.*
+	hadoop fs -rmr -skipTrash out in/dat
 	cat dat/out/tmp | ./utils $EM_FLAGS
-	rm dat/out/tmp in/dat.* # remove previous iteration
+	rm dat/out/tmp in/dat # remove previous iteration
 	mkdir -p dat/out/iter.$i
 	mv out/* dat/out/iter.$i
 	
 	if [ $i != $MAX_ITERS ]; then
-		cp out/dat.* in
+		cp out/dat in
 		echo Adding next iteration input to HDFS
-		hadoop fs -D dfs.replication=1 -put out/dat.* in
+		hadoop fs -D dfs.replication=1 -put out/dat in
 	fi
 
 

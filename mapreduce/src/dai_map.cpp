@@ -3,22 +3,6 @@
 #include "dai_mapreduce.h"
 #include "boost/foreach.hpp"
 
-string execCommand(const char* cmd) {
-	FILE* pipe = popen(cmd, "r");
-	if (!pipe) {
-	   cerr << "Error executing command: " << cmd << endl;
-		throw 6;
-	}
-	char buffer[128];
-	string result = "";
-	while(!feof(pipe)) {
-		if(fgets(buffer, 128, pipe) != NULL)
-			result += buffer;
-	}
-	pclose(pipe);
-	return result;
-}
-
 Real EM_estep(MaximizationStep &mstep, const Evidence &evidence, InfAlg &inf) {
 	Real likelihood = 0;
 
@@ -107,30 +91,44 @@ int main(int argc, char* argv[]) {
 
 
 	string emFile = readFile("in/em");
-
+	string datFile = "in/dat";
 	string tabFile = ss.str();
 
-	string ls = "ls in/dat.* | cat";
-	string datFiles = execCommand(ls.c_str());
-	vector<string> datFilesSplit = str_split(datFiles, '\n');
-	assert(datFilesSplit.size() > 0);
+	ifstream fin(datFile.c_str());
+	assert(fin.good());
 
-	foreach(string file, datFilesSplit) {
-		string datFile = readFile(file.c_str());
+	using namespace boost::iostreams;
+	filtering_streambuf<input> gzIn;
+	gzIn.push(gzip_decompressor());
+	gzIn.push(fin);
+	boost::archive::binary_iarchive ia(gzIn);
 
-		EMdata datForMapper = stringToEM(datFile);
-		datForMapper.lastLikelihood = datForMapper.likelihood;
-		datForMapper.likelihood = 0;
-		datForMapper.emFile = emFile;
-		datForMapper.tabFile = tabFile;
+	int objectsRead = 0;
 
-		string out = mapper(datForMapper);
+	EMdata datForMapper;
 
-		// : is delimiter for Hadoop K-V; e.g. key*value
-		cout << datForMapper.bnID << ':' << datForMapper.bnID << '*';
-		// print data for reducer
-		cout << out << endl;
-	}
+	try {
+	  while(true) {
+	    ia >> datForMapper;
+
+	    objectsRead++;
+
+	    datForMapper.lastLikelihood = datForMapper.likelihood;
+	    datForMapper.likelihood = 0;
+	    datForMapper.emFile = emFile;
+	    datForMapper.tabFile = tabFile;
+
+	    string out = mapper(datForMapper);
+
+	    // : is delimiter for Hadoop K-V; e.g. key*value
+	    cout << datForMapper.bnID << ':' << datForMapper.bnID << '*';
+	    // print data for reducer
+	    cout << out << endl;
+	  }
+	} catch(boost::archive::archive_exception const& e) { }
+
+	fin.close();
+	assert(objectsRead > 0);
 
 	return 0;
 }

@@ -7,7 +7,10 @@ if [ $# -ne 4 ]; then
     echo Usage: $0 \"dir with net,fg,em\", max_iters, population size, em_flags\(-u or -alem\)
     exit 1                                                                                    
 fi                                                                                            
-                                                                                              
+
+echo TODO: THIS IS BROKEN!
+exit 1
+                                                                                             
 DAT_DIR=$1
 
 # max MapReduce job iterations, not max EM iters

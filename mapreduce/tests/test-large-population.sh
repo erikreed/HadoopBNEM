@@ -4,7 +4,7 @@
 pop=10000
 mappers=2
 reducers=2
-net=water
+net=asia
 
 SAMPLES=1
 HIDDEN=rand

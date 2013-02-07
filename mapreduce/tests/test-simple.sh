@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 # erik reed
 
 pop=1
