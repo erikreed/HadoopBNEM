@@ -6,7 +6,7 @@ This code amends the libDAI library to provide:
 * A new parameter learning implementation called **Age-Layered Expectation Maximization** (ALEM),
     inspired by the [ALPS](https://github.com/ghornby/alps) genetic algorithm work of Greg Hornby of NASA Ames.
 * A distributed parameter learning implementation using MapReduce and a population structure,
-    with either ALEM or a large random restart-equivalent which my I call **Multiple Expectation Maximzation** (MEM).
+    with either ALEM or a large random restart-equivalent which I call **Multiple Expectation Maximzation** (MEM).
 
 This code can be used to recreate the results shown in my paper:
 
