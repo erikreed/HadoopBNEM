@@ -86,6 +86,13 @@ for i in $(seq 1 1 $MAX_ITERS); do
 		hadoop fs -D dfs.replication=1 -put out/dat in
 	fi
 
+        if [ -z "$start_time" && -z "$time_duration" ]; then
+          dur=$((`date +%s` - $start_time))
+          if [ $dur -ge $time_duration ]; then
+            echo $time_duration seconds reached! Quitting...
+            break
+          fi     
+        fi
 
 	converged=`cat dat/out/iter.$i/converged`
 	if [ "$converged" = 1 ]; then

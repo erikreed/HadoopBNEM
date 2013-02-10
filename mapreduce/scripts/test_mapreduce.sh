@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#.!/bin/bash -e
 # erik reed
 # runs EM algoritm on MapReduce locally
 
@@ -8,15 +8,12 @@ if [ $# -ne 4 ]; then
     exit 1                                                                                    
 fi                                                                                            
 
-echo TODO: THIS IS BROKEN!
-exit 1
-                                                                                             
 DAT_DIR=$1
 
 # max MapReduce job iterations, not max EM iters
 MAX_ITERS=$2
 
-REDUCERS=1 # TODO: bug when REDUCERS > 1
+REDUCERS=1
 
 # 2 choices: -u and -alem
 # -u corresponds to update; standard EM with fixed population size
@@ -46,28 +43,31 @@ echo ---------------------- | $LOG
 echo $POP > dat/in/pop
 
 # randomize initial population
-names=
-for id in $(seq 0 1 $(($POP - 1)))
-do
-	names+="dat/in/dat.$id "
-done
-./utils dat/in/fg $names
+./utils dat/in/fg $POP
 
 cp $DAT_DIR/* in
 
 # copy 0th iteration (i.e. initial values)
 mkdir -p out/iter.0
-cp in/dat.* out/iter.0
+cp in/dat out/iter.0
 
 for i in $(seq 1 1 $MAX_ITERS); do
 	echo starting local MapReduce job iteration: $i
 	
-	cat in/tab_content | ./dai_map | ./dai_reduce | ./utils $EM_FLAGS
+	cat in/tab_content | ./dai_map | sort | ./dai_reduce | ./utils $EM_FLAGS
 
 	mkdir -p out/iter.$i
-	rm in/dat.* # remove previous iteration
-	cp out/dat.* in 
-	mv out/dat.* out/iter.$i
+	rm in/dat # remove previous iteration
+	cp out/dat in 
+	mv out/dat out/iter.$i
+
+        if [ -z "$start_time" && -z "$time_duration" ]; then
+          dur=$((`date +%s` - $start_time))
+          if [ $dur -ge $time_duration ]; then
+            echo $time_duration seconds reached! Quitting...
+            break
+          fi
+        fi
 
 	converged=`cat out/converged`
 	if [ "$converged" = 1 ]; then
