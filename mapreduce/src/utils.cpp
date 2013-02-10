@@ -325,9 +325,10 @@ int main(int argc, char* argv[]) {
 		cout << "best likelihood: " << bestLikelihood << endl;
 		return 0;
 	}
-
+	assert(argc == 2);
 	FactorGraph fg;
 	fg.ReadFromFile(argv[1]);
+	int pop = atoi(argv[2]);
 	int id = 0;
 
 	ofstream fout;
@@ -348,7 +349,7 @@ int main(int argc, char* argv[]) {
 
     boost::archive::binary_oarchive oa(gzOut);
 
-    for (int i = 2; i < argc; i++) {
+    for (int i = 0; i < pop; i++) {
       randomize_fg(&fg);
 
       EMdata datForMapper;

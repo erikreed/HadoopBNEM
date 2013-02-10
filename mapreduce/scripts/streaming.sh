@@ -46,13 +46,8 @@ echo ---------------------- | $LOG
 
 echo $POP > in/pop
 
-# randomize initial population
-names=
-for id in $(seq 0 1 $(($POP - 1)))
-do
-	names+="dat/in/dat.$id "
-done
-./utils in/fg $names
+# create random initial population
+./utils in/fg $POP
 
 # copy 0th iteration (i.e. initial values)
 mkdir -p dat/out/iter.0
