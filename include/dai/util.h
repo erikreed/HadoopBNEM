@@ -22,6 +22,7 @@
 #include <boost/foreach.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/version.hpp>
 #include <algorithm>
 #include <cerrno>
 #include <gmpxx.h>
@@ -41,6 +42,11 @@
 
 
 /// An alias to the BOOST_FOREACH macro from the boost::foreach library
+namespace boost {
+#if BOOST_VERSION != 104900
+  namespace BOOST_FOREACH = foreach;
+#endif
+} // namespace boost
 #define foreach BOOST_FOREACH
 
 #ifdef DAI_DEBUG
