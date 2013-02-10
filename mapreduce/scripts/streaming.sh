@@ -60,44 +60,44 @@ echo Adding input to HDFS
 hadoop fs -D dfs.replication=1 -put in in
 
 for i in $(seq 1 1 $MAX_ITERS); do
-	echo starting MapReduce job iteration: $i
-	$HADOOP_PREFIX/bin/hadoop jar $HADOOP_JAR \
-		-files "dai_map,dai_reduce,in" \
-		-D 'stream.map.output.field.separator=:' \
-		-D 'stream.reduce.output.field.separator=:' \
-		-D mapred.tasktracker.tasks.maximum=$MAPPERS \
-		-D mapred.map.tasks=$MAPPERS \
-		-D mapred.output.compress=false \
-		-input in/tab_content \
-		-output out \
-		-mapper ./dai_map \
-		-reducer ./dai_reduce \
-		-numReduceTasks $REDUCERS
-	hadoop fs -cat out/part-* > dat/out/tmp
-	hadoop fs -rmr -skipTrash out in/dat
-	cat dat/out/tmp | ./utils $EM_FLAGS
-	rm dat/out/tmp in/dat # remove previous iteration
-	mkdir -p dat/out/iter.$i
-	mv out/* dat/out/iter.$i
-	
-	if [ $i != $MAX_ITERS ]; then
-		cp out/dat in
-		echo Adding next iteration input to HDFS
-		hadoop fs -D dfs.replication=1 -put out/dat in
-	fi
+  echo starting MapReduce job iteration: $i
+  $HADOOP_PREFIX/bin/hadoop jar $HADOOP_JAR \
+    -files "dai_map,dai_reduce,in" \
+    -D 'stream.map.output.field.separator=:' \
+    -D 'stream.reduce.output.field.separator=:' \
+    -D mapred.tasktracker.tasks.maximum=$MAPPERS \
+    -D mapred.map.tasks=$MAPPERS \
+    -D mapred.output.compress=false \
+    -input in/tab_content \
+    -output out \
+    -mapper ./dai_map \
+    -reducer ./dai_reduce \
+    -numReduceTasks $REDUCERS
+  hadoop fs -cat out/part-* > dat/out/tmp
+  hadoop fs -rmr -skipTrash out in/dat
+  cat dat/out/tmp | ./utils $EM_FLAGS
+  rm dat/out/tmp in/dat # remove previous iteration
+  mkdir -p dat/out/iter.$i
+  mv out/* dat/out/iter.$i
+  
+  if [ $i != $MAX_ITERS ]; then
+    cp out/dat in
+    echo Adding next iteration input to HDFS
+    hadoop fs -D dfs.replication=1 -put out/dat in
+  fi
 
-        if [ -z "$start_time" && -z "$time_duration" ]; then
-          dur=$((`date +%s` - $start_time))
-          if [ $dur -ge $time_duration ]; then
-            echo $time_duration seconds reached! Quitting...
-            break
-          fi     
-        fi
+  if [ -n "$start_time" -a -n "$time_duration" ]; then
+    dur=$((`date +%s` - $start_time))
+    if [ $dur -ge $time_duration ]; then
+      echo $time_duration seconds reached! Quitting...
+      break
+    fi     
+  fi
 
-	converged=`cat dat/out/iter.$i/converged`
-	if [ "$converged" = 1 ]; then
-		echo EM converged at iteration $i
-		break
-	fi
+  converged=`cat dat/out/iter.$i/converged`
+  if [ "$converged" = 1 ]; then
+    echo EM converged at iteration $i
+    break
+  fi
 done
 

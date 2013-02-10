@@ -325,7 +325,7 @@ int main(int argc, char* argv[]) {
 		cout << "best likelihood: " << bestLikelihood << endl;
 		return 0;
 	}
-	assert(argc == 2);
+	assert(argc == 3);
 	FactorGraph fg;
 	fg.ReadFromFile(argv[1]);
 	int pop = atoi(argv[2]);

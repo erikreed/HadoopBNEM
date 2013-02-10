@@ -17,7 +17,7 @@ REDUCERS=1
 
 # 2 choices: -u and -alem
 # -u corresponds to update; standard EM with fixed population size
-#		e.g. a simple random restart with $POP BNs
+#   e.g. a simple random restart with $POP BNs
 # -alem corresponds to Age-Layered EM with dynamic population size
 EM_FLAGS=$4
 
@@ -52,27 +52,27 @@ mkdir -p out/iter.0
 cp in/dat out/iter.0
 
 for i in $(seq 1 1 $MAX_ITERS); do
-	echo starting local MapReduce job iteration: $i
-	
-	cat in/tab_content | ./dai_map | sort | ./dai_reduce | ./utils $EM_FLAGS
+  echo starting local MapReduce job iteration: $i
+  
+  cat in/tab_content | ./dai_map | sort | ./dai_reduce | ./utils $EM_FLAGS
 
-	mkdir -p out/iter.$i
-	rm in/dat # remove previous iteration
-	cp out/dat in 
-	mv out/dat out/iter.$i
+  mkdir -p out/iter.$i
+  rm in/dat # remove previous iteration
+  cp out/dat in 
+  mv out/dat out/iter.$i
 
-        if [ -z "$start_time" && -z "$time_duration" ]; then
-          dur=$((`date +%s` - $start_time))
-          if [ $dur -ge $time_duration ]; then
-            echo $time_duration seconds reached! Quitting...
-            break
-          fi
-        fi
+  if [ -n "$start_time" -a -n "$time_duration" ]; then
+    dur=$((`date +%s` - $start_time))
+    if [ $dur -ge $time_duration ]; then
+      echo $time_duration seconds reached! Quitting...
+      break
+    fi
+  fi
 
-	converged=`cat out/converged`
-	if [ "$converged" = 1 ]; then
-		echo EM complete!
-		break
-	fi
+  converged=`cat out/converged`
+  if [ "$converged" = 1 ]; then
+    echo EM complete!
+    break
+  fi
 done
 
