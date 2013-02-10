@@ -20,6 +20,15 @@ POP=$5
 
 HADOOP_JAR=`echo $HADOOP_PREFIX/contrib/streaming/*.jar`
 
+if [ -n "$HADOOP_PREFIX" ]; then
+  HADOOP_HOME=$HADOOP_PREFIX
+elif [ -n "$HADOOP_HOME" ]; then
+  echo Hadoop env vars not proeprly set!
+  exit 1
+else
+  HADOOP_PREFIX=$HADOOP_HOME
+fi
+
 # max MapReduce job iterations, not max EM iters, which
 # is defined in dai_mapreduce.h
 
