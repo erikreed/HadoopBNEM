@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #CPT_dim.py
 #prints the number of entries in a node's CPT
 

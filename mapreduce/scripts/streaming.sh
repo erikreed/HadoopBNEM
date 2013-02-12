@@ -48,11 +48,11 @@ echo Max number of MapReduce iterations: $MAX_ITERS | $LOG
 echo Reducers: $REDUCERS | $LOG
 echo Mappers: $MAPPERS | $LOG
 echo Population size: $POP | $LOG
-#echo BNs per mapper: $(($POP / $MAPPERS))
 echo EM flags: $EM_FLAGS
+echo Max MR iterations: $MAX_ITERS
 echo ---------------------- | $LOG
-./scripts/make_input.sh $DAT_DIR
 
+./scripts/make_input.sh $DAT_DIR
 echo $POP > in/pop
 
 # create random initial population

@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #read_net.py
 
 import sys

@@ -1,4 +1,4 @@
-#.!/bin/bash -e
+#!/bin/bash -e
 # erik reed
 # runs EM algoritm on MapReduce locally
 
@@ -13,8 +13,6 @@ DAT_DIR=$1
 # max MapReduce job iterations, not max EM iters
 MAX_ITERS=$2
 
-REDUCERS=1
-
 # 2 choices: -u and -alem
 # -u corresponds to update; standard EM with fixed population size
 #   e.g. a simple random restart with $POP BNs
@@ -24,9 +22,6 @@ EM_FLAGS=$4
 # set to min_runs[0]
 POP=$3
 
-# (disabled) save previous run if it exists (just in case)
-#rm -rf dat/out.prev
-#mv -f dat/out dat/out.prev || true
 rm -rf out
 mkdir -p out
 
@@ -37,9 +32,11 @@ echo Directory: $DAT_DIR | $LOG
 echo Max number of MapReduce iterations: $MAX_ITERS | $LOG
 echo Population size: $POP | $LOG
 echo EM flags: $EM_FLAGS
+echo Max iterations: $MAX_ITERS
 echo ---------------------- | $LOG
-./scripts/make_input.sh $DAT_DIR
 
+
+./scripts/make_input.sh $DAT_DIR
 echo $POP > dat/in/pop
 
 # randomize initial population
@@ -54,8 +51,8 @@ cp in/dat out/iter.0
 for i in $(seq 1 1 $MAX_ITERS); do
   echo starting local MapReduce job iteration: $i
   
-  cat in/tab_content | ./dai_map | sort | ./dai_reduce | ./utils $EM_FLAGS
-
+  cat in/tab_content | ./dai_map | sort -t':' -g | ./dai_reduce | ./utils $EM_FLAGS
+  
   mkdir -p out/iter.$i
   rm in/dat # remove previous iteration
   cp out/dat in 

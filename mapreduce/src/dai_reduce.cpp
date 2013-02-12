@@ -119,6 +119,7 @@ int main(int argc, char* argv[]) {
         dats.push_back(dat);
       }
     }
+    ids.insert(id);
   }
 
   if (!dats.empty()) {

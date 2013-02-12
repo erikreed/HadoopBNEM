@@ -1,3 +1,4 @@
+#!/usr/bin/python
 #write_em2.py
 #input as many nodes to share as you want by name
 

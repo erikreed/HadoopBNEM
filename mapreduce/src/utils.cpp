@@ -212,31 +212,39 @@ int main(int argc, char* argv[]) {
 			string s;
 			Real bestLikelihood = -1e100;
 			size_t bestIters = -1;
-			while (std::getline(std::cin, s)) {
-				str_char_replace(s,'^','\n');
-				EMdata dat = stringToEM(s);
 
-				ostringstream outname;
-				outname << "out/dat." << dat.bnID;
-				ofstream fout;
-				fout.open (outname.str().c_str());
-				fout << s << endl;
-				fout.close();
+			ofstream fout;
+			fout.open("out/dat");
 
-				// check if all BNs have converged
-				if (terminated)
-					terminated = dat.isConverged();
-				if (dat.isConverged())
-					numConverged++;
-				total++;
-				cout << "iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
+			{
+			  using namespace boost::iostreams;
+			  filtering_streambuf<output> gzOut;
+			  gzOut.push(gzip_compressor());
+			  gzOut.push(fout);
+			  boost::archive::binary_oarchive oa(gzOut);
 
-				if (dat.likelihood > bestLikelihood) {
-					bestLikelihood = dat.likelihood;
-					bestIters = dat.iter;
-				}
+			  while (std::getline(std::cin, s)) {
+			    str_char_replace(s,'^','\n');
+			    EMdata dat = stringToEM(s);
 
+			    oa << dat;
+
+			    // check if all BNs have converged
+			    if (terminated)
+			      terminated = dat.isConverged();
+			    if (dat.isConverged())
+			      numConverged++;
+			    total++;
+			    cout << "iter: " << dat.iter << "\t likelihood: " << dat.likelihood << endl;
+
+			    if (dat.likelihood > bestLikelihood) {
+			      bestLikelihood = dat.likelihood;
+			      bestIters = dat.iter;
+			    }
+
+			  }
 			}
+			fout.close();
 			cout << "Runs converged: " << numConverged << "/" << total << endl;
 			cout << "Best EM likelihood so far: " << bestLikelihood << ", iters: " << bestIters << endl;
 		}
@@ -279,23 +287,28 @@ int main(int argc, char* argv[]) {
 				cout << "ALEM progress: " << numConverged << "/" << pop_size << " converged." << endl;
 				terminated = false;
 				alem(emAlgs);
-			}
+      }
 
-			foreach(vector<EMdata> &layer, emAlgs) {
-				foreach(EMdata &em, layer) {
-					ostringstream outname;
-					outname << "out/dat." << em.bnID;
-					ofstream fout;
-					fout.open (outname.str().c_str());
-					fout << emToString(em) << endl;
-					fout.close();
-				}
+			ofstream fout;
+			fout.open("out/dat");
+			{
+			  using namespace boost::iostreams;
+			  filtering_streambuf<output> gzOut;
+			  gzOut.push(gzip_compressor());
+			  gzOut.push(fout);
+			  boost::archive::binary_oarchive oa(gzOut);
+			  foreach(vector<EMdata> &layer, emAlgs) {
+			    foreach(EMdata &em, layer) {
+			      oa << em;
+			    }
+			  }
 			}
+			fout.close();
 		}
 
 		ofstream fout("out/converged");
 		if (terminated)
-			fout << 1 << endl;
+		  fout << 1 << endl;
 		else
 			fout << 0 << endl;
 		fout.close();
