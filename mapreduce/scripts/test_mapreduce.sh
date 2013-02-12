@@ -60,6 +60,7 @@ for i in $(seq 1 1 $MAX_ITERS); do
 
   if [ -n "$start_time" -a -n "$time_duration" ]; then
     dur=$((`date +%s` - $start_time))
+    echo TIME: $dur
     if [ $dur -ge $time_duration ]; then
       echo $time_duration seconds reached! Quitting...
       break
