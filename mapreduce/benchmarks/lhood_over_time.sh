@@ -15,14 +15,15 @@ export time_duration=5
 
 mkdir -p $dir
 
-rm -rf dat/{in,out} in out
-./scripts/init.sh dat/bnets/$net.net $SAMPLES $HIDDEN
 echo $net: pop=$pop, max_iters=$max_iters
 
-
 for trial in `seq 1 1 $trials`; do
-  name=$dir/$net.$pop.$trial
+  name=$dir/$net.$pop.$trial.sem
   rm -f $name
+  
+  rm -rf dat/{in,out} in out
+  ./scripts/init.sh dat/bnets/$net.net $SAMPLES $HIDDEN
+  
   export start_time=`date +%s`
   while true; do
     /usr/bin/time ./scripts/test_mapreduce.sh dat/in $max_iters $pop -u | \
