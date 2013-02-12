@@ -5,8 +5,8 @@ OPT_FLAGS= -Wall -O3 -ffast-math -fwhole-program -flto
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_WITH_JTREE -DDAI_WITH_GIBBS 
 DAI_FLAGS+= -DDAI_DEBUG
 
-LIBS=-Wl,-Bstatic -lgmpxx -lm -lc -lgmp -lboost_serialization \
-    -lz -lboost_iostreams -Wl,-Bdynamic -lpthread 
+LIBS=-static -lgmpxx -lm -lc -lgmp -lboost_serialization \
+    -lz -lboost_iostreams -lpthread 
 
 all: dai_map dai_reduce utils 
 
