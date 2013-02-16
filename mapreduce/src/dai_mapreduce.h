@@ -36,11 +36,11 @@ const Real LIB_EM_TOLERANCE = 1e-4;
 const size_t EM_MAX_ITER = 100;
 
 // ALEM (Saluja et al) parameters
-const size_t pop_size = 10; // i.e. converged EMruns required, denoted N
-const size_t numLayers = 5;
+const size_t pop_size = 5; // i.e. converged EMruns required, denoted N
+const size_t numLayers = 4;
 const double agegap = 5; // denoted a
 const bool verbose = false;
-const size_t min_runs_layer0 = 10;
+const size_t min_runs_layer0 = 5;
 const size_t min_runs_intermediate = 2;
 // end ALEM parameters
 

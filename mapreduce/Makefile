@@ -1,12 +1,12 @@
 #erikreed@cmu.edu
 
-OPT_FLAGS= -Wall -O3 -ffast-math -fwhole-program -flto
+OPT_FLAGS= -Wall -O3 -ffast-math #-fwhole-program -flto
 
 DAI_FLAGS=$(OPT_FLAGS) -DDAI_WITH_JTREE -DDAI_WITH_GIBBS 
 DAI_FLAGS+= -DDAI_DEBUG
 
 LIBS=-static -lgmpxx -lm -lc -lgmp -lboost_serialization \
-    -lz -lboost_iostreams -lpthread 
+    -lboost_iostreams -lpthread -lz
 
 all: dai_map dai_reduce utils 
 
