@@ -47,7 +47,7 @@ for trial in `seq 1 1 $trials`; do
   
   export start_time=`date +%s`
   while true; do
-    /usr/bin/time ./scripts/test_mapreduce.sh dat/in $max_iters $pop $flag | \
+    /usr/bin/time ./scripts/mr_local.sh dat/in $max_iters $pop $flag | \
         tee -a $name
     
     if [ -n "$start_time" -a -n "$time_duration" ]; then

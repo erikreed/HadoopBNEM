@@ -18,8 +18,8 @@ for i in `seq 1 1 $trials`; do
 			echo $net: samples=$samp, hidden=$hid, $i of $trials
 			rm -rf dat/{in,out}
 			./scripts/init.sh dat/bnets/$net.net $samp $hid
-			/usr/bin/time -o results/$net.$samp.$hid.$i.log ./scripts/test_mapreduce.sh dat/in/ $iters $pop -u | tee results/$net.$samp.$hid.$i.txt
-			/usr/bin/time -o results/$net.$samp.$hid.$i.alem.log ./scripts/test_mapreduce.sh dat/in/ $iters $pop -alem | tee -a results/$net.$samp.$hid.$i.alem.txt
+			/usr/bin/time -o results/$net.$samp.$hid.$i.log ./scripts/mr_local.sh dat/in/ $iters $pop -u | tee results/$net.$samp.$hid.$i.txt
+			/usr/bin/time -o results/$net.$samp.$hid.$i.alem.log ./scripts/mr_local.sh dat/in/ $iters $pop -alem | tee -a results/$net.$samp.$hid.$i.alem.txt
 		done
 	done
 done

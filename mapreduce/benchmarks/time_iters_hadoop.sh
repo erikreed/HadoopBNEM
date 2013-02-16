@@ -22,7 +22,7 @@ for net in $nets; do
         reducers=1
       fi
       /usr/bin/time -o $RESULTS/$net.$mapper.$pop.log \
-          ./scripts/streaming.sh dat/in -u $mapper $reducers $pop 2>&1 | \
+          ./scripts/mr_streaming.sh dat/in -u $mapper $reducers $pop 2>&1 | \
           tee $RESULTS/$net.$mapper.$pop.txt
 			mv dat/out/log.txt $RESULTS/$net.info
 		done

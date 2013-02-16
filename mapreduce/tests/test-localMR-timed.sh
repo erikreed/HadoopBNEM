@@ -16,7 +16,7 @@ rm -rf dat/{in,out} in out
 echo $net: pop=$pop, max_iters=$max_iters
 
 while true; do
-  /usr/bin/time ./scripts/test_mapreduce.sh dat/in $max_iters $pop -u
+  /usr/bin/time ./scripts/mr_local.sh dat/in $max_iters $pop -u
   rm -rf dat/{in,out} in out
   
   if [ -n "$start_time" -a -n "$time_duration" ]; then

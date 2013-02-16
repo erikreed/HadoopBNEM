@@ -22,7 +22,7 @@ clean:
 	rm -f dai_map dai_reduce utils alem
 
 run: all
-	./streaming.sh
+	./mr_streaming.sh
 
 dai_map: src/dai_map.cpp ../lib/libdai.a src/dai_mapreduce.h
 	g++ -Wno-write-strings -I../include -I. $(DAI_FLAGS)  \

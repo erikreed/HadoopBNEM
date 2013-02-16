@@ -13,6 +13,6 @@ rm -rf dat/{in,out} in out
 echo $net: pop=$pop, max_iters=$max_iters
 
 
-/usr/bin/time ./scripts/test_mapreduce.sh dat/in $max_iters $pop -alem
+/usr/bin/time ./scripts/mr_local.sh dat/in $max_iters $pop -alem
 #rm -rf dat/{in,out} in out
 

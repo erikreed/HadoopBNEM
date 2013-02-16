@@ -17,12 +17,12 @@ for i in `seq 1 1 $trials`; do
 			rm -rf dat/{in,out} in out
 			./scripts/init.sh dat/bnets/$net.net $samp $hid
 			/usr/bin/time -o results/$net.$samp.$hid.$i.log \
-				./scripts/streaming.sh dat/in -u $mappers $pop 2>&1 | \
+				./scripts/mr_streaming.sh dat/in -u $mappers $pop 2>&1 | \
 				tee results/$net.$samp.$hid.$i.txt
 			mv dat/out/log.txt results/$net.info
 
 			/usr/bin/time -o results/$net.$samp.$hid.$i.alem.log \
-				./scripts/streaming.sh dat/in -alem $mappers $pop 2>&1 | \
+				./scripts/mr_streaming.sh dat/in -alem $mappers $pop 2>&1 | \
 				tee results/$net.$samp.$hid.$i.alem.txt
 			mv dat/out/log.txt results/$net.alem.info
 		done
