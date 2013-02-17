@@ -11,9 +11,12 @@ n=$3
 nodes=`head -1 $in | grep -o $'\t' | wc -l`
 
 shopt -s nocasematch
-if [[ ! $n =~ ^[0-9]+$ ]]; then
-	echo Number of hidden nodes set to half of total
+if [[ $n == "half" ]]; then
 	n=$((($nodes + 1) / 2))
+	echo Number of hidden nodes set to half of total: $n
+elif [[ $n == "rand" ]]; then
+	n=$(($RANDOM % $nodes + 1))
+	echo Number of hidden nodes set to random: $n
 fi
 
 echo Hiding $n of $(($nodes + 1)) nodes...
