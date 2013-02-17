@@ -131,6 +131,14 @@ FactorGraph getFirstFG(vector<vector<EMdata> > &emAlgs) {
 	throw 5;
 }
 
+int getNumRuns(vector<vector<EMAlg*> > &emAlgs) {
+  int sum = 0;
+  foreach(vector<EMAlg*> v, emAlgs) {
+    sum += v.size();
+  }
+  return sum;
+}
+
 int getMaxID(vector<vector<EMdata> > &emAlgs) {
 	int id_max = -1;
 	foreach(vector<EMdata> &layer, emAlgs) {
@@ -160,12 +168,12 @@ void alem(vector<vector<EMdata> > &emAlgs) {
 	// add EMs to first layer
 	if (emAlgs[0].size() < min_runs[0]) {
 		// insert k new EM runs
-	   int k = min_runs[0] - emAlgs[0].size();
+	   //int k = min_runs[0] - emAlgs[0].size();
 	   // TODO: check original ALEM paper to see what was done here
 
 	  // TODO: note this is using the total population to determine how the first layer is filled,
 	  // effectively putting a cap on population size. This is different from alem.cpp
-//		int k = min_runs[0] - getNumRuns(emAlgs);
+		int k = min_runs[0] - getNumRuns(emAlgs);
 		if (k > 0) {
 			int currentID = getMaxID(emAlgs) + 1;
 			for (int j=0; j<k; j++) {

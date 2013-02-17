@@ -32,13 +32,13 @@ using namespace std;
 using namespace dai;
 
 const string INF_TYPE = "JTREE";
-const Real LIB_EM_TOLERANCE = 1e-4;
+const Real LIB_EM_TOLERANCE = 1e-6;
 const size_t EM_MAX_ITER = 100;
 
 // ALEM (Saluja et al) parameters
 const size_t pop_size = 5; // i.e. converged EMruns required, denoted N
 const size_t numLayers = 4;
-const double agegap = 5; // denoted a
+const double agegap = 4; // denoted a
 const bool verbose = false;
 const size_t min_runs_layer0 = 5;
 const size_t min_runs_intermediate = 2;
@@ -96,17 +96,6 @@ struct EMdata {
     }
   }
 };
-
-int getNumRuns(vector<vector<EMAlg*> > &emAlgs) {
-	int sum = 0;
-	foreach(vector<EMAlg*> &layer, emAlgs) {
-		foreach(EMAlg* em, layer) {
-			if (!em->hasSatisfiedTermConditions())
-				sum++;
-		}
-	}
-	return sum;
-}
 
 int getNumRuns(vector<vector<EMdata> > &emAlgs) {
 	int sum = 0;
